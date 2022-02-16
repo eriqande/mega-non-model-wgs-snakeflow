@@ -1,0 +1,14 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+
+description: an entry in the chromosomes sheet
+properties:
+  id:
+    type: string
+    description: chromosome identifier
+  chrom:
+    type: string
+    description: chromosome name
+
+required:
+  - id
+  - chrom

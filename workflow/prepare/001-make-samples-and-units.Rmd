@@ -1,0 +1,83 @@
+---
+title: "Making Chinookome samples and units"
+output: html_notebook
+---
+
+To make samples.tsv and units.tsv, we need to get the file paths
+of the fastqs and process them a bit.
+
+```{r, message=FALSE}
+library(tidyverse)
+library(readxl)
+
+x <- tibble(
+  path = read_lines("full-paths-to-fastqs.txt")
+) %>%
+  mutate(base = basename(path), .before = path) %>%
+  separate(
+    base,
+    into = c(
+      "sample_id",
+      "plate",
+      "well",
+      "s_lane", # sample number in the lane
+      "lane",
+      "read",
+      "const"
+    ),
+    sep = "_"
+  ) %>%
+  select(-plate, -well, -s_lane, -const) %>%
+  mutate(
+    lane = as.integer(substr(lane, 2, 4)),
+    read = case_when(
+      read == "R1" ~ "fq1",
+      read == "R2" ~ "fq2",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  pivot_wider(
+    names_from = read,
+    values_from = path
+  ) %>%
+  mutate(
+    sample = sprintf("s%03d", 1:n()),
+    .before = sample_id
+  ) %>%
+  mutate(
+    unit = 1,
+    platform = "ILLUMINA",
+    library = str_c("Lib-", lane),
+    flowcell = "HY75HDSX2", # just got this from the fastq
+    .after = sample_id
+  )
+
+## Now, we want to add the barcodes to these guys too.
+## Here I use IlluminaIndex+DualIndex
+ex <- read_excel(
+  path = "NGS WorkOrder_garza_DEC2021.xlsx",
+  sheet = "Library Indexing",
+  skip = 6
+)
+
+# it is sort of a hassle getting this done, they way they store their
+# data in those god-awful spread sheets.  But we want set of three
+# consecutive colums that start on 1, 6, 11, and 16
+sets <- lapply(c(1, 6, 11, 16), function(x) x + 0:3)
+listo <- lapply(sets, function(x) {
+  y <- ex[, x]
+  names(y) <- c("sample_name", "illumina_index", "dual_index", "dual_index_rc")
+  y
+}) %>%
+  bind_rows(.id = "lane")
+
+## In the end, I am not going to hassle with this, since I don't
+## know how GATK uses the barcodes.
+
+
+write_tsv(x, file = "../units.tsv")
+
+x %>%
+  select(sample) %>%
+  write_tsv("../samples.tsv")
+```

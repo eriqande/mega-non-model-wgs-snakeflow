@@ -1,0 +1,372 @@
+---
+title: "Memory and CPU usage Summary"
+output: html_document
+---
+
+
+
+```{css, echo=FALSE}
+/* This lets you expand it out to full screen on my laptop. I could probaly */
+/* Set max-width larger for bigger screens.  1440 is max for my laptop.  Maybe */
+/* I will do 2880, in case people want to go really big */
+body .main-container {
+  max-width: 2880px !important;
+  margin: auto;
+  padding: 1em
+}
+body {
+  max-width: 2880px !important;
+  margin: auto;
+  padding: 1em
+}
+```
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+# this is all the code to parse the things.
+library(tidyverse)
+
+# I thought a lot about how to deal with all the different wildcard names and
+# values.  Ultimately, I think the most general approach will be to have each
+# wildcard (name) occupy a separate column, that we will prefix with "wc.", like
+# "wc.sample". If the rule didn't use a certain wildcard name, then the entry will
+# just be NA.  Once everything is in that format, it will be pretty easy to left-join
+# the information about the units (like size of the fastqs, etc.) from the units.tsv files,
+# and the chromosome and scaffold group files.
+# The following are two functions that take a wildcard string like "sample=s002,unit=1"
+# and break it into a list columns, either of wc_names, or of wc_values.  Each one should
+# be run within map().
+wildcard_names <- function(x) {str_extract_all(x, "([[:alnum:]_]+)(?==)")[[1]]}
+wildcard_values <- function(x) {str_extract_all(x, "(?<==)([^,]+)")[[1]]}
+
+# Here is a function that will take a code than I used above to break wildcard strings from
+# snakemake into wildcard names and values.  But I don't think I need to use it...
+#mutate(
+#      rule = str_match(JobName, ".*(?=\\.)"),
+#      wildstr = str_replace(JobName, str_c(rule, "\\."), ""),
+#      wildnames = map(JobName, function(x) str_extract_all(x, "([[:alnum:]_]+)(?==)")[[1]])
+#    )
+
+#' here is a function to get the slurm_log output file names
+#'
+#' 
+#' @param dir path (relative to the main directory) to search for things
+get_slurm_logs <- function(dir = "results/slurm_logs") {
+  all_files <- list.files(
+    path = dir, 
+    pattern = "*.out",
+    recursive = TRUE, 
+    full.names = TRUE
+  ) %>%
+    tibble(full_path = .) 
+  
+  
+  # deal with samtools index.  This is a total hack....
+  no_samindex <- all_files %>%  
+    filter(!str_detect(full_path, "slurm_logs/samtools_index")) %>%  # get rid of these cuz they don't fit the bill well because of the way the wildcards are set up.
+    mutate(
+      basename = basename(full_path),
+    ) %>%
+    separate(basename, into = c("rule"), sep = "\\.", remove = FALSE, extra = "drop")
+  
+  with_samindex <- all_files %>%
+    filter(str_detect(full_path, "slurm_logs/samtools_index")) %>%
+    mutate(
+      rule = "samtools_index",
+      tmp = basename(full_path)
+    ) %>% 
+    separate(tmp, into = c("a", "b", "c", "d"), sep = "[.-]") %>%
+    mutate(
+      wildstring = str_c("sample=", a),
+      slurm_id = c  
+    ) %>%
+    select(rule, wildstring, slurm_id)
+    
+    
+  
+  # now we have some ugly processing to get the wildcards and slurmids
+  ns2 <- no_samindex %>% 
+    mutate(remain = str_replace(basename, str_c(rule, "\\."), "")) %>%
+    extract(remain, into = "slurm_id", regex = "-([0-9]+)\\.out$", remove = FALSE) %>% 
+    mutate(wildstring = str_replace(remain, str_c("-", slurm_id, "\\.out$"), "")) %>%
+    select(rule, wildstring, slurm_id)
+  
+  job_list <- bind_rows(ns2, with_samindex)
+  
+  # now, make a tibble with an explicit column for each possible wildcard
+  wide_list <- job_list %>%
+    mutate(
+      wc_names = map(wildstring, wildcard_names),
+      wc_values = map(wildstring, wildcard_values)
+    ) %>% 
+    unnest(cols = c(wc_names, wc_values), keep_empty = TRUE) %>%
+    mutate(wc_names = str_c("wc.", wc_names)) %>%
+    pivot_wider(
+      names_from = wc_names,
+      values_from = wc_values
+    ) %>%
+    select(-`NA`)
+  
+  # this just counts up the patterns of different wildcards, to be looked
+  # at, typically interactively, in order to help the user figure out
+  # how to join info onto these...
+  tmp <- wide_list %>%
+    mutate(across(starts_with("wc."), .fns = ~ !is.na(.x)))
+  
+  check_em <- tmp %>%
+    count(rule, across(starts_with("wc.")))
+  
+  wildcard_counts <- tmp %>%
+    count(across(starts_with("wc.")))
+  
+  # now, we just return those in a list
+  ret <- list(
+    JL = wide_list,  # this is the "Job List"
+    wildcard_counts = wildcard_counts,
+    wildcard_counts_by_rule = check_em
+  )
+  
+}
+
+
+#' A function to slurp up the gatk runtime and memory information
+#'
+#' @param gatk_dir  directory (or directories) in the logs that holds all the gatk
+#' and/or picard stderr output.
+gather_gatk_logs <- function(gatk_dir = c("results/logs/gatk", "results/logs/picard")) {
+  files <- tibble(
+    full_path = dir(gatk_dir, pattern = "*.log", recursive = TRUE, full.names = TRUE)
+  ) %>%
+    mutate(
+      tail = map(full_path, function(x) system(paste("tail -n 2", x), intern = TRUE)),
+      elapsed_minutes = map_chr(tail, function(x) str_match(x[1], "([0-9.]+) +minutes.$")[,2]),
+      total_bytes = map_chr(tail, function(x) str_match(x[2], "Runtime.totalMemory\\(\\)=([0-9]+)$")[,2]),
+      # this is not portable to different file structures.  In fact, not much is here!!
+      rule = str_match(full_path, "results/logs/(gatk|picard)/([a-zA-Z_-]+)/.*$")[,3],
+      wildcard = basename(full_path) %>% str_replace("\\.log$", ""),
+      wildcard = str_replace(wildcard, "-.*$", "")  # this gets rid of the -1 for the units
+    ) 
+  files
+}
+
+
+
+
+
+#' here is a function that uses SLURM's sacct command to gather information about each slurm job
+#'
+#' @param JL  the job list tibble that comes out of get_slurm_logs()
+get_and_join_slurm_job_data <- function(JL) {
+  
+  # first, catenate all the slurm job id's into a single string
+  jobstr <- JL %>%
+    pull(slurm_id) %>%
+    paste(collapse = ",")
+  
+  # make the call to sacct
+  call <- paste(
+    "sacct -p --format 'JobID,JobName,Partition,Account,Start,End,AllocCPUS,State,ExitCode,CPUTime,ElapsedRaw,MaxRSS' -j ",
+    jobstr
+  )
+  
+  slurm_info_tib <- system(call, intern = TRUE) %>%
+    read_delim(delim = "|")
+  
+  #slurm_info_tib <- read_rds("slurm_info_tib.rds")
+  
+  # get the MaxRSS from the batch row and put it in the main row
+  sit2 <- slurm_info_tib %>%
+    mutate(rawid = str_replace(JobID, "\\.batch", "")) %>%
+    group_by(rawid) %>%
+    fill(MaxRSS, .direction = "up") %>%
+    ungroup() %>%
+    select(-X13, -rawid) %>%
+    filter(!str_detect(JobID, "batch"))
+  
+  # now, simply join that onto our jobs list
+  jobs_and_data <- JL %>%
+    left_join(sit2, by = c("slurm_id" = "JobID"))
+    
+}
+
+
+gsl <- get_slurm_logs()
+
+SlurmData <- get_and_join_slurm_job_data(gsl$JL)
+
+#SlurmData <- read_rds("slurm_data.rds")
+
+
+##### Now we associate metadata like file size and chromosome length #####
+## wit the wildcard values.  For this, it is pretty nice to be able to 
+## consult with gsl$wildcard_counts_by_rule.  We will put all these tibbles
+## into a list so we can left_join them on, successively.
+units <- read_tsv("units.tsv")
+chroms <- read_tsv("chromosomes.tsv")
+scaffolds <- read_tsv("scaffold_groups.tsv") %>%
+  group_by(id) %>%
+  summarise(
+    num_fragments = n(),
+    num_bases = sum(len)
+  )
+
+joiners <- list(
+  sample_unit = units %>%
+    rename(wc.sample = sample, wc.unit = unit) %>%
+    mutate(wc.unit = as.character(wc.unit)),
+  sample = units %>%
+    rename(wc.sample = sample),
+  chromo = chroms %>%
+    rename(wc.chromo = chrom),
+  scaff_group = scaffolds %>%
+    rename(wc.scaff_group = id),
+  sg_or_chrom_type_of_subset = bind_rows(scaffolds, chroms) %>%
+    mutate(
+      wc.type_of_subset = ifelse(!is.na(chrom), "chromosomes", "scaffold_groups"),
+      wc.sg_or_chrom = ifelse(is.na(chrom), id, chrom)
+    ) %>%
+    select(-id, -chrom)
+)
+
+
+# to combine these, we have to do some acrobatics. We only want to join the
+# meta data to the correct rows.  Those rows are ones that are not NA for every
+# wc.-column shared with the meta data tibble, and _are_ NA for all the others.
+# Here is a vectorized function for that.  
+PickRows <- function(SD, m) {
+  has_em <- SD[names(m)[str_detect(names(m), "^wc\\.")]] %>%
+    as.matrix() %>%
+    apply(., 1, function(x) all(!is.na(x)))
+  
+  unshared_names <- setdiff(
+    names(SD)[str_detect(names(SD), "^wc\\.")],
+    names(m)[str_detect(names(m), "^wc\\.")]
+  )
+  has_only_them <- SD[unshared_names] %>%
+    as.matrix() %>%
+    apply(., 1, function(x) all(is.na(x)))
+  
+  has_em & has_only_them
+}
+
+# now, using that, we cycle over our joiners and join them only to the
+# parts that should be joined on, and then we bind all those rows at the end.
+# We also make RAM used numeric and in Gb
+mem_to_gb <- function(R) {
+  numeric <- readr::parse_number(R$MaxRSS)  
+  non_numeric <- str_extract(R$MaxRSS, "(K|M|G)$")
+  Gbs <- numeric / ( (1e6 * (non_numeric == "K")) + (1e3 * (non_numeric == "M")) + (1 * (non_numeric == "G")))
+}
+
+MasterTable <- lapply(joiners, function(x) {
+  left_join(
+    SlurmData %>% filter(PickRows(., x)),
+    x,
+    by = names(x)[str_detect(names(x), "^wc\\.")]
+  )
+}) %>%
+  bind_rows() %>%
+  arrange(slurm_id) %>%
+  mutate(
+    max_ram_Gb = mem_to_gb(.)
+  )
+
+
+# Let's keep only the latest run for each combination of rule, wildstring, and State (Failed or Completed)
+# and let us also munge the memory values since they may be reported in K, M, or G
+
+
+OnlyLastRuns <- MasterTable %>%
+  arrange(rule, wildstring, State, desc(End)) %>%
+  group_by(rule, wildstring, State) %>%
+  slice(1) %>%
+  ungroup()
+  
+
+
+
+# And then we can break that into sample-centric and chromo-centric
+sample_centric <- OnlyLastRuns %>%
+  filter(!is.na(wc.sample)) 
+
+sc_for_plots <- sample_centric %>%
+  select(rule, wc.sample, State, CPUTime, ElapsedRaw, MaxRSS, kb1, kb2, max_ram_Gb) %>%
+  mutate(
+    paired_files_Gb = (kb1 + kb2) / 1e6,
+    hours_elapsed = ElapsedRaw / 60 / 60
+  )
+
+# get the chromo-centric ones and get a column for choromo and one for type
+chromo_centric <- OnlyLastRuns %>% 
+  filter(!is.na(wc.chromo) | !is.na(wc.scaff_group) | !is.na(wc.sg_or_chrom)) %>%
+  mutate(
+    chrom = case_when(
+      !is.na(wc.chromo) ~ wc.chromo,
+      !is.na(wc.scaff_group) ~ wc.scaff_group,
+      !is.na(wc.type_of_subset) ~ wc.sg_or_chrom
+    ),
+    type = ifelse(str_detect(chrom, "scaff"), "scaffolds", "chromosome"),
+    hours_elapsed = ElapsedRaw / 60 / 60
+  ) %>%
+  filter(rule != "genomics_db_import")  # this is cruft from an old rule
+```
+
+Now, make a plot of the sample-centric run times. First with scales locked, then free.
+
+## Sample-centric rule runtimes.  Scales constant
+
+```{r, fig.height=3.5}
+ggplot(sc_for_plots, aes(x = paired_files_Gb, y = hours_elapsed, fill = State)) +
+  geom_point(shape = 21) + 
+  facet_wrap(~ rule)
+```
+
+## Sample-centric rule runtimes.  Scales free
+
+```{r, fig.height=3.5}
+ggplot(sc_for_plots, aes(x = paired_files_Gb, y = hours_elapsed, fill = State)) +
+  geom_point(shape = 21) + 
+  facet_wrap(~ rule, scales = "free_y")
+```
+
+## Sample-centric rule max mems.  Scales constant
+
+```{r, fig.height=3.5}
+ggplot(sc_for_plots, aes(x = paired_files_Gb, y = max_ram_Gb, fill = State)) +
+  geom_point(shape = 21) + 
+  facet_wrap(~ rule)
+```
+
+## Sample-centric rule max mems.  Scales free
+
+```{r, fig.height=3.5}
+ggplot(sc_for_plots, aes(x = paired_files_Gb, y = max_ram_Gb, fill = State)) +
+  geom_point(shape = 21) + 
+  facet_wrap(~ rule, scales = "free_y")
+```
+
+
+## Chromocentric run-times
+
+```{r, fig.height=3}
+ggplot(chromo_centric, aes(x = num_bases / 1e6, y = hours_elapsed, fill = type, colour = State)) + 
+  geom_point(shape = 21) +
+  facet_wrap(~rule) +
+  xlab("Megabases")
+         
+```
+
+
+## Chromocentric memory usage
+
+```{r, height=3}
+ggplot(chromo_centric, aes(x = num_bases / 1e6, y = max_ram_Gb, fill = type, colour = State)) + 
+  geom_point(shape = 21) +
+  facet_wrap(~rule) +
+  xlab("Megabases")
+```

@@ -1,0 +1,21 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+
+description: an entry in the chromosomes sheet
+properties:
+  id:
+    type: string
+    description: scaffold_group identifier
+  chrom:
+    type: string
+    description: name of scaffold
+  len:
+    type: integer
+    description: length of scaffold
+  cumul:
+    type: integer
+    description: cumulative length of all scaffolds up to and including the present
+
+required:
+  - id
+  - chrom
+
