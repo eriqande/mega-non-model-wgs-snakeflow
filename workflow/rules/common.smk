@@ -16,13 +16,10 @@ container: "continuumio/miniconda3:4.8.2"
 
 
 ###### Config file and sample sheets #####
-configfile: "config.yaml"
+configfile: "config/config.yaml"
 
 
 validate(config, schema="../schemas/config.schema.yaml")
-
-samples = pd.read_table(config["samples"]).set_index("sample", drop=False)
-validate(samples, schema="../schemas/samples.schema.yaml")
 
 units = pd.read_table(config["units"], dtype=str).set_index(
     ["sample", "unit"], drop=False
@@ -33,11 +30,15 @@ units.index = units.index.set_levels(
 validate(units, schema="../schemas/units.schema.yaml")
 
 
+# rather than have a separate samples.tsv, we can just get a list of
+# the samples from units
+sample_list = list(dict.fromkeys(list(units["sample"])))
+
 ### Eric's addition to genotype over the chromosomes and scaffold_groups
-chromosomes = pd.read_table("chromosomes.tsv").set_index("id", drop=False)
+chromosomes = pd.read_table(config["chromosomes"]).set_index("chrom", drop=False)
 validate(chromosomes, schema="../schemas/chromosomes.schema.yaml")
 
-scaffold_groups = pd.read_table("scaffold_groups.tsv").set_index("id", drop=False)
+scaffold_groups = pd.read_table(config["scaffold_groups"]).set_index("id", drop=False)
 validate(scaffold_groups, schema="../schemas/scaffold_groups.schema.yaml")
 
 # get a list of just the unique values of the scaffold_group
@@ -46,9 +47,35 @@ unique_scaff_groups = list(scaffold_groups.id.unique())
 
 ##### Wildcard constraints #####
 wildcard_constraints:
-    vartype="snvs|indels",
-    sample="|".join(samples.index),
+    sample="|".join(sample_list),
     unit="|".join(units["unit"]),
+    chromo="|".join(chromosomes["chrom"]),
+    scaff_group="|".join(unique_scaff_groups),
+    sg_or_chrom="|".join(unique_scaff_groups + list(chromosomes["chrom"]))
+
+
+#### Pick out all the units that are of the same sample in the same library
+def get_units_of_common_sample_and_lib(wildcards):
+    su = units.loc[(units["sample"] == wildcards.sample) & (units["library"] == wildcards.library)]
+    return(expand("results/mapped/{sample}---{unit}.sorted.bam", zip,
+        sample = su["sample"].tolist(),
+        unit = su["unit"].tolist(),
+    ))
+
+
+#### Pick out all the libmerged files of a sample
+def get_libmerged_bams_of_common_sample(wildcards):
+    su = units.loc[(units["sample"] == wildcards.sample)]
+    # make a list of all libmerged bams
+    dupie_list = expand(
+        "results/mkdup/{sample}---{library}.bam",
+        zip,
+        sample = su["sample"].tolist(),
+        library = su["library"].tolist(),
+    )
+    # then return just the unique elements from that
+    return(list(dict.fromkeys(dupie_list)))
+
 
 
 ##### Eric's Helper Functions to Handle GenomicDB updating
@@ -104,13 +131,14 @@ def is_single_end(sample, unit):
 
 def get_read_group(wildcards):
     """Denote sample name and platform in read group."""
-    return r"-R '@RG\tID:{sample}\tSM:{sample_id}\tPL:{platform}\tLB:{library}\tPU:{flowcell}.{lane}'".format(
+    return r"-R '@RG\tID:{sample}_{sample_id}_{library}_{flowcell}_{lane}_{barcode}\tSM:{sample_id}\tPL:{platform}\tLB:{library}\tPU:{flowcell}.{lane}.{barcode}'".format(
         sample=wildcards.sample,
         sample_id=units.loc[(wildcards.sample, wildcards.unit), "sample_id"],
         platform=units.loc[(wildcards.sample, wildcards.unit), "platform"],
         library=units.loc[(wildcards.sample, wildcards.unit), "library"],
         flowcell=units.loc[(wildcards.sample, wildcards.unit), "flowcell"],
         lane=units.loc[(wildcards.sample, wildcards.unit), "lane"],
+        barcode=units.loc[(wildcards.sample, wildcards.unit), "barcode"],
     )
 
 
@@ -119,16 +147,16 @@ def get_trimmed_reads(wildcards):
     if not is_single_end(**wildcards):
         # paired-end sample
         return expand(
-            "results/trimmed/{sample}-{unit}.{group}.fastq.gz", group=[1, 2], **wildcards
+            "results/trimmed/{sample}---{unit}.{group}.fastq.gz", group=[1, 2], **wildcards
         )
     # single end sample
-    return "results/trimmed/{sample}-{unit}.fastq.gz".format(**wildcards)
+    return "results/trimmed/{sample}---{unit}.fastq.gz".format(**wildcards)
 
 
 def get_sample_bams(wildcards):
     """Get all aligned reads of given sample."""
     return expand(
-        "results/mkdup/{sample}-{unit}.bam",
+        "results/mkdup/{sample}---{unit}.bam",
         sample=wildcards.sample,
         unit=units.loc[wildcards.sample].unit,
     )

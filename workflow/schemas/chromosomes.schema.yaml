@@ -2,13 +2,12 @@ $schema: "http://json-schema.org/draft-04/schema#"
 
 description: an entry in the chromosomes sheet
 properties:
-  id:
-    type: string
-    description: chromosome identifier
   chrom:
     type: string
     description: chromosome name
-
+  num_bases:
+    type: integer
+    description: length of the chromosome in number of bases
 required:
-  - id
   - chrom
+  - num_bases
