@@ -4,5 +4,5 @@
 .Ruserdata
 data
 results
-resources
+resources/genome*
 .snakemake
