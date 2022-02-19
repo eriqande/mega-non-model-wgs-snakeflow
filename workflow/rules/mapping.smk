@@ -99,13 +99,13 @@ rule mark_duplicates:
     benchmark:
         "results/benchmarks/mark_duplicates/{sample}---{library}.bmk"
     params:
-        config["params"]["picard"]["MarkDuplicates"],
-        java_opts = "-Xmx4G ",
+        extra=config["params"]["picard"]["MarkDuplicates"],
     resources:
         cpus = 1,
-        mem_mb = 4600
+        mem_mb = 4700
     wrapper:
-        "0.59.2/bio/picard/markduplicates"
+        "v1.1.0/bio/picard/markduplicateswithmatecigar"
+
 
 
 

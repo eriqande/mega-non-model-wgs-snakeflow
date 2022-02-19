@@ -44,7 +44,7 @@ params:
     GenotypeGVCFs: ""
     VariantRecalibrator: ""
   picard:
-    MarkDuplicates: "REMOVE_DUPLICATES=false"
+    MarkDuplicates: ""
   trimmomatic:
     pe:
       trimmer:
