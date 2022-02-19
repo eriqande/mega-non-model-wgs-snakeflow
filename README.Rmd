@@ -1,0 +1,25 @@
+---
+title: "mega-non-model-wgs-snakeflow"
+output: github_document
+---
+
+
+## What the user must do and values to be set, etc
+
+* Choose an Illuminaclip adapter fasta (in config)
+
+
+
+## Assumptions
+
+* Paired end
+
+
+## Things fixed or added relative to JK's snakemake workflow
+
+* fastqc on both reads
+* don't bother with single end
+* add adapters so illumina clip can work
+* benchmark each rule
+* use genomicsDBimport
+* allow for merging of lots of small scaffolds into genomicsDB
