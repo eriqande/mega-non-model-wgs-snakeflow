@@ -26,8 +26,10 @@ rule trim_reads_pe:
     params:
         **config["params"]["trimmomatic"]["pe"],
         #extra=lambda w, output: "-trimlog {}".format(output.trimlog),
+    benchmark:
+        "results/benchmarks/trim_reads_pe/{sample}---{unit}.bmk"
     log:
-        "results/logs/trimmomatic/{sample}---{unit}.log",
+        "results/logs/trim_reads_pe/{sample}---{unit}.log",
     wrapper:
         "0.59.2/bio/trimmomatic/pe"
 
@@ -46,7 +48,9 @@ rule map_reads:
     output:
         temp("results/mapped/{sample}---{unit}.sorted.bam"),
     log:
-        "results/logs/bwa_mem/{sample}---{unit}.log",
+        "results/logs/map_reads/{sample}---{unit}.log",
+    benchmark:
+        "results/benchmarks/map_reads/{sample}---{unit}.bmk"
     params:
         index=lambda w, input: os.path.splitext(input.idx[0])[0],
         extra=get_read_group,
@@ -64,12 +68,17 @@ rule bam_merge_libraries:
     input: 
         bam=get_units_of_common_sample_and_lib
     output:
-        bam=temp("results/bams_libmerged/{sample}---{library}.bam")
+        bam=temp("results/bams_libmerged/{sample}---{library}.bam"),
+        insize="results/benchmarks/bam_merge_libraries/{sample}---{library}.input_sizes"
+
     log:
         "results/logs/bam_merge_libraries/{sample}-{library}.log",
+    benchmark:
+        "results/benchmarks/bam_merge_libraries/{sample}---{library}.bmk"
     conda:
         "../envs/samtools.yaml"
     shell:
+        "du -k {input} > {output.insize}; "
         "samtools merge {output.bam} {input.bam} 2> {log}"
 
 
@@ -78,12 +87,16 @@ rule bam_merge_samples:
     input: 
         bam=get_libmerged_bams_of_common_sample
     output:
-        bam=protected("results/bams_sampmerged/{sample}.bam")
+        bam=protected("results/bams_sampmerged/{sample}.bam"),
+        insize="results/benchmarks/bam_merge_samples/{sample}.input_sizes"
     log:
         "results/logs/bam_merge_samples/{sample}.log",
+    benchmark:
+        "results/benchmarks/bam_merge_samples/{sample}.bmk"
     conda:
         "../envs/samtools.yaml"
     shell:
+        "du -k {input} > {output.insize}; "
         "samtools merge {output.bam} {input.bam} 2> {log}"
 
 
@@ -96,6 +109,8 @@ rule mark_duplicates:
         metrics="results/qc/mkdup/{sample}---{library}.metrics.txt",
     log:
         "results/logs/picard/mkdup/{sample}---{library}.log",
+    benchmark:
+        "results/benchmarks/mark_duplicates/{sample}---{library}.bmk"
     params:
         config["params"]["picard"]["MarkDuplicates"],
         java_opts = "-Xmx4G ",
@@ -133,9 +148,13 @@ rule samtools_index:
         "results/bams_sampmerged/{sample}.bam",
     output:
         protected("results/bams_sampmerged/{sample}.bam.bai"),
+        insize="results/benchmarks/samtools_index/{sample}.input_sizes"
     log:
         "results/logs/samtools/index/{sample}.log",
+    benchmark:
+        "results/benchmarks/samtools_index/{sample}.bmk"
     conda:
         "../envs/samtools.yaml"
     shell:
+        "du -k {input} > {output.insize}; "
         "samtools index {input} 2> {log}"
