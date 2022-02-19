@@ -1,16 +1,3 @@
-rule trim_reads_se:
-    input:
-        unpack(get_fastq),
-    output:
-        temp("results/trimmed/{sample}---{unit}.fastq.gz"),
-    params:
-        **config["params"]["trimmomatic"]["se"],
-        extra="",
-    log:
-        "results/logs/trimmomatic/{sample}---{unit}.log",
-    wrapper:
-        "0.59.2/bio/trimmomatic/se"
-
 
 # eca commented out the trimlog from this as it is huge and
 # not particularly useful by default, as far as I can tell.
