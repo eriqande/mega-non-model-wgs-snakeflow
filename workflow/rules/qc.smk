@@ -7,7 +7,7 @@ rule fastqc_read1:
     log:
         "results/logs/fastqc/{sample}---{unit}_R1.log",
     wrapper:
-        "0.59.2/bio/fastqc"
+        "v1.1.0/bio/fastqc"
 
 
 rule fastqc_read2:
@@ -19,7 +19,7 @@ rule fastqc_read2:
     log:
         "results/logs/fastqc/{sample}---{unit}_R2.log",
     wrapper:
-        "0.59.2/bio/fastqc"
+        "v1.1.0/bio/fastqc"
 
 
 
@@ -31,7 +31,7 @@ rule samtools_stats:
     log:
         "results/logs/samtools-stats/{sample}.log",
     wrapper:
-        "0.59.2/bio/samtools/stats"
+        "v1.1.0/bio/samtools/stats"
 
 
 rule multiqc_and_index_bams:
@@ -39,14 +39,11 @@ rule multiqc_and_index_bams:
         expand("results/qc/samtools-stats/{sample}.txt", sample=sample_list),
         expand("results/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", u=units.itertuples(), r = [1, 2]),
         list(dict.fromkeys(expand("results/qc/mkdup/{u.sample}---{u.library}.metrics.txt", u=units.itertuples()))),
-        expand("results/bams_sampmerged/{sample}.bam.bai", sample=sample_list)  # only here to force indexing of bams in this early step
+        expand("results/logs/trim_reads_pe/{u.sample}---{u.unit}.log", u=units.itertuples()),
+        expand("results/bams_sampmerged/{sample}.bam.bai", sample=sample_list),  # only here to force indexing of bams in this early step
     output:
-        report(
-            "results/qc/multiqc.html",
-            caption="../../report/multiqc.rst",
-            category="Quality control",
-        ),
+        "results/qc/multiqc.html",
     log:
         "results/logs/multiqc.log",
     wrapper:
-        "0.59.2/bio/multiqc"
+        "v1.1.0/bio/multiqc"

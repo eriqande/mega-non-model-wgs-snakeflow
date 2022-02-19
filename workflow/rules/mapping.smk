@@ -18,7 +18,7 @@ rule trim_reads_pe:
     log:
         "results/logs/trim_reads_pe/{sample}---{unit}.log",
     wrapper:
-        "0.59.2/bio/trimmomatic/pe"
+        "v1.1.0/bio/trimmomatic/pe"
 
 
 # eca modified this.  The idea is to give 4 threads to bwa.
@@ -104,7 +104,7 @@ rule mark_duplicates:
         cpus = 1,
         mem_mb = 4700
     wrapper:
-        "v1.1.0/bio/picard/markduplicateswithmatecigar"
+        "v1.1.0/bio/picard/markduplicates"
 
 
 

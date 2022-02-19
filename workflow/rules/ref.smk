@@ -10,7 +10,7 @@ rule get_genome:
         release=config["ref"]["release"],
     cache: True
     wrapper:
-        "0.59.2/bio/reference/ensembl-sequence"
+        "v1.1.0/bio/reference/ensembl-sequence"
 
 
 rule genome_faidx:
@@ -51,7 +51,7 @@ rule bwa_index:
     log:
         "results/logs/bwa_index.log",
     resources:
-        mem_mb=369000,
+        mem_mb=36900,
     cache: True
     wrapper:
         "0.59.2/bio/bwa/index"
