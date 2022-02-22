@@ -4,7 +4,6 @@ rule get_genome:
     log:
         "results/logs/get_genome.log",
     benchmark:
-        log:
         "results/benchmarks/get_genome.bmk",
     params:
         species=config["ref"]["species"],
