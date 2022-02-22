@@ -2,7 +2,10 @@ rule get_genome:
     output:
         "resources/genome.fasta",
     log:
-        "results/logs/get-genome.log",
+        "results/logs/get_genome.log",
+    benchmark:
+        log:
+        "results/benchmarks/get_genome.bmk",
     params:
         species=config["ref"]["species"],
         datatype="dna",
@@ -19,7 +22,9 @@ rule genome_faidx:
     output:
         "resources/genome.fasta.fai",
     log:
-        "results/logs/genome-faidx.log",
+        "results/logs/genome_faidx.log",
+    benchmark:
+        "results/benchmarks/genome_faidx.bmk",
     conda:
         "../envs/samtools.yaml"
     cache: True
@@ -33,7 +38,9 @@ rule genome_dict:
     output:
         "resources/genome.dict",
     log:
-        "results/logs/samtools/create_dict.log",
+        "results/logs/genome_dict.log",
+    benchmark:
+        "results/benchmarks/genome_dict.bmk"
     conda:
         "../envs/samtools.yaml"
     cache: True
@@ -50,6 +57,8 @@ rule bwa_index:
         multiext("resources/genome.fasta", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
         "results/logs/bwa_index.log",
+    benchmark:
+        "results/benchmarks/bwa_index.bmk",
     resources:
         mem_mb=36900,
     cache: True

@@ -17,6 +17,8 @@ rule eca_call_variants:
     log:
         stderr="results/logs/gatk/haplotypecaller/{sample}.stderr",
         stdout="results/logs/gatk/haplotypecaller/{sample}.stdout",
+    benchmark:
+        "results/benchmarks/haplotypecaller/{sample}.bmk"
     params:
         java_opts="-Xmx4g"
     resources:
@@ -51,6 +53,8 @@ rule genomics_db_import_chromosomes:
         db=directory("results/genomics_db/{chromo}"),
     log:
         "results/logs/gatk/genomicsdbimport/{chromo}.log"
+    benchmark:
+        "results/benchmarks/genomicsdbimport/{chromo}.bmk"
     params:
         fileflags=expand("-V results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
         intervals="{chromo}",
@@ -86,6 +90,8 @@ rule genomics_db_import_scaffold_groups:
         interval_list="results/gdb_intervals/{scaff_group}.list"
     log:
         "results/logs/gatk/genomicsdbimport/{scaff_group}.log"
+    benchmark:
+        "results/benchmarks/genomicsdbimport/{scaff_group}.bmk"
     params:
         fileflags=expand("-V results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
         db_action="--genomicsdb-workspace-path", # could change to the update flag
@@ -121,6 +127,8 @@ rule genomics_db2vcf:
         vcf="results/vcf_sections/{sg_or_chrom}.vcf.gz",
     log:
         "results/logs/gatk/genotypegvcfs/{sg_or_chrom}.log",
+    benchmark:
+        "results/benchmarks/genotypegvcfs/{sg_or_chrom}.bmk",
     params:
         java_opts="-Xmx8g"  # I might need to consider a temp directory, too in which case, put it in the config.yaml
     resources:

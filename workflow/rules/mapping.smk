@@ -108,28 +108,6 @@ rule mark_duplicates:
 
 
 
-
-
-
-
-rule recalibrate_base_qualities:
-    input:
-        bam=get_recal_input(),
-        bai=get_recal_input(bai=True),
-        ref="resources/genome.fasta",
-        idx="resources/genome.dict",
-        known="resources/variation.noiupac.vcf.gz",
-        tbi="resources/variation.noiupac.vcf.gz.tbi",
-    output:
-        bam=protected("recal/{sample}---{unit}.bam"),
-    params:
-        extra=get_regions_param() + config["params"]["gatk"]["BaseRecalibrator"],
-    log:
-        "logs/gatk/bqsr/{sample}---{unit}.log",
-    wrapper:
-        "0.59.2/bio/gatk/baserecalibrator"
-
-
 rule samtools_index:
     input:
         "results/bams_sampmerged/{sample}.bam",
