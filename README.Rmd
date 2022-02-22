@@ -15,7 +15,26 @@ You must have Snakemake (version > 6.0) in the active environment.
 In short, here are the steps to install and run the `.test`.
 
 ```sh
+# clone the repo
+git clone git@github.com:eriqande/mega-non-model-wgs-snakeflow.git
 
+# download the tarball with the genome in it and then move that
+# into resources/
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1LMK-DCkH1RKFAWTR2OKEJ_K9VOjJIZ1b' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1LMK-DCkH1RKFAWTR2OKEJ_K9VOjJIZ1b" -O non-model-wgs-example-data.tar && rm -rf /tmp/cookies.txt
+
+# untar the tarball
+tar -xvf non-model-wgs-example-data.tar
+
+# copy the genome from the extracted tarball into mega-non-model-wgs-snakeflow/resources/
+cp non-model-wgs-example-data/resources/genome.fasta mega-non-model-wgs-snakeflow/resources/
+```
+
+Once that is set up, you can do a dry run like:
+```sh
+conda activate snakemake
+cd mega-non-model-wgs-snakeflow
+
+snakemake -np 
 ```
 
 ## What the user must do and values to be set, etc
