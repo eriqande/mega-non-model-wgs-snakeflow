@@ -3,6 +3,20 @@ title: "mega-non-model-wgs-snakeflow"
 output: github_document
 ---
 
+## Quick install and run
+
+If you would like to put this on your system and test it running on a single node
+(more later about using SLURM for deployment across multiple nodes) you have to
+clone this repository and then download the pseudo-genome used for
+the included test data set (in `.test`).
+
+You must have Snakemake (version > 6.0) in the active environment.
+
+In short, here are the steps to install and run the `.test`.
+
+```sh
+
+```
 
 ## What the user must do and values to be set, etc
 
