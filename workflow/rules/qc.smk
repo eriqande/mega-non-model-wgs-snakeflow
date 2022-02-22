@@ -35,14 +35,14 @@ rule samtools_stats:
     log:
         "results/logs/samtools_stats/{sample}.log",
     benchmark:
-        "results/benchmarks/samtools-stats/{sample}.bmk",
+        "results/benchmarks/samtools_stats/{sample}.bmk",
     wrapper:
         "v1.1.0/bio/samtools/stats"
 
 
 rule multiqc:
     input:
-        expand("results/qc/samtools-stats/{sample}.txt", sample=sample_list),
+        expand("results/qc/samtools_stats/{sample}.txt", sample=sample_list),
         expand("results/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", u=units.itertuples(), r = [1, 2]),
         list(dict.fromkeys(expand("results/qc/mkdup/{u.sample}---{u.library}.metrics.txt", u=units.itertuples()))),
         expand("results/logs/trim_reads_pe/{u.sample}---{u.unit}.log", u=units.itertuples()),
