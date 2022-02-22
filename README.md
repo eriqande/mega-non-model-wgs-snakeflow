@@ -23,10 +23,42 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 # untar the tarball
 tar -xvf non-model-wgs-example-data.tar
 
-# move the genome from the extracted tarball into mega-non-model-wgs-snakeflow/resources/
-
+# copy the genome from the extracted tarball into mega-non-model-wgs-snakeflow/resources/
 cp non-model-wgs-example-data/resources/genome.fasta mega-non-model-wgs-snakeflow/resources/
 ```
+
+Once that is set up, you can do a dry run like:
+
+``` sh
+conda activate snakemake
+cd mega-non-model-wgs-snakeflow
+
+# set the number of cores you have access to, to use in the
+# following command.  Here I have 12.  You should set yours
+# however is appropriate
+CORES=12
+snakemake --cores $CORES --use-conda --conda-frontend mamba -np
+```
+
+If that gives you a reasonable looking output (165 total jobs, lots of
+conda environments to be installed, etc.) then take the `-np` off the
+end of the command to actually run it:
+
+``` sh
+snakemake --cores $CORES --use-conda --conda-frontend mamba
+```
+
+Installing all the conda packages could take a while (2–30 minutes,
+depending on your system). Once that was done, running all the steps in
+the workflow on this small data set required less than 4 minutes on 12
+cores of a single node from UC Boulder’s SUMMIT supercomputer.
+
+## Condensed DAG for the workflow
+
+Here is a DAG for the workflow on the test data in `.test`, condensed
+into an easier-to-look-at picture by the `condense_dag()` function in
+Eric’s [SnakemakeDagR](https://github.com/eriqande/SnakemakeDagR)
+package. ![](README_files/test_run_dag_condensed.svg)<!-- -->
 
 ## What the user must do and values to be set, etc
 
