@@ -4,7 +4,7 @@ rule get_genome:
     log:
         "results/logs/get_genome.log",
     benchmark:
-        "results/benchmarks/get_genome.bmk",
+        "results/benchmarks/get_genome/get_genome.bmk",
     params:
         species=config["ref"]["species"],
         datatype="dna",
@@ -23,7 +23,7 @@ rule genome_faidx:
     log:
         "results/logs/genome_faidx.log",
     benchmark:
-        "results/benchmarks/genome_faidx.bmk",
+        "results/benchmarks/genome_faidx/genome_faidx.bmk",
     conda:
         "../envs/samtools.yaml"
     cache: True
@@ -39,7 +39,7 @@ rule genome_dict:
     log:
         "results/logs/genome_dict.log",
     benchmark:
-        "results/benchmarks/genome_dict.bmk"
+        "results/benchmarks/genome_dict/genome_dict.bmk"
     conda:
         "../envs/samtools.yaml"
     cache: True
@@ -57,7 +57,7 @@ rule bwa_index:
     log:
         "results/logs/bwa_index.log",
     benchmark:
-        "results/benchmarks/bwa_index.bmk",
+        "results/benchmarks/bwa_index/bwa_index.bmk",
     resources:
         mem_mb=36900,
     cache: True

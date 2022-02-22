@@ -2,7 +2,7 @@
 # a GVCF from the bam in mkdup, over all the regions.  Note that I give it
 # 72 hours by default because I want it to be long enough for all possible
 # bam files.
-rule eca_call_variants:
+rule make_gvcfs:
     input:
         bam="results/bams_sampmerged/{sample}.bam",
         bai="results/bams_sampmerged/{sample}.bam.bai",
@@ -18,7 +18,7 @@ rule eca_call_variants:
         stderr="results/logs/gatk/haplotypecaller/{sample}.stderr",
         stdout="results/logs/gatk/haplotypecaller/{sample}.stdout",
     benchmark:
-        "results/benchmarks/haplotypecaller/{sample}.bmk"
+        "results/benchmarks/make_gvcfs/{sample}.bmk"
     params:
         java_opts="-Xmx4g"
     resources:
@@ -54,7 +54,7 @@ rule genomics_db_import_chromosomes:
     log:
         "results/logs/gatk/genomicsdbimport/{chromo}.log"
     benchmark:
-        "results/benchmarks/genomicsdbimport/{chromo}.bmk"
+        "results/benchmarks/genomics_db_import_chromosomes/{chromo}.bmk"
     params:
         fileflags=expand("-V results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
         intervals="{chromo}",
@@ -91,7 +91,7 @@ rule genomics_db_import_scaffold_groups:
     log:
         "results/logs/gatk/genomicsdbimport/{scaff_group}.log"
     benchmark:
-        "results/benchmarks/genomicsdbimport/{scaff_group}.bmk"
+        "results/benchmarks/genomics_db_import_scaffold_groups/{scaff_group}.bmk"
     params:
         fileflags=expand("-V results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
         db_action="--genomicsdb-workspace-path", # could change to the update flag
