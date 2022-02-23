@@ -62,6 +62,7 @@ package. ![](README_files/test_run_dag_condensed.svg)<!-- -->
 
 ## What the user must do and values to be set, etc
 
+-   `samples.tsv` and `units.tsv`
 -   Choose an Illuminaclip adapter fasta (in config)
 
 ## Assumptions
