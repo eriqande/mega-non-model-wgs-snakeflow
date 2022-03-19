@@ -7,7 +7,7 @@ rule fastqc_read1:
     log:
         "results/logs/fastqc/{sample}---{unit}_R1.log",
     benchmark:
-        "results/benchmarks/fastqc/{sample}---{unit}_R1.bmk",
+        "results/benchmarks/fastqc_read1/{sample}---{unit}_R1.bmk",
     wrapper:
         "v1.1.0/bio/fastqc"
 
@@ -21,7 +21,7 @@ rule fastqc_read2:
     log:
         "results/logs/fastqc/{sample}---{unit}_R2.log",
     benchmark:
-        "results/benchmarks/fastqc/{sample}---{unit}_R2.bmk",
+        "results/benchmarks/fastqc_read2/{sample}---{unit}_R2.bmk",
     wrapper:
         "v1.1.0/bio/fastqc"
 
