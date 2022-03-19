@@ -128,7 +128,7 @@ rule genomics_db2vcf:
     log:
         "results/logs/gatk/genotypegvcfs/{sg_or_chrom}.log",
     benchmark:
-        "results/benchmarks/genotypegvcfs/{sg_or_chrom}.bmk",
+        "results/benchmarks/genomics_db2vcf/{sg_or_chrom}.bmk",
     params:
         java_opts="-Xmx8g"  # I might need to consider a temp directory, too in which case, put it in the config.yaml
     resources:
