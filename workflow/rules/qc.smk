@@ -53,4 +53,4 @@ rule multiqc:
     benchmark:
         "results/benchmarks/multiqc/multiqc.bmk",
     wrapper:
-        "v1.1.0/bio/multiqc"
+        "v1.3.1/bio/multiqc"
