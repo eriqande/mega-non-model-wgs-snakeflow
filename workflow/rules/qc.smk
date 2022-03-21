@@ -29,7 +29,7 @@ rule fastqc_read2:
 
 rule samtools_stats:
     input:
-        "results/bams_sampmerged/{sample}.bam",
+        "results/mkdup/{sample}.bam",
     output:
         "results/qc/samtools_stats/{sample}.txt",
     log:
@@ -44,9 +44,8 @@ rule multiqc:
     input:
         expand("results/qc/samtools_stats/{sample}.txt", sample=sample_list),
         expand("results/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", u=units.itertuples(), r = [1, 2]),
-        list(dict.fromkeys(expand("results/qc/mkdup/{u.sample}---{u.library}.metrics.txt", u=units.itertuples()))),
+        list(dict.fromkeys(expand("results/qc/mkdup/{u.sample}.metrics.txt", u=units.itertuples()))),
         expand("results/logs/trim_reads_pe/{u.sample}---{u.unit}.log", u=units.itertuples()),
-        expand("results/bams_sampmerged/{sample}.bam.bai", sample=sample_list),  # only here to force indexing of bams in this early step
     output:
         "results/qc/multiqc.html",
     log:

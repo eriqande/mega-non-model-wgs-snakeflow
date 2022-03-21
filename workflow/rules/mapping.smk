@@ -51,53 +51,54 @@ rule map_reads:
         "0.59.2/bio/bwa/mem"
 
 
-rule bam_merge_libraries:
-    input: 
-        bam=get_units_of_common_sample_and_lib
-    output:
-        bam=temp("results/bams_libmerged/{sample}---{library}.bam"),
-        insize="results/benchmarks/bam_merge_libraries/{sample}---{library}.input_sizes"
+# rule bam_merge_libraries:
+#     input: 
+#         bam=get_units_of_common_sample_and_lib
+#     output:
+#         bam=temp("results/bams_libmerged/{sample}---{library}.bam"),
+#         insize="results/benchmarks/bam_merge_libraries/{sample}---{library}.input_sizes"
 
-    log:
-        "results/logs/bam_merge_libraries/{sample}-{library}.log",
-    benchmark:
-        "results/benchmarks/bam_merge_libraries/{sample}---{library}.bmk"
-    conda:
-        "../envs/samtools.yaml"
-    shell:
-        "du -k {input} > {output.insize}; "
-        "samtools merge {output.bam} {input.bam} 2> {log}"
+#     log:
+#         "results/logs/bam_merge_libraries/{sample}-{library}.log",
+#     benchmark:
+#         "results/benchmarks/bam_merge_libraries/{sample}---{library}.bmk"
+#     conda:
+#         "../envs/samtools.yaml"
+#     shell:
+#         "du -k {input} > {output.insize}; "
+#         "samtools merge {output.bam} {input.bam} 2> {log}"
 
 
 
-rule bam_merge_samples:
-    input: 
-        bam=get_libmerged_bams_of_common_sample
-    output:
-        bam=protected("results/bams_sampmerged/{sample}.bam"),
-        insize="results/benchmarks/bam_merge_samples/{sample}.input_sizes"
-    log:
-        "results/logs/bam_merge_samples/{sample}.log",
-    benchmark:
-        "results/benchmarks/bam_merge_samples/{sample}.bmk"
-    conda:
-        "../envs/samtools.yaml"
-    shell:
-        "du -k {input} > {output.insize}; "
-        "samtools merge {output.bam} {input.bam} 2> {log}"
+# rule bam_merge_samples:
+#     input: 
+#         bam=get_libmerged_bams_of_common_sample
+#     output:
+#         bam=protected("results/bams_sampmerged/{sample}.bam"),
+#         insize="results/benchmarks/bam_merge_samples/{sample}.input_sizes"
+#     log:
+#         "results/logs/bam_merge_samples/{sample}.log",
+#     benchmark:
+#         "results/benchmarks/bam_merge_samples/{sample}.bmk"
+#     conda:
+#         "../envs/samtools.yaml"
+#     shell:
+#         "du -k {input} > {output.insize}; "
+#         "samtools merge {output.bam} {input.bam} 2> {log}"
 
 
 
 rule mark_duplicates:
     input:
-        "results/bams_libmerged/{sample}---{library}.bam",
+        get_all_bams_of_common_sample
     output:
-        bam=temp("results/mkdup/{sample}---{library}.bam"),
-        metrics="results/qc/mkdup/{sample}---{library}.metrics.txt",
+        bam=protected("results/mkdup/{sample}.bam"),
+        bai=protected("results/mkdup/{sample}.bam.bai"),
+        metrics="results/qc/mkdup/{sample}.metrics.txt",
     log:
-        "results/logs/picard/mkdup/{sample}---{library}.log",
+        "results/logs/picard/mkdup/{sample}.log",
     benchmark:
-        "results/benchmarks/mark_duplicates/{sample}---{library}.bmk"
+        "results/benchmarks/mark_duplicates/{sample}.bmk"
     params:
         extra=config["params"]["picard"]["MarkDuplicates"],
     resources:
@@ -108,18 +109,18 @@ rule mark_duplicates:
 
 
 
-rule samtools_index:
-    input:
-        "results/bams_sampmerged/{sample}.bam",
-    output:
-        protected("results/bams_sampmerged/{sample}.bam.bai"),
-        insize="results/benchmarks/samtools_index/{sample}.input_sizes"
-    log:
-        "results/logs/samtools/index/{sample}.log",
-    benchmark:
-        "results/benchmarks/samtools_index/{sample}.bmk"
-    conda:
-        "../envs/samtools.yaml"
-    shell:
-        "du -k {input} > {output.insize}; "
-        "samtools index {input} 2> {log}"
+# rule samtools_index:
+#     input:
+#         "results/bams_sampmerged/{sample}.bam",
+#     output:
+#         protected("results/bams_sampmerged/{sample}.bam.bai"),
+#         insize="results/benchmarks/samtools_index/{sample}.input_sizes"
+#     log:
+#         "results/logs/samtools/index/{sample}.log",
+#     benchmark:
+#         "results/benchmarks/samtools_index/{sample}.bmk"
+#     conda:
+#         "../envs/samtools.yaml"
+#     shell:
+#         "du -k {input} > {output.insize}; "
+#         "samtools index {input} 2> {log}"

@@ -55,26 +55,34 @@ wildcard_constraints:
 
 
 #### Pick out all the units that are of the same sample in the same library
-def get_units_of_common_sample_and_lib(wildcards):
-    su = units.loc[(units["sample"] == wildcards.sample) & (units["library"] == wildcards.library)]
+# def get_units_of_common_sample_and_lib(wildcards):
+#     su = units.loc[(units["sample"] == wildcards.sample) & (units["library"] == wildcards.library)]
+#     return(expand("results/mapped/{sample}---{unit}.sorted.bam", zip,
+#         sample = su["sample"].tolist(),
+#         unit = su["unit"].tolist(),
+#     ))
+
+# get all the units of a particular sample
+def get_all_bams_of_common_sample(wildcards):
+    s=units.loc[(units["sample"] == wildcards.sample)]
     return(expand("results/mapped/{sample}---{unit}.sorted.bam", zip,
-        sample = su["sample"].tolist(),
-        unit = su["unit"].tolist(),
+        sample = s["sample"].tolist(),
+        unit = s["unit"].tolist(),
     ))
 
 
-#### Pick out all the libmerged files of a sample
-def get_libmerged_bams_of_common_sample(wildcards):
-    su = units.loc[(units["sample"] == wildcards.sample)]
-    # make a list of all libmerged bams
-    dupie_list = expand(
-        "results/mkdup/{sample}---{library}.bam",
-        zip,
-        sample = su["sample"].tolist(),
-        library = su["library"].tolist(),
-    )
-    # then return just the unique elements from that
-    return(list(dict.fromkeys(dupie_list)))
+# #### Pick out all the libmerged files of a sample
+# def get_libmerged_bams_of_common_sample(wildcards):
+#     su = units.loc[(units["sample"] == wildcards.sample)]
+#     # make a list of all libmerged bams
+#     dupie_list = expand(
+#         "results/mkdup/{sample}---{library}.bam",
+#         zip,
+#         sample = su["sample"].tolist(),
+#         library = su["library"].tolist(),
+#     )
+#     # then return just the unique elements from that
+#     return(list(dict.fromkeys(dupie_list)))
 
 
 

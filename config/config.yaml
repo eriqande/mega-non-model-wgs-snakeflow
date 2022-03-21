@@ -44,7 +44,7 @@ params:
     GenotypeGVCFs: ""
     VariantRecalibrator: ""
   picard:
-    MarkDuplicates: ""
+    MarkDuplicates: " --TAGGING_POLICY All --CREATE_INDEX "
   trimmomatic:
     pe:
       trimmer:

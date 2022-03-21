@@ -4,8 +4,8 @@
 # bam files.
 rule make_gvcfs:
     input:
-        bam="results/bams_sampmerged/{sample}.bam",
-        bai="results/bams_sampmerged/{sample}.bam.bai",
+        bam="results/mkdup/{sample}.bam",
+        bai="results/mkdup/{sample}.bam.bai",
         ref="resources/genome.fasta",
         idx="resources/genome.dict",
         fai="resources/genome.fasta.fai"
