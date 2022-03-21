@@ -1,0 +1,2 @@
+picard_config:
+  markdups_merge_multiple_libraries: False
