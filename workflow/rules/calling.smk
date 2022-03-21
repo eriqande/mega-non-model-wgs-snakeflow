@@ -5,7 +5,7 @@
 rule make_gvcfs:
     input:
         bam="results/mkdup/{sample}.bam",
-        bai="results/mkdup/{sample}.bam.bai",
+        bai="results/mkdup/{sample}.bai",
         ref="resources/genome.fasta",
         idx="resources/genome.dict",
         fai="resources/genome.fasta.fai"

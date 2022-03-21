@@ -93,7 +93,7 @@ rule mark_duplicates:
         get_all_bams_of_common_sample
     output:
         bam=protected("results/mkdup/{sample}.bam"),
-        bai=protected("results/mkdup/{sample}.bam.bai"),
+        bai=protected("results/mkdup/{sample}.bai"),
         metrics="results/qc/mkdup/{sample}.metrics.txt",
     log:
         "results/logs/picard/mkdup/{sample}.log",
