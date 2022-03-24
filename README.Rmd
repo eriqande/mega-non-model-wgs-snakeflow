@@ -82,3 +82,12 @@ knitr::include_graphics("README_files/test_run_dag_condensed.svg")
 * benchmark each rule
 * use genomicsDBimport
 * allow for merging of lots of small scaffolds into genomicsDB
+
+## Things that will be added in the future
+
+* Formalize a system for adding samples to the GenomicsDB via the updating
+option.
+* Develop a sane way to iteratively bootstrap some base-quality score
+recalibration.
+
+
