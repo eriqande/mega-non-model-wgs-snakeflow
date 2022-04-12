@@ -56,7 +56,6 @@ rule genomics_db_import_chromosomes:
     benchmark:
         "results/benchmarks/genomics_db_import_chromosomes/{chromo}.bmk"
     params:
-        fileflags=expand("-V results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
         intervals="{chromo}",
         db_action="--genomicsdb-workspace-path", # could change to the update flag
         extra=" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations ",  # optional
@@ -70,7 +69,7 @@ rule genomics_db_import_chromosomes:
         "../envs/gatk4.2.5.0.yaml"
     shell:
         " gatk --java-options {params.java_opts} GenomicsDBImport {params.extra} "
-        " {params.fileflags} "
+        " $(echo {input.gvcfs} | awk '{{for(i=1;i<=NF;i++) printf(\" -V %s \", $i)}}') "
         " --intervals {params.intervals} "
         " {params.db_action} {output.db} > {log} 2> {log}"
 
@@ -93,7 +92,6 @@ rule genomics_db_import_scaffold_groups:
     benchmark:
         "results/benchmarks/genomics_db_import_scaffold_groups/{scaff_group}.bmk"
     params:
-        fileflags=expand("-V results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
         db_action="--genomicsdb-workspace-path", # could change to the update flag
         extra=" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --merge-contigs-into-num-partitions 1  ",  # optional
         java_opts="-Xmx4g",  # optional
@@ -105,10 +103,9 @@ rule genomics_db_import_scaffold_groups:
     conda:
         "../envs/gatk4.2.5.0.yaml"
     shell:
-        " export TILEDB_DISABLE_FILE_LOCKING=1; "
         " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output.interval_list}; "
         " gatk --java-options {params.java_opts} GenomicsDBImport {params.extra} "
-        " {params.fileflags} "
+        " $(echo {input.gvcfs} | awk '{{for(i=1;i<=NF;i++) printf(\" -V %s \", $i)}}') "
         " --intervals {output.interval_list} "
         " {params.db_action} {output.db} > {log} 2> {log} "
 
