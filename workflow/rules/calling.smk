@@ -45,20 +45,24 @@ rule make_gvcfs:
 ### the sample identifer, no longer any units, after that!!
 ## Note: the next two rules are unsatisfying because params.fileflags and input.gvcfs are
 ## defined separately, though they are effecively the same thing.
+## This is pretty messed up.  The log file is for the last run, but I also
+## tee it to one named with the import number.  
 rule genomics_db_import_chromosomes:
     input:
-        gvcfs=expand("results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
-        gcvf_idxs=expand("results/gvcf/{sample}.g.vcf.gz.tbi", sample=sample_list),
+        gvcfs=lambda wc: expand("results/gvcf/{sample}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
+        gvcf_idxs=lambda wc: expand("results/gvcf/{sample}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
     output:
-        db=directory("results/genomics_db/{chromo}"),
+        counter="results/gdb_accounting/counters/{chromo}.txt",
+        receipts=touch(expand("results/gdb_accounting/receipts/{{chromo}}/{s}", s=sample_list))
     log:
         "results/logs/gatk/genomicsdbimport/{chromo}.log"
     benchmark:
         "results/benchmarks/genomics_db_import_chromosomes/{chromo}.bmk"
     params:
-        intervals="{chromo}",
-        db_action="--genomicsdb-workspace-path", # could change to the update flag
-        extra=" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations ",  # optional
+        db="results/genomics_db/{chromo}",
+        import_num=get_GDB_import_number,
+        histories=lambda wc: expand("results/gdb_accounting/histories/{chr}/{sample}.txt", chr=wc.chromo, sample=get_samples_for_GDB_import(wc)),
+        my_opts=chromo_import_gdb_opts,
         java_opts="-Xmx4g",  # optional
     resources:
         mem_mb = 9400,
@@ -68,10 +72,12 @@ rule genomics_db_import_chromosomes:
     conda:
         "../envs/gatk4.2.5.0.yaml"
     shell:
-        " gatk --java-options {params.java_opts} GenomicsDBImport {params.extra} "
+        " mkdir -p results/genomics_db; "
+        " gatk --java-options {params.java_opts} GenomicsDBImport "
         " $(echo {input.gvcfs} | awk '{{for(i=1;i<=NF;i++) printf(\" -V %s \", $i)}}') "
-        " --intervals {params.intervals} "
-        " {params.db_action} {output.db} > {log} 2> {log}"
+        " {params.my_opts} {params.db} 2>&1 | tee {log} > {log}.import_{params.import_num} && "
+        " (echo $(({params.import_num} + 1)) > {output.counter}) && "
+        " (for i in {params.histories}; do mkdir -p $(dirname $i); echo {params.import_num} $(date) > $i; done)"
 
 
 
@@ -81,19 +87,22 @@ rule genomics_db_import_chromosomes:
 # than that.
 rule genomics_db_import_scaffold_groups:
     input:
-        gvcfs=expand("results/gvcf/{sample}.g.vcf.gz", sample=sample_list),
-        gcvf_idxs=expand("results/gvcf/{sample}.g.vcf.gz.tbi", sample=sample_list),
+        gvcfs=lambda wc: expand("results/gvcf/{sample}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
+        gvcf_idxs=lambda wc: expand("results/gvcf/{sample}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
         scaff_groups = config["scaffold_groups"],
     output:
-        db=directory("results/genomics_db/{scaff_group}"),
-        interval_list="results/gdb_intervals/{scaff_group}.list"
+        interval_list="results/gdb_intervals/{scaff_group}.list",
+        counter="results/gdb_accounting/counters/{scaff_group}.txt",
+        receipts=touch(expand("results/gdb_accounting/receipts/{{scaff_group}}/{s}", s=sample_list))
     log:
         "results/logs/gatk/genomicsdbimport/{scaff_group}.log"
     benchmark:
         "results/benchmarks/genomics_db_import_scaffold_groups/{scaff_group}.bmk"
     params:
-        db_action="--genomicsdb-workspace-path", # could change to the update flag
-        extra=" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --merge-contigs-into-num-partitions 1  ",  # optional
+        db="results/genomics_db/{scaff_group}",
+        import_num=get_GDB_import_number,
+        histories=lambda wc: expand("results/gdb_accounting/histories/{sg}/{sample}.txt", sg=wc.scaff_group, sample=get_samples_for_GDB_import(wc)),
+        my_opts=scaff_group_import_gdb_opts,
         java_opts="-Xmx4g",  # optional
     resources:
         mem_mb = 9400,
@@ -103,11 +112,13 @@ rule genomics_db_import_scaffold_groups:
     conda:
         "../envs/gatk4.2.5.0.yaml"
     shell:
+        " mkdir -p results/genomics_db; "
         " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output.interval_list}; "
-        " gatk --java-options {params.java_opts} GenomicsDBImport {params.extra} "
+        " gatk --java-options {params.java_opts} GenomicsDBImport "
         " $(echo {input.gvcfs} | awk '{{for(i=1;i<=NF;i++) printf(\" -V %s \", $i)}}') "
-        " --intervals {output.interval_list} "
-        " {params.db_action} {output.db} > {log} 2> {log} "
+        " {params.my_opts} {params.db} 2>&1 | tee {log} > {log}.import_{params.import_num} && "
+        " (echo $(({params.import_num} + 1)) > {output.counter}) && "
+        " (for i in {params.histories}; do mkdir -p $(dirname $i); echo {params.import_num} $(date) > $i; done) "
 
 
 
@@ -119,7 +130,7 @@ rule genomics_db_import_scaffold_groups:
 rule genomics_db2vcf:
     input:
         genome="resources/genome.fasta",
-        gendb="results/genomics_db/{sg_or_chrom}"
+        receipts=expand("results/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
     output:
         vcf="results/vcf_sections/{sg_or_chrom}.vcf.gz",
     log:
@@ -127,6 +138,7 @@ rule genomics_db2vcf:
     benchmark:
         "results/benchmarks/genomics_db2vcf/{sg_or_chrom}.bmk",
     params:
+        gendb="results/genomics_db/{sg_or_chrom}",
         java_opts="-Xmx8g"  # I might need to consider a temp directory, too in which case, put it in the config.yaml
     resources:
         mem_mb = 11750,
@@ -138,7 +150,7 @@ rule genomics_db2vcf:
     shell:
         " gatk --java-options {params.java_opts} GenotypeGVCFs "
         " -R {input.genome} "
-        " -V gendb://{input.gendb} "
+        " -V gendb://{params.gendb} "
         " -O {output.vcf} > {log} 2> {log} " 
 
 

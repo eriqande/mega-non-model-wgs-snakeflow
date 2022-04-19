@@ -1,5 +1,5 @@
-import glob
-import re
+import os
+import warnings
 import pandas as pd
 from snakemake.utils import validate
 from snakemake.utils import min_version
@@ -32,7 +32,7 @@ validate(units, schema="../schemas/units.schema.yaml")
 
 # rather than have a separate samples.tsv, we can just get a list of
 # the samples from units
-sample_list = list(dict.fromkeys(list(units["sample"])))
+sample_list = list(units["sample"].unique())
 
 ### Eric's addition to genotype over the chromosomes and scaffold_groups
 chromosomes = pd.read_table(config["chromosomes"]).set_index("chrom", drop=False)
@@ -86,36 +86,86 @@ def get_all_bams_of_common_sample(wildcards):
 
 
 
-##### Eric's Helper Functions to Handle GenomicDB updating
+##################################################################
+##### Eric's Helper Functions to Handle GenomicDB updating  #####
+
+# here is how we are doing it.  Every time a sample gets put
+# in the data base, a file with the sample name is put into
+# results/gdb_accounting/receipts/{chrom_or_scaff_group}/sample_name.
+# The contents of the file are a number
+# which is the number of the update.  0 = initial import, 1 = first
+# update, etc.  and on the same line we will put the date that happened.
+#
+# Additionally, each time the data base is imported or updated, we will
+# write a line with the total number of imports/updates made to
+# results/gdb_accounting/counters/{chrom_or_scaff_group.txt}.
+# We add those up to get what the number should be.
 
 # here chrom is either a chromosome or a scaffold group, because we have to get
 # either of those.
-def check_dbi_receipts(chrom):
-    # get the different files in two lists
-    adds_receipts = glob.glob("results/dbi_run_receipts/" + chrom + "/*/added_samples.txt", recursive=True)
-    cums_receipts = glob.glob("results/dbi_run_receipts/" + chrom + "/*/cumulative_samples.txt", recursive=True)
-    # extract the integer part
-    adds_nums = [int(re.findall("[0-9]+", i )[0])  for i in adds_receipts]
-    cums_nums = [int(re.findall("[0-9]+", i )[0])  for i in cums_receipts]
-    adds_nums.sort()
-    cums_nums.sort()
-    # make sure that the two files are present in all numbered subdirs
-    if(adds_nums != cums_nums):
-        raise Exception("added_samples.txt and cumulative_samples.txt occurrences not congruent in results/dbi_run_receipts/[0-9]+/")
-    # if there are no such files, we return a -1
-    if not bool(adds_receipts):
-        return(-1)
-    # get the maximum value in adds_nums are return it
-    return(max(adds_nums))
+def previously_imported_samples(chrom):
+    dir="results/gdb_accounting/receipts/" + chrom
+    if not  os.path.exists(dir):
+        return([])  
+    return(os.listdir(dir))
+    
 
 
+# samples to put in the GDB are any in sample list
+# that have not already been imported.
 def get_samples_for_GDB_import(wildcards):
-    # check for receipts and corrctness thereof
-    lastDBImport = check_dbi_receipts()
-    # get the written number of the run from the config
-    gdi_run = config["genomics_db_import_num"]
-    if(gdi_run > lastDBImport + 1):
-        raise Exception("Requested value of config variable `genomics_db_import_num` must be, at most, one larger than the highest dbi_run_receipt.")
+    # wildcards might contain either scaff_group or chromo.
+    # whichever it is, we get it and save it as the variable chrom
+    if hasattr(wildcards, 'chromo'):
+        chrom=wildcards.chromo
+    elif hasattr(wildcards, 'scaff_group'):
+            chrom=wildcards.scaff_group
+    else:
+        raise Exception("Wildcards has neither chromo or scaff_group in get_samples_for_GDB_import")
+    return(list(set(sample_list).difference(set(previously_imported_samples(chrom)))))
+
+
+# get the number of data base import or update
+# based on the dbi_counters
+def get_GDB_import_number(wildcards):
+    # wildcards might contain either scaff_group or chromo.
+    # whichever it is, we get it and save it as the variable chrom
+    if hasattr(wildcards, 'chromo'):
+        chrom=wildcards.chromo
+    elif hasattr(wildcards, 'scaff_group'):
+            chrom=wildcards.scaff_group
+    else:
+        raise Exception("Wildcards has neither chromo or scaff_group in get_samples_for_GDB_import")
+    file="results/gdb_accounting/counters/" + chrom + ".txt"
+    if not  os.path.exists(file):
+        return(0)  
+    return int(open(file).readlines()[0])
+
+
+
+
+def chromo_import_gdb_opts(wildcards):
+    inum=get_GDB_import_number(wildcards)
+    if inum == 0:
+        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals {chr} --genomicsdb-workspace-path ".format(chr = wildcards.chromo))
+    else:
+        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --genomicsdb-update-workspace-path ")
+
+
+def scaff_group_import_gdb_opts(wildcards):
+    inum=get_GDB_import_number(wildcards)
+    if inum == 0:
+        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/gdb_intervals/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(sg = wildcards.scaff_group))
+    else:
+        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --merge-contigs-into-num-partitions 1  --genomicsdb-update-workspace-path ")
+
+
+###################################################################################################
+
+
+
+
+
 
 
 ##### Helper functions #####

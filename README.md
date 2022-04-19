@@ -84,3 +84,27 @@ package. ![](README_files/test_run_dag_condensed.svg)<!-- -->
     updating option.
 -   Develop a sane way to iteratively bootstrap some base-quality score
     recalibration.
+
+## In order to test the stepwise addition of things to the Genomics Data bases
+
+I have made a scheme were we can start with one units.tsv file that
+maybe only has six sample in it, and you can run that to completion.
+Then you can update the units.tsv file to have two additional samples in
+it, and that should then properly update the genomics data bases. This
+is done by a system of writing Genomics\_DBI receipts that tell us what
+is already in there.
+
+Here is how you can run it and test that system is working properly on
+the small included test data set.
+
+``` sh
+# load in the first six samples
+snakemake --use-conda --cores 6  --keep-going --config units=config/units-only-s001-s006.tsv
+
+# after that is done check it.  Then, to add the final two samples
+# re-run it with the standard config that
+# has the units.tsv file with all 8 samples, and we will --forcerun the
+# genomics_db2vcf rule, to make sure it notices that it needs to add
+# some more samples to the genomics data bases.
+snakemake --use-conda --cores 6  --keep-going --forcerun genomics_db2vcf
+```
