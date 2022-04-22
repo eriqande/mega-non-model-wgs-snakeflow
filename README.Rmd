@@ -64,7 +64,7 @@ knitr::include_graphics("README_files/test_run_dag_condensed.svg")
 
 ## What the user must do and values to be set, etc
 
-* `samples.tsv` and `units.tsv`
+* `units.tsv`
 * Choose an Illuminaclip adapter fasta (in config)
 
 
@@ -85,8 +85,6 @@ knitr::include_graphics("README_files/test_run_dag_condensed.svg")
 
 ## Things that will be added in the future
 
-* Formalize a system for adding samples to the GenomicsDB via the updating
-option.
 * Develop a sane way to iteratively bootstrap some base-quality score
 recalibration.
 
@@ -103,7 +101,7 @@ in there.
 Here is how you can run it and test that system is working properly on the
 small included test data set.  First we run it on the first six samples, using
 `.test/config/units-only-s001-s006.tsv` as the units file.  This file can
-be viewed [here](put link when pulled in)
+be viewed [here](https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/.test/config/units-only-s001-s006.tsv)
 ```sh
 # run the pipeline on the first six samples:
 snakemake --use-conda --cores 6  --keep-going --config units=.test/config/units-only-s001-s006.tsv
@@ -125,15 +123,17 @@ when those were the only samples we had.  But now we want to add two more sample
 be updated.  The snakemake workflow does all that for us.  All we have to do
 is provide an updated units file that has all our original 6 samples, just like
 before, but has a few more rows for the units corresponding to `s007` and `s008`.
+Such a file can be seen [here](https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/.test/config/units.tsv).
 
 We run that as shown below.  We have to be careful to force re-running
 two rules, 
 ```sh
-# after that is done check it.  Then, to add the final two samples
+# To add the final two samples
 # re-run it with the standard config that
 # has the units.tsv file with all 8 samples, and we will --forcerun the
 # genomics_db2vcf rule, to make sure it notices that it needs to add
-# some more samples to the genomics data bases.
+# some more samples to the genomics data bases. # We also --forcerun the
+# multiqc step, since that has to do re-done with all the new samples.
 snakemake --use-conda --cores 6  --keep-going \
    --config units=.test/config/units.tsv \
    --forcerun genomics_db2vcf multiqc 
