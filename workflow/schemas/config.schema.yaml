@@ -5,24 +5,25 @@ description: snakemake configuration file
 type: object
 
 properties:
-  samples:
-    type: string
   units:
     type: string
 
   ref:
     type: object
     properties:
-      species:
+      species_name:
         type: string
-      build:
+      genome_version_name:
         type: string
-      release:
-        type: integer
+      genome_url:
+        type: string
+      gff_or_gtf_url:
+        type: string
     required:
-      - species
-      - build
-      - release
+      - species_name
+      - genome_version_name
+      - genome_url
+      - gff_or_gtf_url
 
   filtering:
     type: object
@@ -86,7 +87,6 @@ properties:
       - picard
 
 required:
-  - samples
   - units
   - ref
   - filtering

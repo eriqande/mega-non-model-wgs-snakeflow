@@ -1,4 +1,3 @@
-samples: .test/config/samples.tsv
 units: .test/config/units.tsv
 chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv
@@ -8,13 +7,23 @@ scaffold_groups: .test/config/scaffold_groups.tsv
 # on the command line.
 genomics_db_import_num: 0
 
+
+# eric modified this to be able to easily handle genomes of non-model
+# organisms that are not yet on enseml, etc.
 ref:
-  # ensembl species name
-  species: oncorhynchus_tshawytscha
-  # ensembl release
-  release: 0
-  # genome build
-  build: Otsh_v2.0
+  # name of the species.  (will simply be put in the SnpEff config).
+  # Put underscores for spaces
+  species_name: Oncorhynchus_tsawytscha
+  # name you want to use for the genome version
+  genome_version_name: Otsh_v2_reduced
+  # the URL where this can be downloaded, if public and easy to
+  # get with wget.  If not, then you should hand-download
+  # genome.fasta and genome.gff or genome.gtf
+  genome_url: https://github.com/eriqande/mega-non-model-wgs-snakeflow/raw/main/.test/genome/mini-test-genome.fna.gz
+  # if there is a GFF or GTF file, they have to have a .gff or
+  # .gtf extension.  This where you put the URL for it
+  gff_or_gtf_url: ""
+
 
 filtering:
   # Set to true in order to apply machine learning based recalibration of
