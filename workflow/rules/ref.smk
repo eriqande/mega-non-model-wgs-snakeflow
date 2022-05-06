@@ -63,18 +63,4 @@ rule bwa_index:
     cache: True
     wrapper:
         "0.59.2/bio/bwa/index"
-        
-
-rule define_chromosomes_and_scaffolds:
-    input:
-        fai="resources/genome.fasta.fai"
-    output:
-        chrom="resources/chromosomes.tsv",
-        scaff="resources/scaffold_groups.tsv"
-    log:
-        "results/logs/define_chromosomes_and_scaffolds/define_chromosomes_and_scaffolds.log"
-    conda:
-        "../envs/R.yaml"
-    script:
-        "../scripts/make-chromosomes-and-scaffolds.R"
 
