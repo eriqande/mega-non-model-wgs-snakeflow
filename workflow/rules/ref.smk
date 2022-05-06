@@ -6,14 +6,14 @@ rule get_genome:
     benchmark:
         "results/benchmarks/get_genome/get_genome.bmk",
     params:
-        species=config["ref"]["species"],
-        datatype="dna",
-        build=config["ref"]["build"],
-        release=config["ref"]["release"],
-    cache: True
-    wrapper:
-        "v1.1.0/bio/reference/ensembl-sequence"
-
+        url=config["ref"]["genome_url"],
+    shell:
+        " (tmp_dir=$(mktemp -d) && "
+        " URL={params.url} && "
+        " if [[ $URL =~ \.gz$ ]]; then EXT='.gz'; else EXT=''; fi && "
+        " wget -O $tmp_dir/file$EXT $URL && "
+        " if [[ $URL =~ \.gz$ ]]; then gunzip $tmp_dir/file$EXT; fi && "
+        " mv $tmp_dir/file {output}) > {log} 2>&1 "
 
 rule genome_faidx:
     input:
@@ -63,4 +63,18 @@ rule bwa_index:
     cache: True
     wrapper:
         "0.59.2/bio/bwa/index"
+        
+
+rule define_chromosomes_and_scaffolds:
+    input:
+        fai="resources/genome.fasta.fai"
+    output:
+        chrom="resources/chromosomes.tsv",
+        scaff="resources/scaffold_groups.tsv"
+    log:
+        "results/logs/define_chromosomes_and_scaffolds/define_chromosomes_and_scaffolds.log"
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/make-chromosomes-and-scaffolds.R"
 
