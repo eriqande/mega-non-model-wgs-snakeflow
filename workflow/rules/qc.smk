@@ -52,5 +52,7 @@ rule multiqc:
         "results/logs/multiqc.log",
     benchmark:
         "results/benchmarks/multiqc/multiqc.bmk",
+    resources:
+        mem_mb: 36800
     wrapper:
         "v1.3.1/bio/multiqc"

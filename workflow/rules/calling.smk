@@ -40,9 +40,6 @@ rule make_gvcfs:
 # I want to be sure to get more RAM than that.  On slurm, it will get that
 # if we request 2 CPUs on sedna.  Note that this thing runs no faster with
 # four cpus and reader threads than with 2.
-### NOTE: WHEN WE HAVE SAMPLE SEQUENCED IN MULTIPLE UNITS WE WILL HAVE TO COMPLETELY
-### OVERHAUL THIS TO MERGE THE BAMS before Marking Duplicates, then deal just with
-### the sample identifer, no longer any units, after that!!
 ## Note: the next two rules are unsatisfying because params.fileflags and input.gvcfs are
 ## defined separately, though they are effecively the same thing.
 ## This is pretty messed up.  The log file is for the last run, but I also
