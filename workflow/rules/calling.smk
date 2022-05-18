@@ -13,7 +13,7 @@ rule make_gvcfs:
         gvcf=protected("results/gvcf/{sample}.g.vcf.gz"),
         idx=protected("results/gvcf/{sample}.g.vcf.gz.tbi"),
     conda:
-        "../envs/gatk4.2.5.0.yaml"
+        "../envs/gatk4.2.6.1.yaml"
     log:
         stderr="results/logs/gatk/haplotypecaller/{sample}.stderr",
         stdout="results/logs/gatk/haplotypecaller/{sample}.stdout",
@@ -67,7 +67,7 @@ rule genomics_db_import_chromosomes:
         time = "36:00:00"
     threads: 2
     conda:
-        "../envs/gatk4.2.5.0.yaml"
+        "../envs/gatk4.2.6.1.yaml"
     shell:
         " mkdir -p results/genomics_db; "
         " gatk --java-options {params.java_opts} GenomicsDBImport "
@@ -107,7 +107,7 @@ rule genomics_db_import_scaffold_groups:
         time = "36:00:00"
     threads: 2
     conda:
-        "../envs/gatk4.2.5.0.yaml"
+        "../envs/gatk4.2.6.1.yaml"
     shell:
         " mkdir -p results/genomics_db; "
         " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output.interval_list}; "
@@ -130,25 +130,75 @@ rule genomics_db2vcf:
         receipts=expand("results/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
     output:
         vcf="results/vcf_sections/{sg_or_chrom}.vcf.gz",
+        tbi="results/vcf_sections/{sg_or_chrom}.vcf.gz.tbi"
     log:
         "results/logs/gatk/genotypegvcfs/{sg_or_chrom}.log",
     benchmark:
         "results/benchmarks/genomics_db2vcf/{sg_or_chrom}.bmk",
     params:
         gendb="results/genomics_db/{sg_or_chrom}",
-        java_opts="-Xmx8g"  # I might need to consider a temp directory, too in which case, put it in the config.yaml
+        java_opts="-Xmx8g",  # I might need to consider a temp directory, too in which case, put it in the config.yaml
+        pextra=" --genomicsdb-shared-posixfs-optimizations "
     resources:
         mem_mb = 11750,
         cpus = 2,
         time = "3-00:00:00"
     threads: 2
     conda:
-        "../envs/gatk4.2.5.0.yaml"
+        "../envs/gatk4.2.6.1.yaml"
     shell:
         " gatk --java-options {params.java_opts} GenotypeGVCFs "
+        " {params.pextra} "
         " -R {input.genome} "
         " -V gendb://{params.gendb} "
-        " -O {output.vcf} > {log} 2> {log} " 
+        " -O {output.vcf} > {log} 2> {log} "
+
+
+# this is a little rule we throw in here so that we can mark
+# an individual as missing data (./. or .|.) when it has a read
+# depth of 0, because GATK now marks those as 0/0,
+# see https://gatk.broadinstitute.org/hc/en-us/community/posts/4476803114779-GenotypeGVCFs-Output-no-call-as-reference-genotypes?page=1#community_comment_6006727219867
+# this also adds an INFO field NMISS, which gives the number of samples missing a call.
+rule mark_dp0_as_missing:
+    input:
+        vcf="results/vcf_sections/{sg_or_chrom}.vcf.gz"
+    output:
+        vcf="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz"
+    log:
+        "results/logs/mark_dp0_as_missing/{sg_or_chrom}.log",
+    benchmark:
+        "results/benchmarks/mark_dp0_as_missing/{sg_or_chrom}.bmk"
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        "(bcftools +setGT {input.vcf} -- -t q -n . -i 'FMT/DP=0' | "
+        " bcftools +fill-tags - -- -t 'NMISS=N_MISSING' | "
+        " bcftools view -Oz - > {output.vcf}) 2> {log} "
+
+
+
+
+rule vcf_concat:
+    input:
+        expand("results/vcf_sect_miss_denoted/{sgc}.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
+    output:
+        vcfgz=protected("results/vcf/all.vcf.gz"),
+        vcf_idx=protected("results/vcf/all.vcf.gz.tbi")
+    log:
+        "results/logs/vcf_concat/vcf_concat_log.txt"
+    benchmark:
+        "results/benchmarks/vcf_concat/vcf_concat.bmk",
+    params:
+        opts=" --naive "
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        " bcftools concat {params.opts} -O z {input} >  {output.vcfgz} 2>{log}; "
+        " bcftools index -t {output.vcfgz} "
+
+
+
+
 
 
 

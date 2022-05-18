@@ -56,3 +56,5 @@ rule multiqc:
         mem_mb = 36800
     wrapper:
         "v1.3.1/bio/multiqc"
+
+

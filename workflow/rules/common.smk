@@ -41,8 +41,9 @@ validate(chromosomes, schema="../schemas/chromosomes.schema.yaml")
 scaffold_groups = pd.read_table(config["scaffold_groups"]).set_index("id", drop=False)
 validate(scaffold_groups, schema="../schemas/scaffold_groups.schema.yaml")
 
-# get a list of just the unique values of the scaffold_group
+# get a list of just the unique values of the scaffold_group and of the chromosomes
 unique_scaff_groups = list(scaffold_groups.id.unique())
+unique_chromosomes = list(chromosomes.chrom.unique())  # don't need to unique it, but I do anyway
 
 
 ##### Wildcard constraints #####
@@ -161,10 +162,6 @@ def scaff_group_import_gdb_opts(wildcards):
 
 
 ###################################################################################################
-
-
-
-
 
 
 
