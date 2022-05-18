@@ -10,7 +10,8 @@ If you would like to put this on your system and test it running on a single nod
 clone this repository and then download the pseudo-genome used for
 the included test data set (in `.test`).
 
-You must have Snakemake (version > 6.0) in the active environment.
+You must have Snakemake in the active environment. I am currently developing
+and testing this with snakemake 7.7.0. 
 
 In short, here are the steps to install and run the `.test`.
 

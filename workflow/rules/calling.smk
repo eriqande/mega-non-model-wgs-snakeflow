@@ -163,7 +163,8 @@ rule mark_dp0_as_missing:
     input:
         vcf="results/vcf_sections/{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz"
+        vcf="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
+        tbi="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
     log:
         "results/logs/mark_dp0_as_missing/{sg_or_chrom}.log",
     benchmark:
@@ -173,17 +174,18 @@ rule mark_dp0_as_missing:
     shell:
         "(bcftools +setGT {input.vcf} -- -t q -n . -i 'FMT/DP=0' | "
         " bcftools +fill-tags - -- -t 'NMISS=N_MISSING' | "
-        " bcftools view -Oz - > {output.vcf}) 2> {log} "
+        " bcftools view -Oz - > {output.vcf}; "
+        " bcftools index -t {output.vcf}) 2> {log} "
 
 
 
 
 rule vcf_concat:
     input:
-        expand("results/vcf_sect_miss_denoted/{sgc}.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
+        expand("results/hard_filtering/all-filtered-{sgc}.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        vcfgz=protected("results/vcf/all.vcf.gz"),
-        vcf_idx=protected("results/vcf/all.vcf.gz.tbi")
+        vcfgz=protected("results/vcf/all-filtered.vcf.gz"),
+        vcf_idx=protected("results/vcf/all-filtered.vcf.gz.tbi")
     log:
         "results/logs/vcf_concat/vcf_concat_log.txt"
     benchmark:

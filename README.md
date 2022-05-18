@@ -8,7 +8,8 @@ single node (more later about using SLURM for deployment across multiple
 nodes) you have to clone this repository and then download the
 pseudo-genome used for the included test data set (in `.test`).
 
-You must have Snakemake (version &gt; 6.0) in the active environment.
+You must have Snakemake in the active environment. I am currently
+developing and testing this with snakemake 7.7.0.
 
 In short, here are the steps to install and run the `.test`.
 

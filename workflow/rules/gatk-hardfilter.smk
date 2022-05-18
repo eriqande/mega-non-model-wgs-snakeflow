@@ -9,13 +9,14 @@
 
 rule make_snp_vcf:
     input:
-        vcf="results/vcf/all.vcf.gz"
+        vcf="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
+        tbi="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
     output:
-        vcf="results/hard_filtering/snps.vcf.gz"
+        vcf="results/hard_filtering/snps-{sg_or_chrom}.vcf.gz"
     log:
-        "results/logs/gatk/selectvariants/select-snps.log",
+        "results/logs/gatk/selectvariants/select-snps-{sg_or_chrom}.log",
     benchmark:
-        "results/benchmarks/make_snp_vcf/selectvariants-snps.bmk"
+        "results/benchmarks/make_snp_vcf/selectvariants-snps-{sg_or_chrom}.bmk"
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -25,13 +26,14 @@ rule make_snp_vcf:
 
 rule make_indel_vcf:
     input:
-        vcf="results/vcf/all.vcf.gz"
+        vcf="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
+        tbi="results/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
     output:
-        vcf="results/hard_filtering/indels.vcf.gz"
+        vcf="results/hard_filtering/indels-{sg_or_chrom}.vcf.gz"
     log:
-        "results/logs/gatk/selectvariants/select-indels.log",
+        "results/logs/gatk/selectvariants/select-indels-{sg_or_chrom}.log",
     benchmark:
-        "results/benchmarks/make_indel_vcf/selectvariants-indels.bmk"
+        "results/benchmarks/make_indel_vcf/selectvariants-indels-{sg_or_chrom}.bmk"
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -42,13 +44,13 @@ rule make_indel_vcf:
 
 rule hard_filter_snps:
     input:
-        vcf="results/hard_filtering/snps.vcf.gz"
+        vcf="results/hard_filtering/snps-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/hard_filtering/snps-filtered.vcf.gz"
+        vcf="results/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz"
     log:
-        "results/logs/gatk/variantfiltration/snps.log",
+        "results/logs/gatk/variantfiltration/snps-{sg_or_chrom}.log",
     benchmark:
-        "results/benchmarks/hard_filter_snps/variantfiltration-snps.bmk"
+        "results/benchmarks/hard_filter_snps/variantfiltration-snps-{sg_or_chrom}.bmk"
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -68,13 +70,13 @@ rule hard_filter_snps:
 
 rule hard_filter_indels:
     input:
-        vcf="results/hard_filtering/indels.vcf.gz"
+        vcf="results/hard_filtering/indels-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/hard_filtering/indels-filtered.vcf.gz"
+        vcf="results/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"
     log:
-        "results/logs/gatk/variantfiltration/indels.log",
+        "results/logs/gatk/variantfiltration/indels-{sg_or_chrom}.log",
     benchmark:
-        "results/benchmarks/hard_filter_indels/variantfiltration-indels.bmk"
+        "results/benchmarks/hard_filter_indels/variantfiltration-indels-{sg_or_chrom}.bmk"
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -91,21 +93,19 @@ rule hard_filter_indels:
 
 rule bung_filtered_vcfs_back_together:
     input:
-        snp="results/hard_filtering/snps-filtered.vcf.gz",
-        indel="results/hard_filtering/indels-filtered.vcf.gz"
+        snp="results/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz",
+        indel="results/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/vcf/all-filtered.vcf.gz",
-        tbi="results/vcf/all-filtered.vcf.gz.tbi"
+        vcf="results/hard_filtering/all-filtered-{sg_or_chrom}.vcf.gz",
     log:
-        "results/logs/bung_filtered_vcfs_back_together/bung.log",
+        "results/logs/bung_filtered_vcfs_back_together/bung-{sg_or_chrom}.log",
     benchmark:
-        "results/benchmarks/bung_filtered_vcfs_back_together/bcftools.bmk"
+        "results/benchmarks/bung_filtered_vcfs_back_together/bcftools-{sg_or_chrom}.bmk"
     conda:
         "../envs/bcftools.yaml"
     shell:
         "(bcftools concat -a {input.snp} {input.indel} | "
-        " bcftools view -Oz > {output.vcf}; "
-        " bcftools index -t {output.vcf}) 2> {log} "
+        " bcftools view -Oz > {output.vcf}; ) 2> {log} "
 
 
 

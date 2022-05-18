@@ -50,9 +50,9 @@ unique_chromosomes = list(chromosomes.chrom.unique())  # don't need to unique it
 wildcard_constraints:
     sample="|".join(sample_list),
     unit="|".join(units["unit"]),
-    chromo="|".join(chromosomes["chrom"]),
+    chromo="|".join(unique_chromosomes),
     scaff_group="|".join(unique_scaff_groups),
-    sg_or_chrom="|".join(unique_scaff_groups + list(chromosomes["chrom"]))
+    sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes)
 
 
 #### Pick out all the units that are of the same sample in the same library
