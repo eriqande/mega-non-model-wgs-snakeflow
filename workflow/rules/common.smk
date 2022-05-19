@@ -16,7 +16,7 @@ container: "continuumio/miniconda3:4.8.2"
 
 
 ###### Config file and sample sheets #####
-configfile: "config/config.yaml"
+#configfile: config["config"]
 
 
 validate(config, schema="../schemas/config.schema.yaml")
@@ -33,6 +33,9 @@ validate(units, schema="../schemas/units.schema.yaml")
 # rather than have a separate samples.tsv, we can just get a list of
 # the samples from units
 sample_list = list(units["sample"].unique())
+
+# this is handy for getting sample info from the bcftools summaries
+unique_sample_ids = list(units["sample_id"].unique())
 
 ### Eric's addition to genotype over the chromosomes and scaffold_groups
 chromosomes = pd.read_table(config["chromosomes"]).set_index("chrom", drop=False)
@@ -52,7 +55,8 @@ wildcard_constraints:
     unit="|".join(units["unit"]),
     chromo="|".join(unique_chromosomes),
     scaff_group="|".join(unique_scaff_groups),
-    sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes)
+    sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes),
+    filter_condition="ALL|PASS|FAIL"
 
 
 #### Pick out all the units that are of the same sample in the same library
@@ -162,6 +166,18 @@ def scaff_group_import_gdb_opts(wildcards):
 
 
 ###################################################################################################
+
+## Here is one for figuring out how to filter for bcftools stats
+def get_bcftools_stats_filter_option(wildcards):
+    if(wildcards.filter_condition == "ALL"):
+        return(" ")
+    elif(wildcards.filter_condition == "PASS"):
+        return( " -i 'FILTER=\"PASS\"' ")
+    elif(wildcards.filter_condition == "FAIL"):
+        return( " -i 'FILTER!=\"PASS\"' ")
+    else:
+        raise Exception("Wildcard filter_condition must be ALL, PASS, or FAIL.")
+
 
 
 

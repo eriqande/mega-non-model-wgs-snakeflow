@@ -11,7 +11,9 @@ rule all:
         #expand("results/vcf_sections/{c}.vcf.gz", c=chromosomes.chrom),
         #expand("results/vcf_sections/{s}.vcf.gz", s=unique_scaff_groups),
         "results/vcf/all-filtered.vcf.gz",
+        "results/vcf/all-filtered.vcf.gz.tbi",
         "results/qc/multiqc.html",
+        expand("results/qc/bcftools_stats/bcftools-stats-{fc}.txt", fc=["ALL", "PASS", "FAIL"])
 
 rule old_all:
     input:

@@ -58,3 +58,35 @@ rule multiqc:
         "v1.3.1/bio/multiqc"
 
 
+
+# here is a rule to use bcftools stats to summarize what is found in the
+# final VCF files.  Basically, we want to run bcftools stats with the option
+# to compile statistics about every single sample, and also to make a histogram
+# of our NMISS INFO tag that we made earlier.  The wildcarding here is so that
+# we can do this three different ways:  1) with all the variants 2) with only those
+# variants that PASS the filter, and 3) with only those variants that don't pass
+# the hard filtering. Note that fitering in the bcftools stats command seems to
+# conflict with samples in there so that things don't work, so I am piping it
+rule vcf_summaries:
+    input:
+        "results/vcf/all-filtered.vcf.gz",
+    output:
+        "results/qc/bcftools_stats/bcftools-stats-{filter_condition}.txt",
+    log:
+        "results/logs/bcftools_stats/{filter_condition}.log",
+    params:
+        comma_samples=",".join(unique_sample_ids),
+        filter_opt=get_bcftools_stats_filter_option,
+        stop=len(unique_sample_ids),
+        steps=len(unique_sample_ids) + 1
+    benchmark:
+        "results/benchmarks/bcftools_stats/{filter_condition}.bmk",
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        "bcftools view {params.filter_opt} -Ou {input} | "
+        " bcftools stats -s {params.comma_samples} "
+        " -u NMISS:0:{params.stop}:{params.steps} > "
+        " {output} 2> {log} "
+
+
