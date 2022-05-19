@@ -106,7 +106,8 @@ like this:
     samtools_stats                            8              1              1
     trim_reads_pe                            22              1              1
     vcf_concat                                1              1              1
-    total                                   167              1              4
+    vcf_summaries                             3              1              1
+    total                                   170              1              4
 
     This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 
@@ -175,10 +176,11 @@ fastq’s, fastqc-ed them, mapped them to the genome, marked duplicates,
 created gVCF files for each sample, imported those gVCF files to a
 genomics data base, genotyped the samples from those genomic data bases,
 marked sites with 0 read depth as missing, did best-practices GATK
-hard-filtering on those genotypes, then combined a lot of VCF files
-across multiple regions of the genome into a single VCF file called
-`results/vcf/all-filtered.vcf.gz`. You can have a look at that with the
-command:
+hard-filtering on those genotypes, combined a lot of VCF files across
+multiple regions of the genome into a single VCF file called
+`results/vcf/all-filtered.vcf.gz`, and then printed out some summaries
+of those variants using `bcftools stats`. You can have a look at that at
+the VCF file with the command:
 
 ``` sh
 zcat results/vcf/all-filtered.vcf.gz | less
