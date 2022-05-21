@@ -367,11 +367,6 @@ stay in there for now, but which ought to be cleaned up, ultimately.
 
 ## Eric’s list of future enhancements
 
--   Parallelize the production of the gVCFs across chromosomes and
-    scaffold groups, and then bcftools concat them at the end.
--   Think about running bcftools stats on each chromosome and scaffold
-    group to avoid really long run times. Then plot the results with
-    `plot-vcfstats` and also merge all the results with `plot-vcfstats`.
 -   Parallelize the GenotypeGVCFs step via a scatter-gather whereby the
     user can define `chromo_scatter.tsv` and a `scaff_group_scatter.tsv`
     files that break things down into X Mb blocks, where X might be
@@ -379,8 +374,6 @@ stay in there for now, but which ought to be cleaned up, ultimately.
     the scatters will include multiple scaffolds. But, we could easily
     rock that all together in R. I would rather the user do it up front
     so that the workflow does not depend on checkpoints.
--   Consider making the final output a bcf file to avoid
-    VCF-&gt;BCF-&gt;VCF conversion inefficiency with it later.
 -   Develop a sane way to iteratively bootstrap some base-quality score
     recalibration.
 

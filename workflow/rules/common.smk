@@ -19,7 +19,12 @@ container: "continuumio/miniconda3:4.8.2"
 #configfile: config["config"]
 
 
+
 validate(config, schema="../schemas/config.schema.yaml")
+
+
+# these are our cutoffs to prepare...
+mafs = ["0.01",  "0.05"]
 
 units = pd.read_table(config["units"], dtype=str).set_index(
     ["sample", "unit"], drop=False
@@ -56,7 +61,8 @@ wildcard_constraints:
     chromo="|".join(unique_chromosomes),
     scaff_group="|".join(unique_scaff_groups),
     sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes),
-    filter_condition="ALL|PASS|FAIL"
+    filter_condition="ALL|PASS|FAIL",
+    maf="|".join(mafs)
 
 
 #### Pick out all the units that are of the same sample in the same library
@@ -165,7 +171,10 @@ def scaff_group_import_gdb_opts(wildcards):
         return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --merge-contigs-into-num-partitions 1  --genomicsdb-update-workspace-path ")
 
 
+
 ###################################################################################################
+
+## Here we get the -L option(s) for a chromosome or a scaff_group
 
 ## Here is one for figuring out how to filter for bcftools stats
 def get_bcftools_stats_filter_option(wildcards):

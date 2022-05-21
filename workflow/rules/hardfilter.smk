@@ -96,7 +96,7 @@ rule bung_filtered_vcfs_back_together:
         snp="results/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz",
         indel="results/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/hard_filtering/all-filtered-{sg_or_chrom}.vcf.gz",
+        vcf="results/hard_filtering/both-filtered-{sg_or_chrom}.bcf",
     log:
         "results/logs/bung_filtered_vcfs_back_together/bung-{sg_or_chrom}.log",
     benchmark:
@@ -105,7 +105,26 @@ rule bung_filtered_vcfs_back_together:
         "../envs/bcftools.yaml"
     shell:
         "(bcftools concat -a {input.snp} {input.indel} | "
-        " bcftools view -Oz > {output.vcf}; ) 2> {log} "
+        " bcftools view -Ob > {output.vcf}; ) 2> {log} "
+
+
+rule maf_filter:
+    input:
+        "results/hard_filtering/both-filtered-{sg_or_chrom}.bcf"
+    output:
+        "results/hard_filtering/both-filtered-{sg_or_chrom}-maf-{maf}.bcf"
+    log:
+        "results/logs/maf_filter/{sg_or_chrom}-maf-{maf}.log",
+    params:
+        maf="{maf}"
+    benchmark:
+        "results/benchmarks/maf_filter/{sg_or_chrom}-maf-{maf}.bmk"
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        " bcftools view -Ob -i 'FILTER=\"PASS\" & MAF > {params.maf} ' "
+        " {input} > {output} 2>{log} "
+
 
 
 

@@ -2,7 +2,7 @@ include: "rules/common.smk"
 
 
 ##### Target rules #####
-
+localrules: make_scaff_group_interval_lists, make_chromo_interval_lists, combine_bcftools_stats
 
 rule all:
     input:
@@ -10,10 +10,12 @@ rule all:
         #expand("results/genomics_db/scaffold_groups/{s}", s=unique_scaff_groups),
         #expand("results/vcf_sections/{c}.vcf.gz", c=chromosomes.chrom),
         #expand("results/vcf_sections/{s}.vcf.gz", s=unique_scaff_groups),
-        "results/vcf/all-filtered.vcf.gz",
-        "results/vcf/all-filtered.vcf.gz.tbi",
+        "results/bcf/all.bcf",
+        "results/bcf/all.bcf.csi",
         "results/qc/multiqc.html",
-        expand("results/qc/bcftools_stats/bcftools-stats-{fc}.txt", fc=["ALL", "PASS", "FAIL"])
+        expand("results/bcf/pass-maf-{maf}.bcf", maf=mafs),
+        expand("results/qc/bcftools_stats/all-{fc}.txt", fc=["ALL", "PASS", "FAIL"]),
+        expand("results/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=mafs)
 
 rule old_all:
     input:
@@ -32,5 +34,5 @@ include: "rules/calling.smk"
 include: "rules/filtering.smk"
 include: "rules/stats.smk"
 include: "rules/qc.smk"
-include: "rules/gatk-hardfilter.smk"
+include: "rules/hardfilter.smk"
 include: "rules/annotation.smk"

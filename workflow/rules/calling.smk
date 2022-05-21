@@ -1,28 +1,82 @@
+# this is primarily a calling thing so we will define it here:
+rule make_scaff_group_interval_lists:
+    input:
+        scaff_groups = config["scaffold_groups"]
+    output:
+        "results/interval_lists/{scaff_group}.list"
+    shell:
+        " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output};"
+
+
+# this is primarily a calling thing so we will define it here:
+rule make_chromo_interval_lists:
+    output:
+        "results/interval_lists/{chromo}.list"
+    shell:
+        " echo {wildcards.chromo} > {output};"
+
+
+
 # this is the straight-up simple version that I use to just create
 # a GVCF from the bam in mkdup, over all the regions.  Note that I give it
 # 72 hours by default because I want it to be long enough for all possible
 # bam files.
-rule make_gvcfs:
+# rule make_gvcfs:
+#     input:
+#         bam="results/mkdup/{sample}.bam",
+#         bai="results/mkdup/{sample}.bai",
+#         ref="resources/genome.fasta",
+#         idx="resources/genome.dict",
+#         fai="resources/genome.fasta.fai"
+#     output:
+#         gvcf=protected("results/gvcf/{sample}.g.vcf.gz"),
+#         idx=protected("results/gvcf/{sample}.g.vcf.gz.tbi"),
+#     conda:
+#         "../envs/gatk4.2.6.1.yaml"
+#     log:
+#         stderr="results/logs/gatk/haplotypecaller/{sample}.stderr",
+#         stdout="results/logs/gatk/haplotypecaller/{sample}.stdout",
+#     benchmark:
+#         "results/benchmarks/make_gvcfs/{sample}.bmk"
+#     params:
+#         java_opts="-Xmx4g"
+#     resources:
+#         time="3-00:00:00",
+#         mem_mb = 4600,
+#         cpus = 1
+#     threads: 1
+#     shell:
+#         "gatk --java-options \"{params.java_opts}\" HaplotypeCaller "
+#         " -R {input.ref} "
+#         " -I {input.bam} "
+#         " -O {output.gvcf} "
+#         " --native-pair-hmm-threads {threads} "
+#         " -ERC GVCF > {log.stdout} 2> {log.stderr} "
+
+
+
+rule make_gvcf_sections:
     input:
         bam="results/mkdup/{sample}.bam",
         bai="results/mkdup/{sample}.bai",
         ref="resources/genome.fasta",
         idx="resources/genome.dict",
-        fai="resources/genome.fasta.fai"
+        fai="resources/genome.fasta.fai",
+        interval_list="results/interval_lists/{sg_or_chrom}.list"
     output:
-        gvcf=protected("results/gvcf/{sample}.g.vcf.gz"),
-        idx=protected("results/gvcf/{sample}.g.vcf.gz.tbi"),
+        gvcf="results/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz",
+        idx="results/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz.tbi",
     conda:
         "../envs/gatk4.2.6.1.yaml"
     log:
-        stderr="results/logs/gatk/haplotypecaller/{sample}.stderr",
-        stdout="results/logs/gatk/haplotypecaller/{sample}.stdout",
+        stderr="results/logs/gatk/haplotypecaller/{sample}/{sg_or_chrom}.stderr",
+        stdout="results/logs/gatk/haplotypecaller/{sample}/{sg_or_chrom}.stdout",
     benchmark:
-        "results/benchmarks/make_gvcfs/{sample}.bmk"
+        "results/benchmarks/make_gvcfs/{sample}/{sg_or_chrom}.bmk"
     params:
         java_opts="-Xmx4g"
     resources:
-        time="3-00:00:00",
+        time="1-00:00:00",
         mem_mb = 4600,
         cpus = 1
     threads: 1
@@ -31,8 +85,32 @@ rule make_gvcfs:
         " -R {input.ref} "
         " -I {input.bam} "
         " -O {output.gvcf} "
+        " -L {input.interval_list} "
         " --native-pair-hmm-threads {threads} "
         " -ERC GVCF > {log.stdout} 2> {log.stderr} "
+
+
+
+rule concat_gvcf_sections:
+    input: 
+        expand("results/gvcf_sections/{{sample}}/{sgc}.g.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
+    output:
+        gvcf=protected("results/gvcf/{sample}.g.vcf.gz"),
+        idx=protected("results/gvcf/{sample}.g.vcf.gz.tbi")
+    log:
+        "results/logs/concat_gvcf_sections/{sample}.txt"
+    benchmark:
+        "results/benchmarks/concat_gvcf_sections/{sample}.bmk",
+    params:
+        opts=" --naive "
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        " bcftools concat {params.opts} -O z {input} > {output.gvcf} 2>{log}; "
+        " bcftools index -t {output.gvcf} "
+
+
+
 
 
 
@@ -180,25 +258,45 @@ rule mark_dp0_as_missing:
 
 
 
-rule vcf_concat:
+rule bcf_concat:
     input:
-        expand("results/hard_filtering/all-filtered-{sgc}.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
+        expand("results/hard_filtering/both-filtered-{sgc}.bcf", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        vcfgz=protected("results/vcf/all-filtered.vcf.gz"),
-        vcf_idx=protected("results/vcf/all-filtered.vcf.gz.tbi")
+        bcf=protected("results/bcf/all.bcf"),
+        tbi=protected("results/bcf/all.bcf.csi")
     log:
-        "results/logs/vcf_concat/vcf_concat_log.txt"
+        "results/logs/bcf_concat/bcf_concat_log.txt"
     benchmark:
-        "results/benchmarks/vcf_concat/vcf_concat.bmk",
+        "results/benchmarks/bcf_concat/bcf_concat.bmk",
     params:
         opts=" --naive "
     conda:
         "../envs/bcftools.yaml"
     shell:
-        " bcftools concat {params.opts} -O z {input} >  {output.vcfgz} 2>{log}; "
-        " bcftools index -t {output.vcfgz} "
+        " (bcftools concat {params.opts} -Ob {input} > {output.bcf}; "
+        " bcftools index {output.bcf})  2>{log}; "
 
 
+
+
+
+rule bcf_concat_mafs:
+    input:
+        expand("results/hard_filtering/both-filtered-{sgc}-maf-{{maf}}.bcf", sgc = unique_chromosomes + unique_scaff_groups)
+    output:
+        bcf=protected("results/bcf/pass-maf-{maf}.bcf"),
+        tbi=protected("results/bcf/pass-maf-{maf}.bcf.csi")
+    log:
+        "results/logs/bcf_concat_mafs/maf-{maf}.txt"
+    benchmark:
+        "results/benchmarks/bcf_concat_mafs/maf-{maf}.bmk",
+    params:
+        opts=" --naive "
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        " (bcftools concat {params.opts} -Ob {input} > {output.bcf}; "
+        " bcftools index {output.bcf})  2>{log}; "
 
 
 
