@@ -84,8 +84,15 @@ like this:
     job                                   count    min threads    max threads
     ----------------------------------  -------  -------------  -------------
     all                                       1              1              1
+    bcf_concat                                1              1              1
+    bcf_concat_mafs                           2              1              1
+    bcf_maf_section_summaries                12              1              1
+    bcf_section_summaries                    18              1              1
     bung_filtered_vcfs_back_together          6              1              1
     bwa_index                                 1              1              1
+    combine_bcftools_stats                    3              1              1
+    combine_maf_bcftools_stats                2              1              1
+    concat_gvcf_sections                      8              1              1
     fastqc_read1                             22              1              1
     fastqc_read2                             22              1              1
     genome_dict                               1              1              1
@@ -96,8 +103,11 @@ like this:
     get_genome                                1              1              1
     hard_filter_indels                        6              1              1
     hard_filter_snps                          6              1              1
-    make_gvcfs                                8              1              1
+    maf_filter                               12              1              1
+    make_chromo_interval_lists                4              1              1
+    make_gvcf_sections                       48              1              1
     make_indel_vcf                            6              1              1
+    make_scaff_group_interval_lists           2              1              1
     make_snp_vcf                              6              1              1
     map_reads                                22              4              4
     mark_dp0_as_missing                       6              1              1
@@ -105,9 +115,7 @@ like this:
     multiqc                                   1              1              1
     samtools_stats                            8              1              1
     trim_reads_pe                            22              1              1
-    vcf_concat                                1              1              1
-    vcf_summaries                             3              1              1
-    total                                   170              1              4
+    total                                   270              1              4
 
     This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 
