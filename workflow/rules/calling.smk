@@ -64,8 +64,8 @@ rule make_gvcf_sections:
         fai="resources/genome.fasta.fai",
         interval_list="results/interval_lists/{sg_or_chrom}.list"
     output:
-        gvcf="results/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz",
-        idx="results/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz.tbi",
+        gvcf=temp("results/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz"),
+        idx=temp("results/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz.tbi"),
     conda:
         "../envs/gatk4.2.6.1.yaml"
     log:
