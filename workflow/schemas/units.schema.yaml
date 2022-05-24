@@ -29,6 +29,9 @@ properties:
   fq2:
     type: string
     description: path to second FASTQ file (leave empty in case of single-end)
+  barcode:
+      type: string
+      description: the barcode of the sample in this unit
 required:
   - sample
   - sample_id
@@ -38,4 +41,5 @@ required:
   - flowcell
   - lane
   - fq1
-
+  - fq2
+  - barcode
