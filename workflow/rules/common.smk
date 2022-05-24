@@ -49,6 +49,13 @@ validate(chromosomes, schema="../schemas/chromosomes.schema.yaml")
 scaffold_groups = pd.read_table(config["scaffold_groups"]).set_index("id", drop=False)
 validate(scaffold_groups, schema="../schemas/scaffold_groups.schema.yaml")
 
+# ensure that column 1 of the scaffold group file is "id" and
+# column 2 is "chrom".  This is essential because I used those
+# column positions in some awk to pull things out.
+scaff_cols = list(scaffold_groups.columns)
+if scaff_cols[0] != 'id' or scaff_cols[1] != 'chrom': 
+    raise Exception("Column order is important in the scaffold_groups file.  The first column must be 'id' and the second column must be 'chrom'.")
+
 # get a list of just the unique values of the scaffold_group and of the chromosomes
 unique_scaff_groups = list(scaffold_groups.id.unique())
 unique_chromosomes = list(chromosomes.chrom.unique())  # don't need to unique it, but I do anyway
