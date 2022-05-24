@@ -2,12 +2,12 @@ rule fastqc_read1:
     input:
         lambda wc: (get_fastq(wc))["r1"],
     output:
-        html="results/qc/fastqc/{sample}---{unit}_R1.html",
-        zip="results/qc/fastqc/{sample}---{unit}_R1_fastqc.zip",
+        html="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R1.html",
+        zip="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R1_fastqc.zip",
     log:
-        "results/logs/fastqc/{sample}---{unit}_R1.log",
+        "results/bqsr-round-{bqsr_round}/logs/fastqc/{sample}---{unit}_R1.log",
     benchmark:
-        "results/benchmarks/fastqc_read1/{sample}---{unit}_R1.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/fastqc_read1/{sample}---{unit}_R1.bmk",
     wrapper:
         "v1.1.0/bio/fastqc"
 
@@ -16,12 +16,12 @@ rule fastqc_read2:
     input:
         lambda wc: (get_fastq(wc))["r2"],
     output:
-        html="results/qc/fastqc/{sample}---{unit}_R2.html",
-        zip="results/qc/fastqc/{sample}---{unit}_R2_fastqc.zip",
+        html="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R2.html",
+        zip="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R2_fastqc.zip",
     log:
-        "results/logs/fastqc/{sample}---{unit}_R2.log",
+        "results/bqsr-round-{bqsr_round}/logs/fastqc/{sample}---{unit}_R2.log",
     benchmark:
-        "results/benchmarks/fastqc_read2/{sample}---{unit}_R2.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/fastqc_read2/{sample}---{unit}_R2.bmk",
     wrapper:
         "v1.1.0/bio/fastqc"
 
@@ -29,29 +29,29 @@ rule fastqc_read2:
 
 rule samtools_stats:
     input:
-        "results/mkdup/{sample}.bam",
+        "results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam",
     output:
-        "results/qc/samtools_stats/{sample}.txt",
+        "results/bqsr-round-{bqsr_round}/qc/samtools_stats/{sample}.txt",
     log:
-        "results/logs/samtools_stats/{sample}.log",
+        "results/bqsr-round-{bqsr_round}/logs/samtools_stats/{sample}.log",
     benchmark:
-        "results/benchmarks/samtools_stats/{sample}.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/samtools_stats/{sample}.bmk",
     wrapper:
         "v1.1.0/bio/samtools/stats"
 
 
 rule multiqc:
     input:
-        expand("results/qc/samtools_stats/{sample}.txt", sample=sample_list),
-        expand("results/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", u=units.itertuples(), r = [1, 2]),
-        list(dict.fromkeys(expand("results/qc/mkdup/{u.sample}.metrics.txt", u=units.itertuples()))),
-        expand("results/logs/trim_reads_pe/{u.sample}---{u.unit}.log", u=units.itertuples()),
+        expand("results/bqsr-round-{{bqsr_round}}/qc/samtools_stats/{sample}.txt", sample=sample_list),
+        expand("results/bqsr-round-{{bqsr_round}}/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", u=units.itertuples(), r = [1, 2]),
+        list(dict.fromkeys(expand("results/bqsr-round-{{bqsr_round}}/qc/mkdup/{u.sample}.metrics.txt", u=units.itertuples()))),
+        expand("results/bqsr-round-{{bqsr_round}}/logs/trim_reads_pe/{u.sample}---{u.unit}.log", u=units.itertuples()),
     output:
-        "results/qc/multiqc.html",
+        "results/bqsr-round-{bqsr_round}/qc/multiqc.html",
     log:
-        "results/logs/multiqc.log",
+        "results/bqsr-round-{bqsr_round}/logs/multiqc.log",
     benchmark:
-        "results/benchmarks/multiqc/multiqc.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/multiqc/multiqc.bmk",
     resources:
         mem_mb = 36800
     wrapper:
@@ -71,18 +71,18 @@ rule multiqc:
 # take upwards of 5 hours on a big data set.
 rule bcf_section_summaries:
     input:
-        "results/hard_filtering/both-filtered-{sg_or_chrom}.bcf",
+        "results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}.bcf",
     output:
-        "results/qc/bcftools_stats/sections/{sg_or_chrom}-{filter_condition}.txt",
+        "results/bqsr-round-{bqsr_round}/qc/bcftools_stats/sections/{sg_or_chrom}-{filter_condition}.txt",
     log:
-        "results/logs/bcftools_stats/{sg_or_chrom}-{filter_condition}.log",
+        "results/bqsr-round-{bqsr_round}/logs/bcftools_stats/{sg_or_chrom}-{filter_condition}.log",
     params:
         comma_samples=",".join(unique_sample_ids),
         filter_opt=get_bcftools_stats_filter_option,
         stop=len(unique_sample_ids),
         steps=len(unique_sample_ids) + 1
     benchmark:
-        "results/benchmarks/bcftools_stats/{sg_or_chrom}-{filter_condition}.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/bcftools_stats/{sg_or_chrom}-{filter_condition}.bmk",
     conda:
         "../envs/bcftools.yaml"
     shell:
@@ -97,17 +97,17 @@ rule bcf_section_summaries:
 # want to do the maf-filtered ones, too.
 rule bcf_maf_section_summaries:
     input:
-        "results/hard_filtering/both-filtered-{sg_or_chrom}-maf-{maf}.bcf",
+        "results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}-maf-{maf}.bcf",
     output:
-        "results/qc/bcftools_stats/maf_sections/{sg_or_chrom}-maf-{maf}.txt",
+        "results/bqsr-round-{bqsr_round}/qc/bcftools_stats/maf_sections/{sg_or_chrom}-maf-{maf}.txt",
     log:
-        "results/logs/bcftools_stats/{sg_or_chrom}-maf-{maf}.log",
+        "results/bqsr-round-{bqsr_round}/logs/bcftools_stats/{sg_or_chrom}-maf-{maf}.log",
     params:
         comma_samples=",".join(unique_sample_ids),
         stop=len(unique_sample_ids),
         steps=len(unique_sample_ids) + 1
     benchmark:
-        "results/benchmarks/bcftools_stats/{sg_or_chrom}-maf-{maf}.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/bcftools_stats/{sg_or_chrom}-maf-{maf}.bmk",
     conda:
         "../envs/bcftools.yaml"
     shell:
@@ -118,25 +118,25 @@ rule bcf_maf_section_summaries:
 
 rule combine_bcftools_stats:
     input:
-        expand("results/qc/bcftools_stats/sections/{sgc}-{{filter_condition}}.txt", sgc=unique_chromosomes + unique_scaff_groups)
+        expand("results/bqsr-round-{{bqsr_round}}/qc/bcftools_stats/sections/{sgc}-{{filter_condition}}.txt", sgc=unique_chromosomes + unique_scaff_groups)
     output:
-        "results/qc/bcftools_stats/all-{filter_condition}.txt",
+        "results/bqsr-round-{bqsr_round}/qc/bcftools_stats/all-{filter_condition}.txt",
     conda:
         "../envs/bcftools.yaml"
     log:
-        "results/logs/combine_bcftools_stats/{filter_condition}.log",
+        "results/bqsr-round-{bqsr_round}/logs/combine_bcftools_stats/{filter_condition}.log",
     shell:
         " plot-vcfstats -m {input} > {output} 2>{log} "
 
 
 rule combine_maf_bcftools_stats:
     input:
-        expand("results/qc/bcftools_stats/maf_sections/{sgc}-maf-{{maf}}.txt", sgc=unique_chromosomes + unique_scaff_groups)
+        expand("results/bqsr-round-{{bqsr_round}}/qc/bcftools_stats/maf_sections/{sgc}-maf-{{maf}}.txt", sgc=unique_chromosomes + unique_scaff_groups)
     output:
-        "results/qc/bcftools_stats/all-pass-maf-{maf}.txt",
+        "results/bqsr-round-{bqsr_round}/qc/bcftools_stats/all-pass-maf-{maf}.txt",
     conda:
         "../envs/bcftools.yaml"
     log:
-        "results/logs/combine_maf_bcftools_stats/maf-{maf}.log",
+        "results/bqsr-round-{bqsr_round}/logs/combine_maf_bcftools_stats/maf-{maf}.log",
     shell:
         " plot-vcfstats -m {input} > {output} 2>{log} "

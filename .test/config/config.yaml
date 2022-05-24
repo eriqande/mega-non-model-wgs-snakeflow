@@ -1,3 +1,4 @@
+bqsr_rounds: 0
 units: .test/config/units.tsv
 chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv

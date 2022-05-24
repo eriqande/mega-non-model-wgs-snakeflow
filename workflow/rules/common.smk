@@ -75,7 +75,7 @@ wildcard_constraints:
 #### Pick out all the units that are of the same sample in the same library
 # def get_units_of_common_sample_and_lib(wildcards):
 #     su = units.loc[(units["sample"] == wildcards.sample) & (units["library"] == wildcards.library)]
-#     return(expand("results/mapped/{sample}---{unit}.sorted.bam", zip,
+#     return(expand("results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam", zip,
 #         sample = su["sample"].tolist(),
 #         unit = su["unit"].tolist(),
 #     ))
@@ -83,7 +83,7 @@ wildcard_constraints:
 # get all the units of a particular sample
 def get_all_bams_of_common_sample(wildcards):
     s=units.loc[(units["sample"] == wildcards.sample)]
-    return(expand("results/mapped/{sample}---{unit}.sorted.bam", zip,
+    return(expand("results/bqsr-round-{{bqsr_round}}/mapped/{sample}---{unit}.sorted.bam", zip,
         sample = s["sample"].tolist(),
         unit = s["unit"].tolist(),
     ))
@@ -94,7 +94,7 @@ def get_all_bams_of_common_sample(wildcards):
 #     su = units.loc[(units["sample"] == wildcards.sample)]
 #     # make a list of all libmerged bams
 #     dupie_list = expand(
-#         "results/mkdup/{sample}---{library}.bam",
+#         "results/bqsr-round-{bqsr_round}/mkdup/{sample}---{library}.bam",
 #         zip,
 #         sample = su["sample"].tolist(),
 #         library = su["library"].tolist(),
@@ -109,20 +109,20 @@ def get_all_bams_of_common_sample(wildcards):
 
 # here is how we are doing it.  Every time a sample gets put
 # in the data base, a file with the sample name is put into
-# results/gdb_accounting/receipts/{chrom_or_scaff_group}/sample_name.
+# results/bqsr-round-{bqsr_round}/gdb_accounting/receipts/{chrom_or_scaff_group}/sample_name.
 # The contents of the file are a number
 # which is the number of the update.  0 = initial import, 1 = first
 # update, etc.  and on the same line we will put the date that happened.
 #
 # Additionally, each time the data base is imported or updated, we will
 # write a line with the total number of imports/updates made to
-# results/gdb_accounting/counters/{chrom_or_scaff_group.txt}.
+# results/bqsr-round-{bqsr_round}/gdb_accounting/counters/{chrom_or_scaff_group.txt}.
 # We add those up to get what the number should be.
 
 # here chrom is either a chromosome or a scaffold group, because we have to get
 # either of those.
-def previously_imported_samples(chrom):
-    dir="results/gdb_accounting/receipts/" + chrom
+def previously_imported_samples(chrom, bq):
+    dir="results/bqsr-round-{bq}/gdb_accounting/receipts/".format(bq = bq) + chrom
     if not  os.path.exists(dir):
         return([])  
     return(os.listdir(dir))
@@ -140,7 +140,7 @@ def get_samples_for_GDB_import(wildcards):
             chrom=wildcards.scaff_group
     else:
         raise Exception("Wildcards has neither chromo or scaff_group in get_samples_for_GDB_import")
-    return(list(set(sample_list).difference(set(previously_imported_samples(chrom)))))
+    return(list(set(sample_list).difference(set(previously_imported_samples(chrom, wildcards.bqsr_round)))))
 
 
 # get the number of data base import or update
@@ -154,7 +154,7 @@ def get_GDB_import_number(wildcards):
             chrom=wildcards.scaff_group
     else:
         raise Exception("Wildcards has neither chromo or scaff_group in get_samples_for_GDB_import")
-    file="results/gdb_accounting/counters/" + chrom + ".txt"
+    file="results/bqsr-round-{{bqsr_round}}/gdb_accounting/counters/" + chrom + ".txt"
     if not  os.path.exists(file):
         return(0)  
     return int(open(file).readlines()[0])
@@ -173,7 +173,7 @@ def chromo_import_gdb_opts(wildcards):
 def scaff_group_import_gdb_opts(wildcards):
     inum=get_GDB_import_number(wildcards)
     if inum == 0:
-        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/gdb_intervals/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(sg = wildcards.scaff_group))
+        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/bqsr-round-{bq}/gdb_intervals/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(bq = wildcards.bqsr_round, sg = wildcards.scaff_group))
     else:
         return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --merge-contigs-into-num-partitions 1  --genomicsdb-update-workspace-path ")
 
@@ -234,16 +234,16 @@ def get_trimmed_reads(wildcards):
     if not is_single_end(**wildcards):
         # paired-end sample
         return expand(
-            "results/trimmed/{sample}---{unit}.{group}.fastq.gz", group=[1, 2], **wildcards
+            "results/bqsr-round-{{bqsr_round}}/trimmed/{sample}---{unit}.{group}.fastq.gz", group=[1, 2], **wildcards
         )
     # single end sample
-    return "results/trimmed/{sample}---{unit}.fastq.gz".format(**wildcards)
+    return "results/bqsr-round-{{bqsr_round}}/trimmed/{sample}---{unit}.fastq.gz".format(**wildcards)
 
 
 def get_sample_bams(wildcards):
     """Get all aligned reads of given sample."""
     return expand(
-        "results/mkdup/{sample}---{unit}.bam",
+        "results/bqsr-round-{{bqsr_round}}/mkdup/{sample}---{unit}.bam",
         sample=wildcards.sample,
         unit=units.loc[wildcards.sample].unit,
     )
@@ -270,10 +270,10 @@ def get_call_variants_params(wildcards, input):
 
 def get_recal_input(bai=False):
     # case 1: no duplicate removal
-    f = "results/mapped/{sample}-{unit}.sorted.bam"
+    f = "results/bqsr-round-{bqsr_round}/mapped/{sample}-{unit}.sorted.bam"
     if config["processing"]["remove-duplicates"]:
         # case 2: remove duplicates
-        f = "results/mkdup/{sample}-{unit}.bam"
+        f = "results/bqsr-round-{bqsr_round}/mkdup/{sample}-{unit}.bam"
     if bai:
         if config["processing"].get("restrict-regions"):
             # case 3: need an index because random access is required

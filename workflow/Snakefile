@@ -6,16 +6,16 @@ localrules: make_scaff_group_interval_lists, make_chromo_interval_lists, combine
 
 rule all:
     input:
-        #expand("results/genomics_db/chromosomes/{c}", c=chromosomes.chrom),
-        #expand("results/genomics_db/scaffold_groups/{s}", s=unique_scaff_groups),
-        #expand("results/vcf_sections/{c}.vcf.gz", c=chromosomes.chrom),
-        #expand("results/vcf_sections/{s}.vcf.gz", s=unique_scaff_groups),
-        "results/bcf/all.bcf",
-        "results/bcf/all.bcf.csi",
-        "results/qc/multiqc.html",
-        expand("results/bcf/pass-maf-{maf}.bcf", maf=mafs),
-        expand("results/qc/bcftools_stats/all-{fc}.txt", fc=["ALL", "PASS", "FAIL"]),
-        expand("results/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=mafs)
+        #expand("results/bqsr-round-{bq}/genomics_db/chromosomes/{c}", c=chromosomes.chrom),
+        #expand("results/bqsr-round-{bq}/genomics_db/scaffold_groups/{s}", s=unique_scaff_groups),
+        #expand("results/bqsr-round-{bq}/vcf_sections/{c}.vcf.gz", c=chromosomes.chrom),
+        #expand("results/bqsr-round-{bq}/vcf_sections/{s}.vcf.gz", s=unique_scaff_groups),
+        expand("results/bqsr-round-{bq}/bcf/all.bcf", bq=config["bqsr_rounds"]),
+        expand("results/bqsr-round-{bq}/bcf/all.bcf.csi", bq=config["bqsr_rounds"]),
+        expand("results/bqsr-round-{bq}/qc/multiqc.html", bq=config["bqsr_rounds"]),
+        expand("results/bqsr-round-{bq}/bcf/pass-maf-{maf}.bcf", maf=mafs,  bq=config["bqsr_rounds"]),
+        expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-{fc}.txt", fc=["ALL", "PASS", "FAIL"],  bq=config["bqsr_rounds"]),
+        expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=mafs,  bq=config["bqsr_rounds"]),
 
 rule old_all:
     input:

@@ -5,18 +5,18 @@ rule trim_reads_pe:
     input:
         unpack(get_fastq),
     output:
-        r1=temp("results/trimmed/{sample}---{unit}.1.fastq.gz"),
-        r2=temp("results/trimmed/{sample}---{unit}.2.fastq.gz"),
-        r1_unpaired=temp("results/trimmed/{sample}---{unit}.1.unpaired.fastq.gz"),
-        r2_unpaired=temp("results/trimmed/{sample}---{unit}.2.unpaired.fastq.gz"),
-        #trimlog="results/trimmed/{sample}---{unit}.trimlog.txt",
+        r1=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.fastq.gz"),
+        r2=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.fastq.gz"),
+        r1_unpaired=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.unpaired.fastq.gz"),
+        r2_unpaired=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.unpaired.fastq.gz"),
+        #trimlog="results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.trimlog.txt",
     params:
         **config["params"]["trimmomatic"]["pe"],
         #extra=lambda w, output: "-trimlog {}".format(output.trimlog),
     benchmark:
-        "results/benchmarks/trim_reads_pe/{sample}---{unit}.bmk"
+        "results/bqsr-round-{bqsr_round}/benchmarks/trim_reads_pe/{sample}---{unit}.bmk"
     log:
-        "results/logs/trim_reads_pe/{sample}---{unit}.log",
+        "results/bqsr-round-{bqsr_round}/logs/trim_reads_pe/{sample}---{unit}.log",
     wrapper:
         "v1.1.0/bio/trimmomatic/pe"
 
@@ -28,16 +28,16 @@ rule trim_reads_pe:
 rule map_reads:
     input:
         reads = [
-            "results/trimmed/{sample}---{unit}.1.fastq.gz",
-            "results/trimmed/{sample}---{unit}.2.fastq.gz"
+            "results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.fastq.gz",
+            "results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.fastq.gz"
         ],
         idx=rules.bwa_index.output,
     output:
-        temp("results/mapped/{sample}---{unit}.sorted.bam"),
+        temp("results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam"),
     log:
-        "results/logs/map_reads/{sample}---{unit}.log",
+        "results/bqsr-round-{bqsr_round}/logs/map_reads/{sample}---{unit}.log",
     benchmark:
-        "results/benchmarks/map_reads/{sample}---{unit}.bmk"
+        "results/bqsr-round-{bqsr_round}/benchmarks/map_reads/{sample}---{unit}.bmk"
     params:
         index=lambda w, input: os.path.splitext(input.idx[0])[0],
         extra=get_read_group,
@@ -56,13 +56,13 @@ rule mark_duplicates:
     input:
         get_all_bams_of_common_sample
     output:
-        bam=protected("results/mkdup/{sample}.bam"),
-        bai=protected("results/mkdup/{sample}.bai"),
-        metrics="results/qc/mkdup/{sample}.metrics.txt",
+        bam=protected("results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam"),
+        bai=protected("results/bqsr-round-{bqsr_round}/mkdup/{sample}.bai"),
+        metrics="results/bqsr-round-{bqsr_round}/qc/mkdup/{sample}.metrics.txt",
     log:
-        "results/logs/picard/mkdup/{sample}.log",
+        "results/bqsr-round-{bqsr_round}/logs/picard/mkdup/{sample}.log",
     benchmark:
-        "results/benchmarks/mark_duplicates/{sample}.bmk"
+        "results/bqsr-round-{bqsr_round}/benchmarks/mark_duplicates/{sample}.bmk"
     params:
         extra=config["params"]["picard"]["MarkDuplicates"],
     resources:

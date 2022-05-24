@@ -2,11 +2,13 @@ rule get_genome:
     output:
         "resources/genome.fasta",
     log:
-        "results/logs/get_genome.log",
+        "results/bqsr-round-0/logs/get_genome.log",
     benchmark:
-        "results/benchmarks/get_genome/get_genome.bmk",
+        "results/bqsr-round-0/benchmarks/get_genome/get_genome.bmk",
     params:
         url=config["ref"]["genome_url"],
+    conda:
+        "../envs/wget.yaml"
     shell:
         " (tmp_dir=$(mktemp -d) && "
         " URL={params.url} && "
@@ -21,9 +23,9 @@ rule genome_faidx:
     output:
         "resources/genome.fasta.fai",
     log:
-        "results/logs/genome_faidx.log",
+        "results/bqsr-round-0/logs/genome_faidx.log",
     benchmark:
-        "results/benchmarks/genome_faidx/genome_faidx.bmk",
+        "results/bqsr-round-0/benchmarks/genome_faidx/genome_faidx.bmk",
     conda:
         "../envs/samtools.yaml"
     cache: True
@@ -37,9 +39,9 @@ rule genome_dict:
     output:
         "resources/genome.dict",
     log:
-        "results/logs/genome_dict.log",
+        "results/bqsr-round-0/logs/genome_dict.log",
     benchmark:
-        "results/benchmarks/genome_dict/genome_dict.bmk"
+        "results/bqsr-round-0/benchmarks/genome_dict/genome_dict.bmk"
     conda:
         "../envs/samtools.yaml"
     cache: True
@@ -55,9 +57,9 @@ rule bwa_index:
     output:
         multiext("resources/genome.fasta", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
-        "results/logs/bwa_index.log",
+        "results/bqsr-round-0/logs/bwa_index.log",
     benchmark:
-        "results/benchmarks/bwa_index/bwa_index.bmk",
+        "results/bqsr-round-0/benchmarks/bwa_index/bwa_index.bmk",
     resources:
         mem_mb=36900,
     cache: True
