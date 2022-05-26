@@ -26,7 +26,6 @@ rule genome_faidx:
         "results/benchmarks/genome_faidx/genome_faidx.bmk",
     conda:
         "../envs/samtools.yaml"
-    cache: True
     shell:
         "samtools faidx {input}"
 
@@ -42,7 +41,6 @@ rule genome_dict:
         "results/benchmarks/genome_dict/genome_dict.bmk"
     conda:
         "../envs/samtools.yaml"
-    cache: True
     shell:
         "samtools dict {input} > {output} 2> {log} "
 
@@ -60,7 +58,6 @@ rule bwa_index:
         "results/benchmarks/bwa_index/bwa_index.bmk",
     resources:
         mem_mb=36900,
-    cache: True
     wrapper:
         "0.59.2/bio/bwa/index"
 
