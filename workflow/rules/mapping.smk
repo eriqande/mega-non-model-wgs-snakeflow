@@ -44,7 +44,7 @@ rule map_reads:
         sort="samtools",
         sort_order="coordinate",
     resources:
-        time = "23:59:59"
+        time = "23:59:59",
         cpus = 4,
         mem_mb = 18400  
     threads: 4
