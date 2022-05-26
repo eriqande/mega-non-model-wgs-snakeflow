@@ -10,7 +10,6 @@ cluster:
     --error=results/slurm_logs/{rule}/{rule}-{wildcards}-%j.err
     --parsable
 default-resources:
-  - mem_mb=4700
   - time="08:00:00"
 restart-times: 0
 max-jobs-per-second: 10
