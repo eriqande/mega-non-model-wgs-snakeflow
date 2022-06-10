@@ -44,8 +44,7 @@ rule map_reads:
         sort="samtools",
         sort_order="coordinate",
     resources:
-        cpus = 4,
-        mem_mb = 18400  
+        time = "23:59:59",
     threads: 4
     wrapper:
         "0.59.2/bio/bwa/mem"
@@ -66,8 +65,7 @@ rule mark_duplicates:
     params:
         extra=config["params"]["picard"]["MarkDuplicates"],
     resources:
-        cpus = 1,
-        mem_mb = 4700
+        cpus = 1
     wrapper:
         "v1.1.0/bio/picard/markduplicates"
 
