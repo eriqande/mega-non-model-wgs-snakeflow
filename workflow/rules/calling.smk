@@ -57,8 +57,7 @@ rule make_chromo_interval_lists:
 
 rule make_gvcf_sections:
     input:
-        bam="results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam",
-        bai="results/bqsr-round-{bqsr_round}/mkdup/{sample}.bai",
+        unpack(get_bams_for_calling),
         ref="resources/genome.fasta",
         idx="resources/genome.dict",
         fai="resources/genome.fasta.fai",

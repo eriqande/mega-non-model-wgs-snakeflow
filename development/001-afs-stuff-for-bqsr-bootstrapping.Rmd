@@ -1,0 +1,168 @@
+---
+title: "Allele frequency spectrum thoughts regarding BQSR bootstrapping for non-model organisms"
+output: html_notebook
+---
+
+We have to come up with a set of variants that we are "reasonably certain about"
+for doing "bootstrapped" base quality score recalibration.  It seems to me that
+there could be a pretty big cost to not including variants in that set.  And, of
+course, there is a cost to including things that are not really variants in that
+set.  
+
+We, of course, have done hard filtering on the data set, but I think that it
+also makes sense, especially with relatively low-coverage data, to focus on
+retaining only the identified variants that you have seen in a good handful of
+individuals---the thought being that if you have seen it in more than one or two
+individuals, it might really be a variant, and not just genotyping error.
+
+So, some sort of minor allele count metric could be good for this.  For example,
+only retain those varaints with a minor allele count greater than or equal to 6,
+or 10, or whatever, depending on the total sample size.
+
+The question then comes up of what fraction of true variant reads might not
+be masked in a typical individual.  In other words, if all the variants were
+true, what fraction of them will be interpreted as errors in a typical
+individual.
+
+We can start to get a handle on this by thinking about the allele frequency
+spectrum.  Let's imagine a sample of $N$ diploids.  So we have $2N$ gene copies
+in the sample.  (Of course, if we have low read depth, than the number of
+gene copies actually sampled might be lower than $2N$).  The fraction of
+sites with $i$ derived alleles is proportional to $1/i$ for $i=1,\ldots,2N-1$,
+from the neutral coalescent.
+
+Of course, we don't know which allele is derived, so we have to use the
+folded AFS.  Here is a simple function for calculating the AFS and the
+folded AFS:
+```{r}
+library(tidyverse)
+#' returns the proportion of sites in each of the different
+#' allele count categories
+#' @param n is the total number of sampled gene copies.  Must be even
+#' for simplicity.
+AFS <- function(n) {
+  stopifnot( n %% 2 == 0)
+  afs <- tibble(
+      i = 1:(n-1),
+      derived = 1/(1:(n-1))
+    ) %>%
+    mutate(
+      derived = derived / sum(derived)
+    ) 
+
+  folded <- rep(0, n-1)
+  folded[1:(n/2 - 1)] <- afs$derived[1:(n/2 - 1)] + afs$derived[(n-1):(n/2 + 1)]
+  folded[n/2] <- afs$derived[n/2]
+  
+  afs %>%
+    mutate(folded = folded)
+}
+```
+
+And we can look at those with a simple plot with a small value of $n$:
+```{r}
+AFS(30) %>%
+  pivot_longer(cols = c(derived, folded), names_to = "type", values_to = "freq") %>%
+  ggplot(aes(x = i, y = freq, fill = type)) +
+  geom_col(position = "identity", alpha = 0.3)
+```
+
+So, those are pretty close, and we have a way to compute it.  
+
+Now, just quick and hasty.  Let's imagine that we have a sample of $N$ individuals,
+so we have $2N$ gene copies amongst them.  We will also assume that the variants
+are spread uniformly amongst those individuals.  This is reasonable of an
+exchangeable coalescent process, but will not be totally correct if individuals
+have big differences in read depth, etc.  But, we won't worry about that
+for now.  
+
+The question is: what fraction of all the variants that will be found
+in an indiviual (i.e. detected on a read) are those that have $i <= i^*$, where
+$i^*$ is some threshold.
+
+First, assume perfect detection.  Then we just have to figure out what
+fraction of the variants in an individual have $i<i*$.  
+
+So, if a minor allele is found at a frequency of $i$ in a sample of $N$ diploids,
+then the chance that it occurs in one copy in an individual is:
+$$
+2\frac{i}{2N}\frac{(2N-i+1)}{(2N-1)}
+$$
+And the chance that it is there in two copies is:
+$$
+\frac{i}{2N}\frac{(i-1)}{(2N-1)}
+$$
+And, of course, the chance that it carries no copies of that
+thing will be:
+$$
+\frac{(2N - i)}{2N}\frac{(2N-1-i)}{(2N-1)}
+$$
+
+So, we can make a function for the probability that the individual
+carries at least one copy of the variant that is present in $i$ copies
+in the sample:
+```{r}
+#' N is the number of diploids in the sample
+al1 <- function(N, i) {
+  1 - (
+    ((2 * N - i) / (2 * N)) *
+      ((2 * N - 1 - i) / (2 * N - 1))
+  )
+}
+```
+
+So, see that this is pretty close to twice the relative frequency of the variant:
+```{r}
+al1(100, 5)
+al1(100, 10)
+
+al1(200, 5)
+al1(200, 10)
+```
+
+That is not surprising at all.  
+
+But, now, if we are setting a threshold, like $i^*$ and then we want to
+know what fraction of the markers within an individual are going to be found
+in less than or equal to $i^*$ counts in the sample, we will need to
+weight this by the frequency of those different categories.  So, another
+function:
+```{r}
+ind_fract <- function(N) {
+  afs <- AFS(2 * N) %>%
+    filter(folded > 0) %>%
+    mutate(
+      al1_prob = al1(N, i),
+      overall = al1_prob * folded,
+      cumul = cumsum(overall),
+      within_indiv = overall / sum(overall),
+      within_indiv_cumul = cumsum(within_indiv)
+    ) %>%
+    mutate(MAF = i/(2 * N), .after = i)
+  afs
+}
+```
+
+So, let's say we have a sample of 445 animals, then:
+```{r}
+ind_fract(445)
+```
+That says that at a MAF of about 0.2, you expect that a fraction of around 0.034 of the
+sites that are actually variable in the individual (which might be bona fide variants, but
+might not be...) will not be included in the variant data set.  And, in that case, you have
+18 of the 445 samples that carried that allele, so you should be pretty sure it is not
+a sequencing error.
+
+That seems pretty reasonable.  What if you have 225 samples?
+```{r}
+ind_fract(225)
+```
+How about 100 samples?
+```{r}
+ind_fract(100)
+```
+
+So, in general, I would say that a MAF of around 2% to 2.5% seems to work in almost
+all of these cases.
+
+I think I will set 2.25% as the default.

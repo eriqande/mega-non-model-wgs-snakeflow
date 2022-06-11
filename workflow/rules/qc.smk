@@ -40,6 +40,21 @@ rule samtools_stats:
         "v1.1.0/bio/samtools/stats"
 
 
+# this is a version that can create the same output for bqsr_round > 0
+# from the bam in the recal directory.  We'll see if this works or not...
+rule samtools_stats2:
+    input:
+        "results/bqsr-round-{bqsr_round}/recal/{sample}.bam",
+    output:
+        "results/bqsr-round-{bqsr_round}/qc/samtools_stats/{sample}.txt",
+    log:
+        "results/bqsr-round-{bqsr_round}/logs/samtools_stats/{sample}.log",
+    benchmark:
+        "results/bqsr-round-{bqsr_round}/benchmarks/samtools_stats/{sample}.bmk",
+    wrapper:
+        "v1.1.0/bio/samtools/stats"
+
+
 rule multiqc:
     input:
         expand("results/bqsr-round-{{bqsr_round}}/qc/samtools_stats/{sample}.txt", sample=sample_list),

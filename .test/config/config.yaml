@@ -1,7 +1,13 @@
-bqsr_rounds: 0
 units: .test/config/units.tsv
 chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv
+bqsr_rounds: 0
+bqsr_maf: 0.0225
+
+# the following must be a list, even if it is just one element
+maf_cutoffs: [0.01, 0.05]
+
+
 
 # this is the default value for the first GenomicsDBImport run.
 # If you want to change it, you should typically change it

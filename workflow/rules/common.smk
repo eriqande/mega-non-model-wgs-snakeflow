@@ -23,8 +23,15 @@ container: "continuumio/miniconda3:4.8.2"
 validate(config, schema="../schemas/config.schema.yaml")
 
 
-# these are our cutoffs to prepare...
-mafs = ["0.01",  "0.05"]
+# these are our MAF cutoffs to prepare.  We take the unique values
+# of the union of the maf_cutoffs from the config and the bqsr_maf
+# from the config.
+mafs = list(
+        dict.fromkeys(
+            [str(x) for x in config["maf_cutoffs"]] + 
+            [str(config["bqsr_maf"])]
+            )
+        )
 
 units = pd.read_table(config["units"], dtype=str).set_index(
     ["sample", "unit"], drop=False
@@ -227,6 +234,34 @@ def get_read_group(wildcards):
         lane=units.loc[(wildcards.sample, wildcards.unit), "lane"],
         barcode=units.loc[(wildcards.sample, wildcards.unit), "barcode"],
     )
+
+
+# here is the function that picks out the appropriate bam and bai file
+# to use for calling gvcfs.  If the {bqsr_round} is = 0 it pulls them
+# from bqsr_round-{bqsr-round}/mkdup. 
+# If the {bqsr_round} is > 0 it pulls them
+# from bqsr_round-{bqsr-round}/recal.
+def get_bams_for_calling(wildcards):
+    if wildcards.bqsr_round == "0":
+        subd = "mkdup"
+    else:
+        subd = "recal"
+    return { 
+        "bam": "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bam".format(
+            bqsr_round = wildcards.bqsr_round,
+            subd = subd,
+            sample = wildcards.sample),
+        "bai": "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bai".format(
+            bqsr_round = wildcards.bqsr_round,
+            subd = subd,
+            sample = wildcards.sample)}
+
+
+# this function looks back to the previous round of BQSR and
+# uses the resulting MAF file from there as input
+def get_variants_to_condense_for_bqsr(wildcards):
+    bqr = int(wildcards.bqsr_round) - 1
+    return("results/bqsr-round-{bq}/bcf/pass-maf-{maf}.bcf".format(bq=bqr, maf = config["bqsr_maf"]))
 
 
 def get_trimmed_reads(wildcards):
