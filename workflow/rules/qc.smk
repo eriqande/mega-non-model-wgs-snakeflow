@@ -29,7 +29,7 @@ rule fastqc_read2:
 
 rule samtools_stats:
     input:
-        "results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam",
+        get_bams_for_samtools_stats,
     output:
         "results/bqsr-round-{bqsr_round}/qc/samtools_stats/{sample}.txt",
     log:
@@ -42,25 +42,22 @@ rule samtools_stats:
 
 # this is a version that can create the same output for bqsr_round > 0
 # from the bam in the recal directory.  We'll see if this works or not...
-rule samtools_stats2:
-    input:
-        "results/bqsr-round-{bqsr_round}/recal/{sample}.bam",
-    output:
-        "results/bqsr-round-{bqsr_round}/qc/samtools_stats/{sample}.txt",
-    log:
-        "results/bqsr-round-{bqsr_round}/logs/samtools_stats/{sample}.log",
-    benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/samtools_stats/{sample}.bmk",
-    wrapper:
-        "v1.1.0/bio/samtools/stats"
+# rule samtools_stats2:
+#     input:
+#         "results/bqsr-round-{bqsr_round}/recal/{sample}.bam",
+#     output:
+#         "results/bqsr-round-{bqsr_round}/qc/samtools_stats/{sample}.txt",
+#     log:
+#         "results/bqsr-round-{bqsr_round}/logs/samtools_stats/{sample}.log",
+#     benchmark:
+#         "results/bqsr-round-{bqsr_round}/benchmarks/samtools_stats/{sample}.bmk",
+#     wrapper:
+#         "v1.1.0/bio/samtools/stats"
 
 
 rule multiqc:
     input:
-        expand("results/bqsr-round-{{bqsr_round}}/qc/samtools_stats/{sample}.txt", sample=sample_list),
-        expand("results/bqsr-round-{{bqsr_round}}/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", u=units.itertuples(), r = [1, 2]),
-        list(dict.fromkeys(expand("results/bqsr-round-{{bqsr_round}}/qc/mkdup/{u.sample}.metrics.txt", u=units.itertuples()))),
-        expand("results/bqsr-round-{{bqsr_round}}/logs/trim_reads_pe/{u.sample}---{u.unit}.log", u=units.itertuples()),
+        get_multiqc_inputs
     output:
         "results/bqsr-round-{bqsr_round}/qc/multiqc.html",
     log:

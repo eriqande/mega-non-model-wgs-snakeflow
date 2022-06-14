@@ -256,6 +256,15 @@ def get_bams_for_calling(wildcards):
             subd = subd,
             sample = wildcards.sample)}
 
+def get_bams_for_samtools_stats(wildcards):
+    if wildcards.bqsr_round == "0":
+        subd = "mkdup"
+    else:
+        subd = "recal"
+    return "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bam".format(
+            bqsr_round = wildcards.bqsr_round,
+            subd = subd,
+            sample = wildcards.sample)
 
 # this function looks back to the previous round of BQSR and
 # uses the resulting MAF file from there as input
@@ -263,6 +272,39 @@ def get_variants_to_condense_for_bqsr(wildcards):
     bqr = int(wildcards.bqsr_round) - 1
     return("results/bqsr-round-{bq}/bcf/pass-maf-{maf}.bcf".format(bq=bqr, maf = config["bqsr_maf"]))
 
+
+def get_bams_for_bqsr(wildcards):
+    if wildcards.bqsr_round == "0":
+        return("");
+    elif wildcards.bqsr_round == "1":
+        subd="mkdup"
+    else: 
+        subd="recal"
+    bqr = int(wildcards.bqsr_round) - 1
+    return { 
+        "bam": "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bam".format(
+            bqsr_round = bqr,
+            subd = subd,
+            sample = wildcards.sample),
+        "bai": "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bai".format(
+            bqsr_round = bqr,
+            subd = subd,
+            sample = wildcards.sample)}
+
+
+# we have this here becuase we only want to do fastqc, mkdup and trimmomatic
+# qc for bqsr_round=0.  The others just do the samtools stats.
+def get_multiqc_inputs(wildcards):
+    if wildcards.bqsr_round == "0":
+        return(
+            expand("results/bqsr-round-{bq}/qc/samtools_stats/{sample}.txt", bq=wildcards.bqsr_round, sample=sample_list) +
+            expand("results/bqsr-round-{bq}/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", bq=wildcards.bqsr_round, u=units.itertuples(), r = [1, 2]) +
+            list(dict.fromkeys(expand("results/bqsr-round-{bq}/qc/mkdup/{u.sample}.metrics.txt", bq=wildcards.bqsr_round, u=units.itertuples()))) +
+            expand("results/bqsr-round-{bq}/logs/trim_reads_pe/{u.sample}---{u.unit}.log", bq=wildcards.bqsr_round, u=units.itertuples())
+        )
+    else:
+        return expand("results/bqsr-round-{bq}/qc/samtools_stats/{sample}.txt", bq=wildcards.bqsr_round, sample=sample_list)
+    
 
 def get_trimmed_reads(wildcards):
     """Get trimmed reads of given sample-unit."""

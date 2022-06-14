@@ -11,6 +11,9 @@ mega-non-model-wgs-snakeflow
     -   [`chromosomes.tsv`](#chromosomestsv)
     -   [`scaffold_groups.tsv`](#scaffold_groupstsv)
     -   [`config.yaml`](#configyaml)
+-   [Bootstrapped Base Quality Score
+    Recalibration](#bootstrapped-base-quality-score-recalibration)
+    -   [What values should be chosen?](#what-values-should-be-chosen)
 -   [Assumptions](#assumptions)
 -   [Things fixed or added relative to JK’s snakemake
     workflow](#things-fixed-or-added-relative-to-jks-snakemake-workflow)
@@ -360,6 +363,214 @@ The current `config.yaml` file in the test directory can be viewed at:
 As mentioned above, there is a little bit of cruft in it that should
 stay in there for now, but which ought to be cleaned up, ultimately.
 
+## Bootstrapped Base Quality Score Recalibration
+
+The GATK folks insist that Base Quality Score Recalibration (BQSR) is a
+very important step—even for non-model organisms that don’t have a
+well-curated data base of known variants. Back in the days of the
+Illumina Hi-Seq, I had been somewhat skeptical of the importance of BQSR
+for non-model organisms. However, not that sequencing is mostly
+happening on NovaSeq machines, my views have changed somewhat, because
+these sequencing machines only deliver four possible base quality
+scores, and one of those, `#` is given to uncalled bases. Observe:
+
+``` r
+# here we extract all the base quality scores recorded by the
+# machine for the fastq file 
+# .test/data/fastq/T199967_T2087_HY75HDSX2_L001_R1_001.fastq.gz
+library(tidyverse)
+
+bqs <- tibble(
+  base_quals = read_lines(".test/data/fastq/T199967_T2087_HY75HDSX2_L001_R1_001.fastq.gz")
+) %>%
+  mutate(line = 1:n()) %>%
+  filter(line %% 4 == 0) %>%
+  mutate(singles = map(base_quals, strsplit, split = "")) %>%
+  pull(singles) %>%
+  unlist(.)
+
+tibble(
+  base_quals = bqs
+) %>%
+  count(base_quals) %>%
+  mutate(
+    ascii = map_int(base_quals, utf8ToInt),
+    PHRED = ascii - 33
+  )
+```
+
+    ## # A tibble: 4 × 4
+    ##   base_quals       n ascii PHRED
+    ##   <chr>        <int> <int> <dbl>
+    ## 1 ,            68212    44    11
+    ## 2 :            77998    58    25
+    ## 3 #               17    35     2
+    ## 4 F          1207941    70    37
+
+So, these new machines produce a whole lot of sequence, but it really
+only provides four possible values for the base qualities:
+
+``` r
+10 ^{-c(2, 11, 25, 37) / 10}
+```
+
+    ## [1] 0.6309573445 0.0794328235 0.0031622777 0.0001995262
+
+Given this, some sort of empirical recalibration of the base quality
+scores seems like it is probably a very good idea.
+
+The problem with this for non-model organisms is that such species don’t
+have a well-known data base of variants that can be used for the base
+score recalibration. In that case, the GATK folks recommend using
+“high-confidence” variants as the the know variant set, and then
+possibly doing several rounds of this. Doing so requires a boatload of
+computation, but it might be worthwhile, so this workflow has been set
+up to do that.
+
+Of course, it is hard to know what is meant by a “high-confidence”
+variant. The purpose of having known variants is so that they don’t get
+included in making an emprirical model of base quality scores.
+Basically, GATK goes through the BAMs and it assumes that any base that
+is not the reference base is an error, and it tallies those up, broken
+down by a number of sequence and read-group features, and uses that to
+estimate what the true sequencing error rate is. Of course, you don’t
+reference mismatches at sites that are actually variants to contribute
+to this calculation—because those mismatches are not actually errors.
+But we are in a chicken and egg situation here—we don’t know which
+variants are real and which are not!
+
+I am of the mind that it is good to include as many known variants as
+you can (because, otherwise, the BQSR model will tell us that there are
+a lot of errors). But, on the other hand, you don’t want to include
+dubious sites in that known variant set, because mismatches at those
+sets are likely actually errors and should be counted.
+
+It is important to recognize that the known variants are only excluded
+from the BQSR model-building stage. Those sites themselves will still
+get recalibrated once the model is made. And, if there isn’t a strong
+pattern to the mismatches that occur because some true variants were
+left out of the known variants data base, the consequences might not be
+too bad.
+
+All this is to say that this is a pretty inexact science. Nonetheless,
+we have a few parameters that can be set in the config to select the
+“known variants” set:
+
+-   `bqsr_maf`. Sites with a minor allele frequency less than this will
+    not be included in the known variants set. The idea is that you are
+    more confident that a variant is real if it actually was observed in
+    more than one or just a few individuals. Not only that, but, of all
+    the true variants found in an individual, only somewhat less than
+    `2 * bqsr_maf` will be discarded because of this filter.
+    Accordingly, the default value in the test config is 0.0225, which
+    means that about 3.5% of the mismatches in any actual variants in
+    any *individual* will still be called mismatches. That seems OK to
+    me.
+
+-   `bqsr_qual`. Only sites with a variant quality (QUAL) score equal to
+    or greater than this value will be retained in the known-variants
+    set. For the test data set, this is set at 40, but should be larger
+    (perhaps 100) for data sets with more depth and more individuals.
+
+-   `bqsr_qd`. Only sites with a `QD`—a variant quality score,
+    normalized by the number of reads—will be retained. `INFO/QD` is
+    calculated by GATK. If it is low, it means that a variant has been
+    called but the base quality scores for that variant are low on most,
+    if not all, of the reads supporting that variant. The default here
+    is 9, but the effect of that should be investigated.
+
+### What values should be chosen?
+
+This is still an area where there are no solid answers; however, it can
+be helpful to look at the distribution of the QUAL and the QD values.
+The workflow is set up to make it easy to get those values and do all
+the quality control steps in the workflow, and then you can investigate
+the results to choose values of the three `bqsr_*` config parameters
+listed above. That is done by choosing the `dest_qc_0` and the
+`dest_bqsr_histos_0` rules as targets for the first run. This will do
+all the mapping and qc and one round of variant calling and filtering
+and then it will compute QUAL and QD histograms. For the test data set
+on a local set of cores that looks like this:
+
+``` sh
+snakemake --cores 6  --use-conda  dest_bqsr_histos_0 dest_qc_0 --configfile .test/config/config.yaml
+```
+
+For determining the effect of the values of `bqsr_qual` and `bqsr_qd`,
+after this has run you can investigate the files:
+
+    results/bqsr-round-0/qc/bqsr_relevant_histograms/qd.tsv    results/bqsr-round-0/qc/bqsr_relevant_histograms/qual.tsv
+
+Versions of those files have been stored in this repo so that we can see
+some example R code of tallying them up:
+
+``` r
+quals <- read_tsv("README_files/qual.tsv", col_names = c("value", "n")) %>%
+  arrange(value) %>%
+  mutate(
+    fract = n / sum(n),
+    cumul = cumsum(fract)
+  )
+qds <- read_tsv("README_files/qd.tsv", col_names = c("value", "n")) %>%
+  arrange(value) %>%
+  mutate(
+    fract = n / sum(n),
+    cumul = cumsum(fract)
+  )
+```
+
+Now, look at the cumulative distribution of `qd` values:
+
+``` r
+ggplot(qds, aes(x = value)) +
+  geom_col(aes(y = fract)) +
+  geom_point(aes(y = cumul)) +
+  geom_line(aes(y = cumul)) +
+  xlab("INFO/QD value")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+And the distribution of `qual` values:
+
+``` r
+g <- ggplot(quals, aes(x = value)) +
+  geom_col(aes(y = fract)) +
+  geom_point(aes(y = cumul)) +
+  geom_line(aes(y = cumul)) +
+  xlab("QUAL value")
+
+g
+```
+
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+That is a little harder to see, so we can limit it to QUAL values less
+than 100:
+
+``` r
+g +
+  xlim(0, 100)
+```
+
+    ## Warning: Removed 126 rows containing missing values (position_stack).
+
+    ## Warning: Removed 1 rows containing missing values (geom_col).
+
+    ## Warning: Removed 126 rows containing missing values (geom_point).
+
+    ## Warning: Removed 126 row(s) containing missing values (geom_path).
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+Obviously, with this very small test data set, it is hard to interpret
+these results. But, you can sort of see why it seems like for this test
+data set, the values of `bqsr_qd = 15` and `bqsr_qual = 37` might be
+reasonable.
+
+You really should check these values for your own data set and select
+values for those parameters accordingly.
+
 ## Assumptions
 
 -   Paired end
@@ -391,7 +602,7 @@ I have made a scheme were we can start with one units.tsv file that
 maybe only has six samples in it, and you can run that to completion.
 Then you can update the units.tsv file to have two additional samples in
 it, and that should then properly update the genomics data bases. This
-is done by a system of writing Genomics\_DBI receipts that tell us what
+is done by a system of writing Genomics_DBI receipts that tell us what
 is already in there.
 
 Here is how you can run it and test that system is working properly on
@@ -457,5 +668,5 @@ put into the genomics data bases. (That said, if you got new sequences
 on a new machine/flow-cell or library from a sample that you had already
 run through the pipeline, and you wanted to compare the results from the
 new sequences to those from the original sequences, you could simply
-give those newly-resequenced samples new sample\_id’s (and sample
+give those newly-resequenced samples new sample_id’s (and sample
 numbers). That would work.)

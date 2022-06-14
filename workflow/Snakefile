@@ -12,10 +12,10 @@ rule all:
         #expand("results/bqsr-round-{bq}/vcf_sections/{s}.vcf.gz", s=unique_scaff_groups),
         expand("results/bqsr-round-{bq}/bcf/all.bcf", bq=config["bqsr_rounds"]),
         expand("results/bqsr-round-{bq}/bcf/all.bcf.csi", bq=config["bqsr_rounds"]),
-        expand("results/bqsr-round-{bq}/qc/multiqc.html", bq=config["bqsr_rounds"]),
         expand("results/bqsr-round-{bq}/bcf/pass-maf-{maf}.bcf", maf=mafs,  bq=config["bqsr_rounds"]),
         expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-{fc}.txt", fc=["ALL", "PASS", "FAIL"],  bq=config["bqsr_rounds"]),
         expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=mafs,  bq=config["bqsr_rounds"]),
+        expand("results/bqsr-round-{bq}/qc/multiqc.html", bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
 
 rule old_all:
     input:
@@ -33,6 +33,7 @@ include: "rules/mapping.smk"
 include: "rules/calling.smk"
 include: "rules/filtering.smk"
 include: "rules/bqsr.smk"
+include: "rules/destination-rules.smk"
 include: "rules/stats.smk"
 include: "rules/qc.smk"
 include: "rules/hardfilter.smk"

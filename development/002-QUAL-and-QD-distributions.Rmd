@@ -1,0 +1,73 @@
+---
+title: "The Distribution of QUAL and QD values and how we might use them for filtering markers for bootstrapping some BQSR"
+output: html_notebook
+---
+
+I got the QUAL and QD values out of the bcf file for the 468 (or so)
+(mostly) Yukon chinook like this:
+```sh
+(snakemake-7.7.0) [node02: bcf]--% pwd
+/home/eanderson/Documents/projects/yukon-chinookomes-all-together/results/bcf
+(snakemake-7.7.0) [node02: bcf]--% time bcftools query -f '%QUAL\t%INFO/QD\n' pass-maf-0.01.bcf > ../../quals-and-qds.txt
+```
+I gzipped the output and put it into `development/data`.  It is still nearly
+100 Mb.  I won't be committing that to the Repo b/c it does not make sense to
+put it on GitHub, etc.
+
+```{r}
+library(tidyverse)
+
+qqd <- read_tsv("data/quals-and-qds.txt.gz", col_names = c("qual", "qd"))
+```
+
+Let's have a look at the general distribution of these things:
+```{r}
+ggplot(qqd, aes(x = qd)) +
+  geom_density()
+```
+
+Wow, that is lumpy.  Let's look at a histogram.
+```{r}
+ggplot(qqd, aes(x = qd)) +
+  geom_histogram(binwidth = 1)
+```
+
+That is quite interesting to see.  There is a peak around 3 or 4.  I wonder
+if that is because of the fact that you only get three possible quality scores
+on a NovaSeq.  It looks to me like 8 would be a reasonable cutoff for
+tossing some of those things.
+
+I could probably compress all the info in that qual-and-qds file with
+awk:
+```{sh}
+gzcat data/quals-and-qds.txt.gz |
+  awk '
+    BEGIN {OFS="\t"}
+    {qual[int($1)]++; qd[int($2)]++}
+    END {
+      for(i in qual) print i, qual[i] > "quals-unsrt.txt"
+      for(i in qd) print i, qd[i] > "qds-unsrt.txt"
+    }
+'
+
+ sort -grk1 quals-unsrt.txt > quals-srt.txt
+```
+Wow, I had a look at that file with:
+```sh
+awk 'BEGIN {OFS="\t"} {if($1>300) p = 0.0; else p = 10^($1/(-10)); add=p*$2; cumul+=add; print $0,add,cumul}' quals-srt.txt
+```
+And it showed that if you interpret the QUAL as a proper posterior probability,
+then your estimated expected number of incorrect variants is incredibly
+low.  So, that won't even be helpful. 
+
+I think it will probably be better to just set a hard cutoff on the QD values
+and then use that, or a fraction of X% of the variants, whichever is smaller, or
+something.
+
+So, that makes it easier to just pipeline it.  I will then condense them
+to integers and we will see what we find:
+
+
+OK, bottom line here is that if you have a lot of samples, I think it will
+be reasonable to take your BQSR set by setting the QUAL >= 100 and the
+QD >= 9.
