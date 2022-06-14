@@ -16,6 +16,7 @@ rule all:
         expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-{fc}.txt", fc=["ALL", "PASS", "FAIL"],  bq=config["bqsr_rounds"]),
         expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=mafs,  bq=config["bqsr_rounds"]),
         expand("results/bqsr-round-{bq}/qc/multiqc.html", bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
+        expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=config["bqsr_maf"], bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
 
 rule old_all:
     input:
