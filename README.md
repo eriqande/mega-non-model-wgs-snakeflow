@@ -469,15 +469,15 @@ we have a few parameters that can be set in the config to select the
 
 -   `bqsr_qual`. Only sites with a variant quality (QUAL) score equal to
     or greater than this value will be retained in the known-variants
-    set. For the test data set, this is set at 40, but should be larger
+    set. For the test data set, this is set at 37, but should be larger
     (perhaps 100) for data sets with more depth and more individuals.
 
 -   `bqsr_qd`. Only sites with a `QD`—a variant quality score,
     normalized by the number of reads—will be retained. `INFO/QD` is
     calculated by GATK. If it is low, it means that a variant has been
     called but the base quality scores for that variant are low on most,
-    if not all, of the reads supporting that variant. The default here
-    is 9, but the effect of that should be investigated.
+    if not all, of the reads supporting that variant. The value in the
+    .test data set is 15, but the effect of that should be investigated.
 
 ### What values should be chosen?
 
@@ -486,7 +486,8 @@ be helpful to look at the distribution of the QUAL and the QD values.
 The workflow is set up to make it easy to get those values and do all
 the quality control steps in the workflow, and then you can investigate
 the results to choose values of the three `bqsr_*` config parameters
-listed above. That is done by choosing the `dest_qc_0` and the
+listed above. That is done by setting `bqsr_rounds: 0` in the
+config.yaml, and then choosing the `dest_qc_0` and the
 `dest_bqsr_histos_0` rules as targets for the first run. This will do
 all the mapping and qc and one round of variant calling and filtering
 and then it will compute QUAL and QD histograms. For the test data set
