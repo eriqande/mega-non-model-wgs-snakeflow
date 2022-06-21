@@ -6,6 +6,38 @@ output:
 
 ---
 
+## Major Update/Upgrade Notes
+
+* I have now pulled the `bqsr-directory-sructure` branch into main.  This lets
+us easily do one or more rounds of "bootstrapped base quality score
+recalibration." The directory structure has been modified rather simply.  For
+each round of BQSR (0 = no BQSR; 1 = using variants from 0 to do a round of BQSR
+and call variants from the results, 2 = using the variants from 1 to do another round of
+BQSR and call variants from the result; etc.), the entire old directory structure
+(except for the `slurm_logs`) get placed into a trunk directory of 
+`bqsr-round-x` where `x` is 0 or 1 or 2, etc.
+* There are a few files/steps that could be marked as temporary, but I haven't
+done that yet, because, while developing, it can be useful to have some of those
+stages for re-running from that point.
+* The way I have done the directory structure, there doesn't seem to be a good way to mark, for 
+example, the gVCFs from the 0-round of BQSR be deleted after the 1-round has been done,
+without also triggering deletion of the 1-round's GVCFs.  So, for now, this has to be
+done by hand.
+* Some new things are required in the config file now.  Basically the new additions looks like
+this:
+```yaml
+bqsr_rounds: 2
+bqsr_maf: 0.0225
+bqsr_qual: 37
+bqsr_qd: 15
+
+# the following must be a list, even if it is just one element
+maf_cutoffs: [0.01, 0.05]
+
+```
+
+
+
 ## Quick install and run
 
 If you would like to put this on your system and test it running on the
@@ -63,38 +95,37 @@ Job stats:
 job                                   count    min threads    max threads
 ----------------------------------  -------  -------------  -------------
 all                                       1              1              1
+apply_bqsr                               16              1              1
 bcf_concat                                1              1              1
-bcf_concat_mafs                           2              1              1
-bcf_maf_section_summaries                12              1              1
+bcf_concat_mafs                           5              1              1
+bcf_maf_section_summaries                30              1              1
 bcf_section_summaries                    18              1              1
-bung_filtered_vcfs_back_together          6              1              1
-bwa_index                                 1              1              1
+bung_filtered_vcfs_back_together         18              1              1
 combine_bcftools_stats                    3              1              1
-combine_maf_bcftools_stats                2              1              1
-concat_gvcf_sections                      8              1              1
+combine_maf_bcftools_stats                5              1              1
+concat_gvcf_sections                     24              1              1
+condense_variants_for_bqsr                2              1              1
 fastqc_read1                             22              1              1
 fastqc_read2                             22              1              1
-genome_dict                               1              1              1
-genome_faidx                              1              1              1
-genomics_db2vcf                           6              2              2
-genomics_db_import_chromosomes            4              2              2
-genomics_db_import_scaffold_groups        2              2              2
-get_genome                                1              1              1
-hard_filter_indels                        6              1              1
-hard_filter_snps                          6              1              1
-maf_filter                               12              1              1
-make_chromo_interval_lists                4              1              1
-make_gvcf_sections                       48              1              1
-make_indel_vcf                            6              1              1
-make_scaff_group_interval_lists           2              1              1
-make_snp_vcf                              6              1              1
+genomics_db2vcf                          18              2              2
+genomics_db_import_chromosomes           12              2              2
+genomics_db_import_scaffold_groups        6              2              2
+hard_filter_indels                       18              1              1
+hard_filter_snps                         18              1              1
+maf_filter                               30              1              1
+make_chromo_interval_lists               12              1              1
+make_gvcf_sections                      144              1              1
+make_indel_vcf                           18              1              1
+make_scaff_group_interval_lists           6              1              1
+make_snp_vcf                             18              1              1
 map_reads                                22              4              4
-mark_dp0_as_missing                       6              1              1
+mark_dp0_as_missing                      18              1              1
 mark_duplicates                           8              1              1
-multiqc                                   1              1              1
-samtools_stats                            8              1              1
+multiqc                                   3              1              1
+recalibrate_bases                        16              1              1
+samtools_stats                           24              1              1
 trim_reads_pe                            22              1              1
-total                                   270              1              4
+total                                   580              1              4
 
 This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 ```
@@ -161,18 +192,19 @@ into a single VCF file called `results/vcf/all-filtered.vcf.gz`, and then
 printed out some summaries of those variants using `bcftools stats`.
 You can have a look at that at the VCF file with the command:
 ```sh
-zcat results/vcf/all-filtered.vcf.gz | less
+zcat results/bqsr-round-{x}/bcf/all.bcf | less
 ```
+Where {x} is 0, 1, or 2.
 If you are doing this on a Mac, then you can use `gzcat` instead of `zcat`.
 
 
 Additionally, the log files from every job that got run have been recorded in
 various directories and files in
-`results/logs`.
+`results/bqsr-round-{x}/logs`.
 
 Finally, run-time information (how long it took, how much memory was required,
 how much disk I/O occurred) for every one of the jobs that ran is recorded
-in various directories and files in `results/benchmarks`.  This can be a treasure
+in various directories and files in `results/bqsr-round-{x}/benchmarks`.  This can be a treasure
 trove for estimating how long different jobs/steps of this workflow will take on
 new data sets.
 
@@ -189,11 +221,10 @@ temporary, but I will do that after I have used this updated workflow to finish
 out a long project. 
 
 Some files are marked as _protected_ so that they cannot easily be accidentally
-deleted or modified.  These include:
-
-- `results/vcf/all-filtered.vcf.gz`
-- All the dupe-marked BAM files for each sample in `results/mkdup`
-- All the gVCF files for each sample in `results/gvcf`
+deleted or modified, such as the files in:
+```
+results/bqsr-round-{x}/bcf
+```
 
 It would be typical practice to copy and archive all those to some other place
 upon completion of the project.
@@ -310,12 +341,14 @@ The user must make a `config.yaml` file. It serves a lot of purposes,
 like:
 
 - giving the relative path to the `units.tsv`, `chromosomes.tsv`, and
-`scaffold_groups.tsv` files.
+`scaffold_groups.tsv` files.  (When we say "relative" path here we mean relative
+to the top level of the repo directory where the snakemake command will be given.)
 - Giving the URL from which the reference genome can be downloaded. (If there is not a URL for it, then just copy the reference
 FASTA file to `resources/genome.fasta`).
 - The location of the adapter file for Trimmomatic must be specified.
 The correct one to use depends on what sequencing platform your data
 come from.
+- The BQSR parameters as described in the next section.
 - Some parameters can be set here; however, some of the YAML blocks
 here are vestigial and need to be cleaned up.  Not all of these options
 actually change things.  For now, ask Eric for help...
