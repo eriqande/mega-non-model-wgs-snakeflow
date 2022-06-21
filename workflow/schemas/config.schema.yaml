@@ -7,6 +7,22 @@ type: object
 properties:
   units:
     type: string
+  chromosomes:
+    type: string
+  scaffold_groups:
+    type: string
+  bqsr_rounds:
+    type: integer
+  bqsr_maf:
+    type: number
+  bqsr_qual:
+    type: number
+  bqsr_qd:
+    type: number
+  maf_cutoffs:
+    type: array
+
+
 
   ref:
     type: object
@@ -92,3 +108,11 @@ required:
   - filtering
   - processing
   - params
+  - chromosomes
+  - scaffold_groups
+  - bqsr_rounds
+  - bqsr_maf
+  - bqsr_qual
+  - bqsr_qd
+  - maf_cutoffs
+
