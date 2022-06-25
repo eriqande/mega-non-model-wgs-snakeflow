@@ -89,7 +89,7 @@ rule apply_bqsr:
 	conda:
 		"../envs/gatk4.2.6.1.yaml"
 	shell:
-		"gatk ApplyBQSR "
+		"gatk --java-options \"-Dsamjdk.compression_level=9\" ApplyBQSR "
 		" -R {input.ref} "
 		" -I {input.bam} "
 		" --bqsr-recal-file {input.rtable} "
