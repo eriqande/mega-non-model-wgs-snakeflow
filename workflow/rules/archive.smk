@@ -35,6 +35,7 @@ rule send_to_gdrive:
 		comma_nums = ",".join([str(x) for x in range(0,config["bqsr_rounds"]+1)]),
 		bamdir="bqsr-round-{bq}/{subd}".format(bq = config["bqsr_rounds"], subd = bam_subd(config["bqsr_rounds"])),
 	shell:
+		" git log | head -n 150  > config/latest-git-commits.txt;  "
 		" mkdir -p results/qc_summaries/bqsr-round-{{0..{params.BQR}}}; "
 		" for i in {{0..{params.BQR}}}; do cp -r results/bqsr-round-$i/qc/{{multiqc.html,bcftools_stats/*.txt}} results/qc_summaries/bqsr-round-$i/; done; "
 		" for i in {{0..{params.BQR}}}; do tar -cvf results/bqsr-round-$i/qc.tar results/bqsr-round-$i/qc; gzip results/bqsr-round-$i/qc.tar;  done; "
