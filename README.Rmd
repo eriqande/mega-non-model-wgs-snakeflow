@@ -542,13 +542,16 @@ snakemake -np --profile  hpcc-profiles/slurm/sedna  send_to_gdrive --configfile 
 And it will print out a command line that does:
 
 1. copies multiqc.html and bcftools stats to a `qc_summaries` directories
-2. tarballs up the `qc` and `benchmarks` directories in all bqsr-round-X directories
+2. tarballs up the `qc`, `benchmarks`, and `logs` directories in all bqsr-round-X directories
 3. uses rclone to copy:
     - the bams and gvcfs (and their indexes) from the final round of BQSR,
     - the BCF files (and their indexes) from the final and all all previous rounds of BQSR
     - the `qc` and `benchmark` tarballs from the ry bqsr-round-X directory,
     - the `qc_summaries` directory,
-    - the `resources` directory with the indexed genome.
+    - the `resources` directory with the indexed genome
+    - the `bq_variants` and `bq_recal_tables`
+    - Finally, if there is a `data` directory present at the top level we assume that
+      is what holds the original fastqs, and we copy all that back, too!
 
 
 For example, on the test data set it prints this out:
@@ -563,12 +566,15 @@ done;
 for i in {0..2}; do 
 tar -cvf results/bqsr-round-$i/benchmarks.tar results/bqsr-round-$i/benchmarks; gzip results/bqsr-round-$i/benchmarks.tar; 
 done; 
+for i in {0..2}; do 
+tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results/bqsr-round-$i/logs.tar; 
+done; 
 
 rclone copy --dry-run  --drive-stop-on-upload-limit . gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test   \
     --include='config/*'  \
     --include='results/qc_summaries/**' \
-    --include='results/bqsr-round-{0,1,2}/{qc,benchmarks}.tar.gz' \
-    --include='results/bqsr-round-{0,1,2}/bcf/*'  \
+    --include='results/bqsr-round-{0,1,2}/{qc,benchmarks,logs}.tar.gz' \
+    --include='results/bqsr-round-{0,1,2}/{bcf,bq_recal_tables,bq_variants}/*'  \
     --include='resources/*'  \
     --include='results/bqsr-round-2/gvcf/*'  \
     --include='results/bqsr-round-2/recal/*'
