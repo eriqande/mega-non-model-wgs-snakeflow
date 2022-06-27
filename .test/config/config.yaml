@@ -10,6 +10,9 @@ bqsr_qd: 15
 maf_cutoffs: [0.01, 0.05]
 
 
+# this next one is here just for quickly writing out rclone statements
+# to put the results back onto google drive.
+rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test"
 
 # this is the default value for the first GenomicsDBImport run.
 # If you want to change it, you should typically change it

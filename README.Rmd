@@ -349,6 +349,7 @@ FASTA file to `resources/genome.fasta`).
 The correct one to use depends on what sequencing platform your data
 come from.
 - The BQSR parameters as described in the next section.
+- The google drive directory to copy results back to, if desired.  See below.
 - Some parameters can be set here; however, some of the YAML blocks
 here are vestigial and need to be cleaned up.  Not all of these options
 actually change things.  For now, ask Eric for help...
@@ -522,6 +523,60 @@ the values of `bqsr_qd = 15` and `bqsr_qual = 37` might be reasonable.
 
 You really should check these values for your own data set and select values
 for those parameters accordingly.
+
+## Offloading results to google drive
+
+Set the config parameter `rclone_base` to the directory on google drive that
+you want created (if necessary) and everything copied to.  For eric, this is like:
+```yaml
+rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test"
+```
+for the test data set.
+
+I have an rclone profile to copy results back to google drive. After you have
+finished a run, you can run the snakemake on the rule `send_to_gdrive` target,
+like this (for SEDNA):
+```sh
+snakemake -np --profile  hpcc-profiles/slurm/sedna  send_to_gdrive --configfile config/config.yaml
+```
+And it will print out a command line that does:
+
+1. copies multiqc.html and bcftools stats to a `qc_summaries` directories
+2. tarballs up the `qc` and `benchmarks` directories in all bqsr-round-X directories
+3. uses rclone to copy:
+    - the bams and gvcfs (and their indexes) from the final round of BQSR,
+    - the BCF files (and their indexes) from the final and all all previous rounds of BQSR
+    - the `qc` and `benchmark` tarballs from the ry bqsr-round-X directory,
+    - the `qc_summaries` directory,
+    - the `resources` directory with the indexed genome.
+
+
+For example, on the test data set it prints this out:
+```sh
+mkdir -p results/qc_summaries/bqsr-round-{0..2};  
+for i in {0..2}; do 
+  cp -r results/bqsr-round-$i/qc/{multiqc.html,bcftools_stats/*.txt} results/qc_summaries/bqsr-round-$i/; 
+done;  
+for i in {0..2}; do 
+tar -cvf results/bqsr-round-$i/qc.tar results/bqsr-round-$i/qc; gzip results/bqsr-round-$i/qc.tar;  
+done;  
+for i in {0..2}; do 
+tar -cvf results/bqsr-round-$i/benchmarks.tar results/bqsr-round-$i/benchmarks; gzip results/bqsr-round-$i/benchmarks.tar; 
+done; 
+
+rclone copy --dry-run  --drive-stop-on-upload-limit . gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test   \
+    --include='config/*'  \
+    --include='results/qc_summaries/**' \
+    --include='results/bqsr-round-{0,1,2}/{qc,benchmarks}.tar.gz' \
+    --include='results/bqsr-round-{0,1,2}/bcf/*'  \
+    --include='resources/*'  \
+    --include='results/bqsr-round-2/gvcf/*'  \
+    --include='results/bqsr-round-2/recal/*'
+```
+But, it prints out out all in one line.  You then need to copy that line
+into the Unix terminal so you can execute it and provide rclone with your
+password.
+
 
 
 ## Assumptions
