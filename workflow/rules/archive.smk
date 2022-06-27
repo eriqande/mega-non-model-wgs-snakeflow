@@ -44,7 +44,7 @@ rule send_to_gdrive:
 		" rclone copy --dry-run  --drive-stop-on-upload-limit . {params.rclone_base}  "
 		" --include='config/**' "
 		" --include='results/qc_summaries/**' "
-		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{qc,benchmarks.logs}}.tar.gz' "
+		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{qc,benchmarks,logs}}.tar.gz' "
 		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{bcf,bq_recal_tables,bq_variants}}/**' "
 		" --include='resources/**' "
 		" --include='data/**' "
