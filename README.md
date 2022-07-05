@@ -17,6 +17,8 @@ mega-non-model-wgs-snakeflow
     -   [What values should be chosen?](#what-values-should-be-chosen)
 -   [Offloading results to google
     drive](#offloading-results-to-google-drive)
+    -   [Google Drive Directory
+        Structure](#google-drive-directory-structure)
 -   [Assumptions](#assumptions)
 -   [Things fixed or added relative to JK’s snakemake
     workflow](#things-fixed-or-added-relative-to-jks-snakemake-workflow)
@@ -669,18 +671,47 @@ tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results
 done; 
 
 rclone copy --dry-run  --drive-stop-on-upload-limit . gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test   \
-    --include='config/*'  \
-    --include='results/qc_summaries/**' \
-    --include='results/bqsr-round-{0,1,2}/{qc,benchmarks,logs}.tar.gz' \
-    --include='results/bqsr-round-{0,1,2}/{bcf,bq_recal_tables,bq_variants}/*'  \
-    --include='resources/*'  \
-    --include='results/bqsr-round-2/gvcf/*'  \
-    --include='results/bqsr-round-2/recal/*'
+  --include='config/**'  \
+  --include='results/qc_summaries/**'  \
+  --include='results/bqsr-round-{0,1,2}/{qc,benchmarks,logs}.tar.gz'  \
+  --include='results/bqsr-round-{0,1,2}/{bcf,bq_recal_tables,bq_variants}/**'  \
+  --include='resources/**'  --include='data/**'  --include='results/bqsr-round-2/gvcf/*' \
+  --include='results/bqsr-round-2/recal/*'
 ```
 
 But, it prints out out all in one line. You then need to copy that line
 into the Unix terminal so you can execute it and provide rclone with
 your password.
+
+### Google Drive Directory Structure
+
+The resulting directory structure on google drive then looks like
+this—an example from a case where one round of BQSR was done:
+
+``` sh
+└── Archive-Directory  # this will be named different things for different runs
+    ├── config # sample meta data and info for doing the run
+    ├── data   # The fastqs
+    │   ├── NVS144B_R1_Columbus
+    │   └── NVS144B_R2_Columbus
+    ├── resources # the indexed genome it was mapped it
+    │   └── adapters # adapter seqs used for Trimmomatic
+    └── results
+        ├── bqsr-round-0
+        │   └── bcf. # the BCF files with no BQSR. pass = passes filters, maf is minor allele freq
+        ├── bqsr-round-1
+        │   ├── bcf  # more BCF files.  These after a round of BQSR.
+        │   ├── bq_recal_tables # BQSR info for each individual 
+        │   ├── bq_variants. # the variants used as "known" for BQSR round 1
+        │   ├── gvcf. # the gVCF files after this round of BQSR
+        │   └── recal  # the bam files after this round of  BQSR
+        └── qc_summaries. # multiqc summaries and bcftools stats for variants for each round
+            ├── bqsr-round-0
+            └── bqsr-round-1
+```
+
+Within each of the `results/bqsr-round-X` directories you will also find
+tarballs of all the log files and all the benchmark files.
 
 ## Assumptions
 
