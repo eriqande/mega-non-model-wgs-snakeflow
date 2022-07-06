@@ -12,7 +12,8 @@ rule make_snp_vcf:
         vcf="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
         tbi="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
     output:
-        vcf="results/bqsr-round-{bqsr_round}/hard_filtering/snps-{sg_or_chrom}.vcf.gz"
+        vcf=temp("results/bqsr-round-{bqsr_round}/hard_filtering/snps-{sg_or_chrom}.vcf.gz"),
+        idx=temp("results/bqsr-round-{bqsr_round}/hard_filtering/snps-{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/selectvariants/select-snps-{sg_or_chrom}.log",
     benchmark:
@@ -29,7 +30,8 @@ rule make_indel_vcf:
         vcf="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
         tbi="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
     output:
-        vcf="results/bqsr-round-{bqsr_round}/hard_filtering/indels-{sg_or_chrom}.vcf.gz"
+        vcf=temp("results/bqsr-round-{bqsr_round}/hard_filtering/indels-{sg_or_chrom}.vcf.gz"),
+        idx=temp("results/bqsr-round-{bqsr_round}/hard_filtering/indels-{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/selectvariants/select-indels-{sg_or_chrom}.log",
     benchmark:
@@ -46,7 +48,8 @@ rule hard_filter_snps:
     input:
         vcf="results/bqsr-round-{bqsr_round}/hard_filtering/snps-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/bqsr-round-{bqsr_round}/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz"
+        vcf=temp("results/bqsr-round-{bqsr_round}/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz"),
+        idx=temp("results/bqsr-round-{bqsr_round}/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/variantfiltration/snps-{sg_or_chrom}.log",
     benchmark:
@@ -72,7 +75,8 @@ rule hard_filter_indels:
     input:
         vcf="results/bqsr-round-{bqsr_round}/hard_filtering/indels-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"
+        vcf=temp("results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"),
+        idx=temp("results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/variantfiltration/indels-{sg_or_chrom}.log",
     benchmark:
@@ -96,7 +100,7 @@ rule bung_filtered_vcfs_back_together:
         snp="results/bqsr-round-{bqsr_round}/hard_filtering/snps-filtered-{sg_or_chrom}.vcf.gz",
         indel="results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}.bcf",
+        vcf=temp("results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}.bcf"),
     log:
         "results/bqsr-round-{bqsr_round}/logs/bung_filtered_vcfs_back_together/bung-{sg_or_chrom}.log",
     benchmark:
@@ -112,7 +116,7 @@ rule maf_filter:
     input:
         "results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}.bcf"
     output:
-        "results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}-maf-{maf}.bcf"
+        temp("results/bqsr-round-{bqsr_round}/hard_filtering/both-filtered-{sg_or_chrom}-maf-{maf}.bcf")
     log:
         "results/bqsr-round-{bqsr_round}/logs/maf_filter/{sg_or_chrom}-maf-{maf}.log",
     params:

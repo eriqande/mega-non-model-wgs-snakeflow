@@ -206,8 +206,8 @@ rule genomics_db2vcf:
         genome="resources/genome.fasta",
         receipts=expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
     output:
-        vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz",
-        tbi="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi"
+        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"),
+        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/genotypegvcfs/{sg_or_chrom}.log",
     benchmark:
@@ -240,8 +240,8 @@ rule mark_dp0_as_missing:
     input:
         vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"
     output:
-        vcf="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
-        tbi="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
+        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz"),
+        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/mark_dp0_as_missing/{sg_or_chrom}.log",
     benchmark:
