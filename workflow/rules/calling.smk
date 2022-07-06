@@ -123,8 +123,8 @@ rule concat_gvcf_sections:
 ## tee it to one named with the import number.  
 rule genomics_db_import_chromosomes:
     input:
-        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf/{sample}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
-        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf/{sample}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
+        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{chromo}}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
+        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{chromo}}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
     output:
         counter="results/bqsr-round-{bqsr_round}/gdb_accounting/counters/{chromo}.txt",
         receipts=touch(expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{chromo}}/{s}", s=sample_list))
@@ -161,8 +161,8 @@ rule genomics_db_import_chromosomes:
 # than that.
 rule genomics_db_import_scaffold_groups:
     input:
-        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf/{sample}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
-        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf/{sample}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
+        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{scaff_group}}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
+        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{scaff_group}}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
         scaff_groups = config["scaffold_groups"],
     output:
         interval_list="results/bqsr-round-{bqsr_round}/gdb_intervals/{scaff_group}.list",
