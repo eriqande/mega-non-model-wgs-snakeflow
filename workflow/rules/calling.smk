@@ -212,7 +212,7 @@ rule genomics_db_import_scaffold_groups:
 # {type_of_subset} will be either "chromosomes" or "scaffold_groups"
 # {sg_or_chrom} will be either like "CM031199.1" (if type_of_subset is chromosomes), 
 # or {scaff_group001} if type_of_subset is scaffold_groups.  
-rule genomics_db2vcf:
+rule genomics_db2vcf_scattered:
     input:
         genome="resources/genome.fasta",
         scatters="results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list",
@@ -249,8 +249,8 @@ rule gather_scattered_vcfs:
         vcf=lambda wc: get_scattered_vcfs(wc, ""),
         tbi=lambda wc: get_scattered_vcfs(wc, ".tbi"),
     output:
-        vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz",
-        tbi="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi"
+        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"),
+        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gather_scattered_vcfs/{sg_or_chrom}.txt"
     benchmark:
