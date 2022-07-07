@@ -1,10 +1,12 @@
 units: .test/config/units.tsv
 chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv
+scatter_intervals_file: .test/config/scatters_1200000.tsv
 bqsr_rounds: 2
 bqsr_maf: 0.0225
 bqsr_qual: 37
 bqsr_qd: 15
+
 
 # the following must be a list, even if it is just one element
 maf_cutoffs: [0.01, 0.05]

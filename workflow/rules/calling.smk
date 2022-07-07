@@ -16,6 +16,17 @@ rule make_chromo_interval_lists:
         " echo {wildcards.chromo} > {output};"
 
 
+# this is primarily a calling thing so we will define it here:
+rule make_scatter_interval_lists:
+    input:
+        scatters_file= config["scatter_intervals_file"]
+    output:
+        "results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list"
+    shell:
+        " awk -v sgc={wildcards.sg_or_chrom} -v scat={wildcards.scatter} ' "
+        "    NR>1 && $1 == sgc && $2==scat {{printf(\"%s:%s-%s\\n\", $3, $4, $5)}} "
+        " ' {input.scatters_file} > {output};"
+
 
 # this is the straight-up simple version that I use to just create
 # a GVCF from the bam in mkdup, over all the regions.  Note that I give it
@@ -204,31 +215,55 @@ rule genomics_db_import_scaffold_groups:
 rule genomics_db2vcf:
     input:
         genome="resources/genome.fasta",
+        scatters="results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list",
         receipts=expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
     output:
-        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"),
-        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi")
+        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz"),
+        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz.tbi")
     log:
-        "results/bqsr-round-{bqsr_round}/logs/gatk/genotypegvcfs/{sg_or_chrom}.log",
+        "results/bqsr-round-{bqsr_round}/logs/gatk/genotypegvcfs/{sg_or_chrom}/{scatter}.log",
     benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/genomics_db2vcf/{sg_or_chrom}.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/genomics_db2vcf/{sg_or_chrom}/{scatter}.bmk",
     params:
         gendb="results/bqsr-round-{bqsr_round}/genomics_db/{sg_or_chrom}",
         java_opts="-Xmx8g",  # I might need to consider a temp directory, too in which case, put it in the config.yaml
-        pextra=" --genomicsdb-shared-posixfs-optimizations "
+        pextra=" --genomicsdb-shared-posixfs-optimizations --only-output-calls-starting-in-intervals "
     resources:
         mem_mb = 11750,
         cpus = 2,
-        time = "3-00:00:00"
+        time = "1-00:00:00"
     threads: 2
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
         " gatk --java-options {params.java_opts} GenotypeGVCFs "
         " {params.pextra} "
+        " -L {input.scatters} "
         " -R {input.genome} "
         " -V gendb://{params.gendb} "
         " -O {output.vcf} > {log} 2> {log} "
+
+
+rule gather_scattered_vcfs:
+    input:
+        vcf=lambda wc: get_scattered_vcfs(wc, ""),
+        tbi=lambda wc: get_scattered_vcfs(wc, ".tbi"),
+    output:
+        vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz",
+        tbi="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi"
+    log:
+        "results/bqsr-round-{bqsr_round}/logs/gather_scattered_vcfs/{sg_or_chrom}.txt"
+    benchmark:
+        "results/bqsr-round-{bqsr_round}/benchmarks/gather_scattered_vcfs/{sg_or_chrom}.bmk",
+    params:
+        opts=" --naive "
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        " (bcftools concat {params.opts} -Oz {input.vcf} > {output.vcf}; "
+        " bcftools index -t {output.vcf})  2>{log}; "
+
+
 
 
 # this is a little rule we throw in here so that we can mark

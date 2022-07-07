@@ -11,6 +11,8 @@ properties:
     type: string
   scaffold_groups:
     type: string
+  scatter_intervals_file:
+    type: string
   bqsr_rounds:
     type: integer
   bqsr_maf:
@@ -110,6 +112,7 @@ required:
   - params
   - chromosomes
   - scaffold_groups
+  - scatter_intervals_file
   - bqsr_rounds
   - bqsr_maf
   - bqsr_qual

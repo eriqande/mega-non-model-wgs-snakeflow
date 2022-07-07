@@ -1,0 +1,30 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+
+description: an entry in the scatter intervals sheet
+properties:
+  id:
+    type: string
+    description: chromosome or scaffold_group identifier
+  scatter_idx:
+    type: string
+    description: name of the scatter group (must be unique within id and must sort lexicographically in genome coordinate order)
+  chrom:
+    type: string
+    description: name of chromosome or scaffold
+  start:
+    type: integer
+    description: start point of the scatter segment on the chromosome/scaffold
+  end:
+    type: integer
+    description: ending point of the scatter segment on the chromosome/scaffold
+  scatter_length:
+    type: integer
+    description: total length of all bases in the scatter group
+
+required:
+  - id
+  - scatter_idx
+  - chrom
+  - start
+  - end
+  - scatter_length

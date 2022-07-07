@@ -6,3 +6,4 @@
 results
 resources/genome*
 .snakemake
+.rmd_snakemake

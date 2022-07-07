@@ -68,6 +68,18 @@ unique_scaff_groups = list(scaffold_groups.id.unique())
 unique_chromosomes = list(chromosomes.chrom.unique())  # don't need to unique it, but I do anyway
 
 
+# finally, get all the scatter groups, indexed two different ways.
+scatter_wc_constraint="scat_0[0-9]*"  # this is just here for the case where `scatter_intervals_file: ""`
+if config["scatter_intervals_file"] != "":
+    scatter_groups = pd.read_table(config["scatter_intervals_file"]).set_index("id", drop=False)
+    validate(scatter_groups, schema="../schemas/scatter_intervals.schema.yaml")
+    scatter_cols = list(scatter_groups.columns)
+    if scatter_cols[0] != 'id' or scatter_cols[1] != 'scatter_idx' or scatter_cols[2] != 'chrom' or scatter_cols[3] != 'start' or scatter_cols[4] != 'end' or scatter_cols[5] != 'scatter_length':
+        raise Exception("Column order is important in the scaffold_groups file.  The columns must be in order: id, scatter_idx, chrom, start, end, scatter_length.")
+    unique_scats = list(scatter_groups.scatter_idx.unique())
+    scatter_wc_constraint="|".join(unique_scats)
+
+
 ##### Wildcard constraints #####
 wildcard_constraints:
     sample="|".join(sample_list),
@@ -76,7 +88,9 @@ wildcard_constraints:
     scaff_group="|".join(unique_scaff_groups),
     sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes),
     filter_condition="ALL|PASS|FAIL",
-    maf="|".join(mafs)
+    maf="|".join(mafs),
+    scatter=scatter_wc_constraint
+
 
 
 #### Pick out all the units that are of the same sample in the same library
@@ -291,6 +305,11 @@ def get_bams_for_bqsr(wildcards):
             subd = subd,
             sample = wildcards.sample)}
 
+
+# given a chromosome or a scaff_group, get all the scattered vcf.gz of vcf.gz.tbi files
+def get_scattered_vcfs(wildcards, ext):
+    scat_ids=scatter_groups.loc[(scatter_groups["id"] == wildcards.sg_or_chrom), "scatter_idx"].unique()
+    return expand("results/bqsr-round-{{bqsr_round}}/vcf_sections/{{sg_or_chrom}}/{scat}.vcf.gz{e}", scat=scat_ids, e=ext)
 
 # we have this here becuase we only want to do fastqc, mkdup and trimmomatic
 # qc for bqsr_round=0.  The others just do the samtools stats.

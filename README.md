@@ -1,7 +1,8 @@
 mega-non-model-wgs-snakeflow
 ================
 
--   [Major Update/Upgrade Notes](#major-updateupgrade-notes)
+-   [Major Update/Upgrade Notes (New)](#major-updateupgrade-notes-new)
+-   [Major Update/Upgrade Notes (Old)](#major-updateupgrade-notes-old)
 -   [Quick install and run](#quick-install-and-run)
     -   [So, what just happened there](#so-what-just-happened-there)
 -   [Condensed DAG for the workflow](#condensed-dag-for-the-workflow)
@@ -28,7 +29,68 @@ mega-non-model-wgs-snakeflow
     Data
     bases)](#stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases)
 
-## Major Update/Upgrade Notes
+## Major Update/Upgrade Notes (New)
+
+I have now pulled the `more-parallel` branch into main. There are two
+main changes:
+
+1.  The genomics databases are now created directly from the gvcf
+    sections. As a consequence, it is not necessary for gvcfs at *all*
+    chromosomes and scaffold groups to be complete before going on to
+    the genomics DB stage. This is helpful when there are some very long
+    chromosomes. This change entails no difference, otherwise, to the
+    user’s resposibilities.
+
+2.  The GenotypeGVCFs step is now done in a scattered fashion over
+    intervals that are all less than some desired length. This means
+    that instead of having to wait a super long time for a long
+    chromosome to finish this step, you can sort of normalize the times
+    required for each instance of this step, but effectively chopping
+    each chromosome into, say, 5 megabase chunks, and then dispatching
+    each of those jobs separately, and stitching them all together at
+    the end. This also means that the workflow can be designed so that
+    none of these jobs exceed 24 hours, so that they can be run on the
+    standard queue on most clusters. **There are some new requirements
+    of the user, however!!**
+
+    1.  There is a new required file: the “scatter_intervals_file.” The
+        path to this must be given in the config file variable
+        `scatter_interval_file`. For example, in the
+        `.test/config/config.yaml` we have:
+
+        ``` yaml
+        scatter_interval_file: ./test/config/scatters_1200000.tsv
+        ```
+
+        The name of the file can be anything you want. In the above
+        case, I named it that to remind me that it has chopped the
+        genome up into segments that are no longer than 1.2 megabases
+        for genotype calling.
+
+    2.  The format of the file can be seen by looking at in on GitHub,
+        [here](PUT-LINK-IN-WHEN-PULLED-INTO-MAIN). Importantly, the
+        order of the columns must be as shown in this file.
+
+    3.  If you already have your `chromosomes.tsv` and your
+        `scaffold_groups.tsv` file paths noted in your config file, you
+        can create the scatter intervals file by first setting
+        `scatter_interval_file: ""` in your config file, then running
+        this command:
+
+        ``` sh
+        snakemake --cores 1 --use-conda results/scatter_config/scatters_XXXXXXX.tsv --configfile path_to/your_config/config.yaml
+        ```
+
+        Where `XXXXXXX` should be replaced with the maximum length
+        segment of genome you want to have in a scatter (for example
+        5000000), and `path_to/your_config/config.yaml` should be
+        replaced by the actual path to your config file. This step will
+        create the file `results/scatter_config/scatters_XXXXXXX.tsv`,
+        after which you can copy it to your `config` directory and give
+        the path to it in the `scatter_interval_file:` line in your
+        `config.yaml`.
+
+## Major Update/Upgrade Notes (Old)
 
 -   I have now pulled the `bqsr-directory-sructure` branch into main.
     This lets us easily do one or more rounds of “bootstrapped base
@@ -571,7 +633,7 @@ ggplot(qds, aes(x = value)) +
   xlab("INFO/QD value")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 And the distribution of `qual` values:
 
@@ -585,7 +647,7 @@ g <- ggplot(quals, aes(x = value)) +
 g
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 That is a little harder to see, so we can limit it to QUAL values less
 than 100:
@@ -603,7 +665,7 @@ g +
 
     ## Warning: Removed 126 row(s) containing missing values (geom_path).
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 Obviously, with this very small test data set, it is hard to interpret
 these results. But, you can sort of see why it seems like for this test

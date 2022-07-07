@@ -21,3 +21,20 @@ rule dest_bqsr_histos_0:
 	input:
 		"results/bqsr-round-0/qc/bqsr_relevant_histograms/qd.tsv",
 		"results/bqsr-round-0/qc/bqsr_relevant_histograms/qual.tsv"
+
+
+
+
+# This turns chromosomes.tsv and scaffolds.tsv into scatter_intervals.tsv.
+# Needs to have R installed and on the path.
+rule dest_scatter_intervals:
+    input:
+        chroms=config["chromosomes"],
+        scaffs=config["scaffold_groups"],
+    params:
+        binsize="{int_length}"
+    output:
+        tsv="results/scatter_config/scatters_{int_length}.tsv"
+    script:
+    	"../scripts/sequence-scatter-bins.R"
+    
