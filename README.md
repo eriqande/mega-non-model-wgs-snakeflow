@@ -6,6 +6,7 @@ mega-non-model-wgs-snakeflow
 -   [Quick install and run](#quick-install-and-run)
     -   [So, what just happened there](#so-what-just-happened-there)
 -   [Condensed DAG for the workflow](#condensed-dag-for-the-workflow)
+-   [Rulegraph for the workflow](#rulegraph-for-the-workflow)
 -   [Running this with SLURM](#running-this-with-slurm)
 -   [What the user must do and values to be set,
     etc](#what-the-user-must-do-and-values-to-be-set-etc)
@@ -55,11 +56,11 @@ main changes:
 
     1.  There is a new required file: the “scatter_intervals_file.” The
         path to this must be given in the config file variable
-        `scatter_interval_file`. For example, in the
+        `scatter_intervals_file`. For example, in the
         `.test/config/config.yaml` we have:
 
         ``` yaml
-        scatter_interval_file: ./test/config/scatters_1200000.tsv
+        scatter_intervals_file: .test/config/scatters_1200000.tsv
         ```
 
         The name of the file can be anything you want. In the above
@@ -68,13 +69,14 @@ main changes:
         for genotype calling.
 
     2.  The format of the file can be seen by looking at in on GitHub,
-        [here](PUT-LINK-IN-WHEN-PULLED-INTO-MAIN). Importantly, the
-        order of the columns must be as shown in this file.
+        [here](https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/.test/config/scatters_1200000.tsv).
+        Importantly, the order of the columns must be as shown in this
+        file.
 
     3.  If you already have your `chromosomes.tsv` and your
         `scaffold_groups.tsv` file paths noted in your config file, you
         can create the scatter intervals file by first setting
-        `scatter_interval_file: ""` in your config file, then running
+        `scatter_intervals_file: ""` in your config file, then running
         this command:
 
         ``` sh
@@ -87,7 +89,7 @@ main changes:
         replaced by the actual path to your config file. This step will
         create the file `results/scatter_config/scatters_XXXXXXX.tsv`,
         after which you can copy it to your `config` directory and give
-        the path to it in the `scatter_interval_file:` line in your
+        the path to it in the `scatter_intervals_file:` line in your
         `config.yaml`.
 
 ## Major Update/Upgrade Notes (Old)
@@ -192,15 +194,20 @@ like this:
     bcf_maf_section_summaries                30              1              1
     bcf_section_summaries                    18              1              1
     bung_filtered_vcfs_back_together         18              1              1
+    bwa_index                                 1              1              1
     combine_bcftools_stats                    3              1              1
     combine_maf_bcftools_stats                5              1              1
-    concat_gvcf_sections                     24              1              1
+    concat_gvcf_sections                      8              1              1
     condense_variants_for_bqsr                2              1              1
     fastqc_read1                             22              1              1
     fastqc_read2                             22              1              1
-    genomics_db2vcf                          18              2              2
-    genomics_db_import_chromosomes           12              2              2
-    genomics_db_import_scaffold_groups        6              2              2
+    gather_scattered_vcfs                    18              1              1
+    genome_dict                               1              1              1
+    genome_faidx                              1              1              1
+    genomics_db2vcf_scattered               126              1              1
+    genomics_db_import_chromosomes           12              1              1
+    genomics_db_import_scaffold_groups        6              1              1
+    get_genome                                1              1              1
     hard_filter_indels                       18              1              1
     hard_filter_snps                         18              1              1
     maf_filter                               30              1              1
@@ -208,15 +215,16 @@ like this:
     make_gvcf_sections                      144              1              1
     make_indel_vcf                           18              1              1
     make_scaff_group_interval_lists           6              1              1
+    make_scatter_interval_lists             126              1              1
     make_snp_vcf                             18              1              1
-    map_reads                                22              4              4
+    map_reads                                22              1              1
     mark_dp0_as_missing                      18              1              1
     mark_duplicates                           8              1              1
     multiqc                                   3              1              1
     recalibrate_bases                        16              1              1
     samtools_stats                           24              1              1
     trim_reads_pe                            22              1              1
-    total                                   580              1              4
+    total                                   820              1              1
 
     This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 
@@ -240,12 +248,12 @@ environments will already be in place.
  snakemake --cores 20 --use-conda  --keep-going --configfile .test/config/config.yaml
 ```
 
-When you do that it should take about 5 minutes to run through the whole
-workflow on the tiny test data. Note that the multiqc step will fail.
-This is a quirk of the tiny test data. I have never had a problem with
-it failing on real, full-sized data sets. You will get an error message
-about the multiqc rule failing, but, with the `--keep-going` option,
-everything else will finish.
+When you do that it should take about 5 to 20 minutes to run through the
+whole workflow on the tiny test data. Note that the multiqc step will
+fail. This is a quirk of the tiny test data. I have never had a problem
+with it failing on real, full-sized data sets. You will get an error
+message about the multiqc rule failing, but, with the `--keep-going`
+option, everything else will finish.
 
 7.  Once that has finished. Do a dry run of snakemake again and you
     should see that all that remains is that pesky multiqc run (again,
@@ -338,6 +346,11 @@ Here is a DAG for the workflow on the test data in `.test`, condensed
 into an easier-to-look-at picture by the `condense_dag()` function in
 Eric’s [SnakemakeDagR](https://github.com/eriqande/SnakemakeDagR)
 package. ![](README_files/test_run_dag_condensed.svg)<!-- -->
+
+## Rulegraph for the workflow
+
+Here is the pure rulegraph, which might be a little easier to read:
+![](README_files/test_run_rulegraph.svg)<!-- -->
 
 ## Running this with SLURM
 
@@ -633,7 +646,7 @@ ggplot(qds, aes(x = value)) +
   xlab("INFO/QD value")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 And the distribution of `qual` values:
 
@@ -647,7 +660,7 @@ g <- ggplot(quals, aes(x = value)) +
 g
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 That is a little harder to see, so we can limit it to QUAL values less
 than 100:
@@ -665,7 +678,7 @@ g +
 
     ## Warning: Removed 126 row(s) containing missing values (geom_path).
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 Obviously, with this very small test data set, it is hard to interpret
 these results. But, you can sort of see why it seems like for this test
@@ -715,7 +728,8 @@ And it will print out a command line that does:
         we assume that is what holds the original fastqs, and we copy
         all that back, too!
 
-For example, on the test data set it prints this out:
+For example, on the test data set it prints out something like this (but
+not exactly this, because I keep tweaking it):
 
 ``` sh
 mkdir -p results/qc_summaries/bqsr-round-{0..2};  
