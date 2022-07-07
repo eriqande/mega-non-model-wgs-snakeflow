@@ -604,7 +604,8 @@ And it will print out a command line that does:
       is what holds the original fastqs, and we copy all that back, too!
 
 
-For example, on the test data set it prints this out:
+For example, on the test data set it prints out something like
+this (but not exactly this, because I keep tweaking it):
 ```sh
 mkdir -p results/qc_summaries/bqsr-round-{0..2};  
 for i in {0..2}; do 

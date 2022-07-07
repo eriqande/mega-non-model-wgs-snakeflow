@@ -28,7 +28,9 @@ rule send_to_gdrive:
 		expand("results/bqsr-round-{bq}/qc/multiqc.html", bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
 		expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=config["bqsr_maf"], bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
 		expand("results/bqsr-round-{bq}/{subd}/{s}.{b}", bq=config["bqsr_rounds"], subd=bam_subd(config["bqsr_rounds"]), s = sample_list, b = ["bam", "bai"]),
-		expand("results/bqsr-round-{bq}/gvcf/{s}.g.vcf.{ext}", bq=config["bqsr_rounds"], s=sample_list, ext=["gz", "gz.tbi"])
+		expand("results/bqsr-round-{bq}/gvcf/{s}.g.vcf.{ext}", bq=config["bqsr_rounds"], s=sample_list, ext=["gz", "gz.tbi"]),
+		expand("results/bqsr-round-{bq}/bq_recal_tables/{s}.table", bq=[str(x) for x in range(1, int(config["bqsr_rounds"])+1)], s=sample_list),
+		expand("results/bqsr-round-{bq}/bq_variants/variant{suff}", bq=[str(x) for x in range(1, int(config["bqsr_rounds"])+1)], suff=['s.vcf.gz', 's.vcf.gz.tbi', '-stats.txt']),
 	params:
 		BQR = config["bqsr_rounds"],
 		rclone_base = config["rclone_base"],
