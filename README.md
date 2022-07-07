@@ -24,8 +24,6 @@ mega-non-model-wgs-snakeflow
 -   [Assumptions](#assumptions)
 -   [Things fixed or added relative to JK’s snakemake
     workflow](#things-fixed-or-added-relative-to-jks-snakemake-workflow)
--   [Eric’s list of future
-    enhancements](#erics-list-of-future-enhancements)
 -   [Stepwise addition of new samples to the Workflow (and the Genomics
     Data
     bases)](#stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases)
@@ -801,18 +799,6 @@ tarballs of all the log files and all the benchmark files.
 -   benchmark each rule
 -   use genomicsDBimport
 -   allow for merging of lots of small scaffolds into genomicsDB
-
-## Eric’s list of future enhancements
-
--   Parallelize the GenotypeGVCFs step via a scatter-gather whereby the
-    user can define `chromo_scatter.tsv` and a `scaff_group_scatter.tsv`
-    files that break things down into X Mb blocks, where X might be
-    like 5. It may be harder for the scaffold groups, because some of
-    the scatters will include multiple scaffolds. But, we could easily
-    rock that all together in R. I would rather the user do it up front
-    so that the workflow does not depend on checkpoints.
--   Develop a sane way to iteratively bootstrap some base-quality score
-    recalibration.
 
 ## Stepwise addition of new samples to the Workflow (and the Genomics Data bases)
 
