@@ -36,7 +36,7 @@ most clusters.  **There are some new requirements of the user, however!!**
         named it that to remind me that it has chopped the genome up into
         segments that are no longer than 1.2 megabases for genotype calling.
     b. The format of the file can be seen by looking at in on GitHub,
-       [here](PUT-LINK-IN-WHEN-PULLED-INTO-MAIN).  Importantly, the order of the
+       [here](https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/.test/config/scatters_1200000.tsv).  Importantly, the order of the
        columns must be as shown in this file.
     c. If you already have your `chromosomes.tsv` and your `scaffold_groups.tsv`
        file paths noted in your config file, you can create the
@@ -151,15 +151,20 @@ bcf_concat_mafs                           5              1              1
 bcf_maf_section_summaries                30              1              1
 bcf_section_summaries                    18              1              1
 bung_filtered_vcfs_back_together         18              1              1
+bwa_index                                 1              1              1
 combine_bcftools_stats                    3              1              1
 combine_maf_bcftools_stats                5              1              1
-concat_gvcf_sections                     24              1              1
+concat_gvcf_sections                      8              1              1
 condense_variants_for_bqsr                2              1              1
 fastqc_read1                             22              1              1
 fastqc_read2                             22              1              1
-genomics_db2vcf                          18              2              2
-genomics_db_import_chromosomes           12              2              2
-genomics_db_import_scaffold_groups        6              2              2
+gather_scattered_vcfs                    18              1              1
+genome_dict                               1              1              1
+genome_faidx                              1              1              1
+genomics_db2vcf_scattered               126              1              1
+genomics_db_import_chromosomes           12              1              1
+genomics_db_import_scaffold_groups        6              1              1
+get_genome                                1              1              1
 hard_filter_indels                       18              1              1
 hard_filter_snps                         18              1              1
 maf_filter                               30              1              1
@@ -167,15 +172,16 @@ make_chromo_interval_lists               12              1              1
 make_gvcf_sections                      144              1              1
 make_indel_vcf                           18              1              1
 make_scaff_group_interval_lists           6              1              1
+make_scatter_interval_lists             126              1              1
 make_snp_vcf                             18              1              1
-map_reads                                22              4              4
+map_reads                                22              1              1
 mark_dp0_as_missing                      18              1              1
 mark_duplicates                           8              1              1
 multiqc                                   3              1              1
 recalibrate_bases                        16              1              1
 samtools_stats                           24              1              1
 trim_reads_pe                            22              1              1
-total                                   580              1              4
+total                                   820              1              1
 
 This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 ```
@@ -196,7 +202,7 @@ you give this command:
 ```sh
  snakemake --cores 20 --use-conda  --keep-going --configfile .test/config/config.yaml
 ```
-When you do that it should take about 5 minutes to run through the whole
+When you do that it should take about 5 to 20 minutes to run through the whole
 workflow on the tiny test data.  Note that the multiqc step will fail.  This is
 a quirk of the tiny test data.  I have never had a problem with it failing on real,
 full-sized data sets.  You will get an error message about the multiqc rule failing,
@@ -291,6 +297,11 @@ Eric's [SnakemakeDagR](https://github.com/eriqande/SnakemakeDagR) package.
 knitr::include_graphics("README_files/test_run_dag_condensed.svg")
 ```
 
+## Rulegraph for the workflow
+Here is the pure rulegraph, which might be a little easier to read:
+```{r, echo=FALSE, outwidth='100%'}
+knitr::include_graphics("README_files/test_run_rulegraph.svg")
+```
 
 ## Running this with SLURM
 
