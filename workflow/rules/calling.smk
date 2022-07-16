@@ -2,30 +2,36 @@
 rule make_scaff_group_interval_lists:
     input:
         scaff_groups = config["scaffold_groups"]
+    log:
+        "results/bqsr-round-{bqsr_round}/logs/make_scaff_group_interval_lists/{scaff_group}.log"
     output:
         "results/bqsr-round-{bqsr_round}/interval_lists/{scaff_group}.list"
     shell:
-        " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output};"
+        " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output} 2> {log};"
 
 
 # this is primarily a calling thing so we will define it here:
 rule make_chromo_interval_lists:
+    log:
+        "results/bqsr-round-{bqsr_round}/logs/make_chromo_interval_lists/{chromo}.log"
     output:
         "results/bqsr-round-{bqsr_round}/interval_lists/{chromo}.list"
     shell:
-        " echo {wildcards.chromo} > {output};"
+        " echo {wildcards.chromo} > {output} 2> {log};"
 
 
 # this is primarily a calling thing so we will define it here:
 rule make_scatter_interval_lists:
     input:
         scatters_file= config["scatter_intervals_file"]
+    log:
+        "results/bqsr-round-{bqsr_round}/logs/make_scatter_interval_lists/{sg_or_chrom}/{scatter}.log"
     output:
         "results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list"
     shell:
         " awk -v sgc={wildcards.sg_or_chrom} -v scat={wildcards.scatter} ' "
         "    NR>1 && $1 == sgc && $2==scat {{printf(\"%s:%s-%s\\n\", $3, $4, $5)}} "
-        " ' {input.scatters_file} > {output};"
+        " ' {input.scatters_file} > {output} 2> {log};"
 
 
 # this is the straight-up simple version that I use to just create
