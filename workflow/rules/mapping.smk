@@ -45,7 +45,7 @@ rule map_reads:
         sort_order="coordinate",
     resources:
         time = "23:59:59",
-        mem_mb = 19100
+        mem_mb = 18400
     threads: 4
     wrapper:
         "0.59.2/bio/bwa/mem"
