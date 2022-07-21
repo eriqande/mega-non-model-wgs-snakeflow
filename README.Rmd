@@ -102,14 +102,13 @@ must have `mamba`.  To install snakemake so that this all works, follow the
 installation directions at
 [https://snakemake.readthedocs.io/en/stable/getting_started/installation.html](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html).
 
-If you already have snakemake, but it it version 6 or earlier, you should create
-a new snakemake environment with the latest version.  Check the installation page
-to see what the latest version is and then tag the name of your snakemake environment
-with it.  For example, if the latest stable version is 7.7.0, you command would look
-like:
+I have developed and tested this workflow using snakemake version 7.7.0.  The updgrade
+to 7.8.0 introduces a lot of new snakemake behaviors that can be a little unexpected,
+so I will be sticking with 7.7.0 for a while.  Accordingly, you should create a
+snakemake environment with 7.7.0 to run this.  You can do that like this:
 ```sh
 conda activate base
-mamba create -c conda-forge -c bioconda -n snakemake-7.7.0 snakemake
+mamba create -c conda-forge -c bioconda -n snakemake-7.7.0 snakemake=7.7.0
 ```
 
 2. You must have cloned this repository.  If you are savvy with this sort of thing,
@@ -145,7 +144,7 @@ Job stats:
 job                                   count    min threads    max threads
 ----------------------------------  -------  -------------  -------------
 all                                       1              1              1
-apply_bqsr                               16              1              1
+apply_bqsr                               14              1              1
 bcf_concat                                1              1              1
 bcf_concat_mafs                           5              1              1
 bcf_maf_section_summaries                30              1              1
@@ -154,39 +153,40 @@ bung_filtered_vcfs_back_together         18              1              1
 bwa_index                                 1              1              1
 combine_bcftools_stats                    3              1              1
 combine_maf_bcftools_stats                5              1              1
-concat_gvcf_sections                      8              1              1
+concat_gvcf_sections                      7              1              1
 condense_variants_for_bqsr                2              1              1
-fastqc_read1                             22              1              1
-fastqc_read2                             22              1              1
+fastqc_read1                             18              1              1
+fastqc_read2                             18              1              1
 gather_scattered_vcfs                    18              1              1
 genome_dict                               1              1              1
 genome_faidx                              1              1              1
-genomics_db2vcf_scattered               126              1              1
-genomics_db_import_chromosomes           12              1              1
-genomics_db_import_scaffold_groups        6              1              1
+genomics_db2vcf_scattered               126              2              2
+genomics_db_import_chromosomes           12              2              2
+genomics_db_import_scaffold_groups        6              2              2
 get_genome                                1              1              1
 hard_filter_indels                       18              1              1
 hard_filter_snps                         18              1              1
 maf_filter                               30              1              1
 make_chromo_interval_lists               12              1              1
-make_gvcf_sections                      144              1              1
+make_gvcf_sections                      126              1              1
 make_indel_vcf                           18              1              1
 make_scaff_group_interval_lists           6              1              1
 make_scatter_interval_lists             126              1              1
 make_snp_vcf                             18              1              1
-map_reads                                22              1              1
+map_reads                                18              4              4
 mark_dp0_as_missing                      18              1              1
-mark_duplicates                           8              1              1
+mark_duplicates                           7              1              1
 multiqc                                   3              1              1
-recalibrate_bases                        16              1              1
-samtools_stats                           24              1              1
-trim_reads_pe                            22              1              1
-total                                   820              1              1
+recalibrate_bases                        14              1              1
+samtools_stats                           21              1              1
+trim_reads_pe                            18              1              1
+total                                   777              1              4
 
 This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 ```
 
-5. Do the run.  But only install the necessary software environments:
+5. Do the run.  But, for the first go-round only install the necessary software environments by
+using the `--conda-create-envs-only` option:
 ```sh
 snakemake --cores 20 --use-conda  --conda-create-envs-only --configfile .test/config/config.yaml
 ```
@@ -200,25 +200,37 @@ have checked out an entire node on SEDNA,
 using, for example `srun -c 20 --pty /bin/bash`.  At any rate, to do the run
 you give this command:
 ```sh
- snakemake --cores 20 --use-conda  --keep-going --configfile .test/config/config.yaml
+ snakemake --cores 20 --use-conda --configfile .test/config/config.yaml
 ```
 When you do that it should take about 5 to 20 minutes to run through the whole
-workflow on the tiny test data.  Note that the multiqc step will fail.  This is
-a quirk of the tiny test data.  I have never had a problem with it failing on real,
-full-sized data sets.  You will get an error message about the multiqc rule failing,
-but, with the `--keep-going` option, everything else will finish. 
+workflow on the tiny test data.  
 
 7. Once that has finished.  Do a dry run of snakemake again and you should see that
-all that remains is that pesky multiqc run (again, this won't be a problem on real
-data) which is part of rule `all`:
+it is telling you that there is nothing to do because all requested output files
+have been created.
 ```sh
 snakemake --cores 20 --use-conda  --keep-going  -np --configfile .test/config/config.yaml
 ```
+This will output something like:
+```
+Building DAG of jobs...
+The input used to generate one or several output files has changed:
+    To inspect which output files have changes, run 'snakemake --list-input-changes'.
+    To trigger a re-run, use 'snakemake -R $(snakemake --list-input-changes)'.
+The params used to generate one or several output files has changed:
+    To inspect which output files have changes, run 'snakemake --list-params-changes'.
+    To trigger a re-run, use 'snakemake -R $(snakemake --list-params-changes)'.
+Nothing to be done (all requested files are present and up to date).
+```
+The changes it thinks have occurred, have not.  Those are a consequence of some
+chicanery I did in the workflow to enable genomic data base updating, which I think I will
+probably revamp at some point, because it is not as useful as one might think, since
+loading genomic data bases from gVCFs is actually not terribly costly.
 
 ### So, what just happened there
 
 The upshot is that this workflow started with the fastq files in `.test` that
-represent 8 samples sequenced across multiple lanes and prepared in different
+represent 7 samples sequenced across multiple lanes and prepared in different
 libraries:
 ```sh
 (snakemake-7.7.0) [node08: mega-non-model-wgs-snakeflow]--% ls .test/data/fastq/

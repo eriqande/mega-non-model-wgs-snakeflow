@@ -1,0 +1,25 @@
+
+
+library(tidyverse)
+
+
+times <- list(
+  scratch = read_tsv("development/scratch-timings-etc/scratch-benchmarks.bmk"),
+  nfs = read_tsv("development/scratch-timings-etc/nfs-benchmarks.bmk")
+) %>%
+  bind_rows(.id = "file_system") %>%
+  select(-`h:m:s`) %>%
+  pivot_longer(cols = s:cpu_time) %>%
+  separate(file, into = c("rule", "sample"), sep = "/") %>%
+  pivot_wider(
+    names_from = file_system,
+    values_from = value
+  )
+
+# now plot those, facet-gridding on rule and name
+times %>%
+  filter(name == "mean_load") %>%
+  ggplot(aes(x = nfs, y = scratch, fill = rule)) +
+  geom_point(shape = 21, stroke = 0.1) + 
+  facet_grid(rule ~ name, scales = "free") +
+  geom_abline(slope = 1, intercept = 0)
