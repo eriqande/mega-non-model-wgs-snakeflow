@@ -277,6 +277,7 @@ rule gather_scattered_vcfs:
 # depth of 0, because GATK now marks those as 0/0,
 # see https://gatk.broadinstitute.org/hc/en-us/community/posts/4476803114779-GenotypeGVCFs-Output-no-call-as-reference-genotypes?page=1#community_comment_6006727219867
 # this also adds an INFO field NMISS, which gives the number of samples missing a call.
+# 8/26/22: This has been updated to also mark genotypes as missing if they have a PL of 0,0,0.
 rule mark_dp0_as_missing:
     input:
         vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"
@@ -290,7 +291,7 @@ rule mark_dp0_as_missing:
     conda:
         "../envs/bcftools.yaml"
     shell:
-        "(bcftools +setGT {input.vcf} -- -t q -n . -i 'FMT/DP=0' | "
+        "(bcftools +setGT {input.vcf} -- -t q -n . -i 'FMT/DP=0 | (FMT/PL[:0]=0 & FMT/PL[:1]=0 & FMT/PL[:2]=0)' | "
         " bcftools +fill-tags - -- -t 'NMISS=N_MISSING' | "
         " bcftools view -Oz - > {output.vcf}; "
         " bcftools index -t {output.vcf}) 2> {log} "
