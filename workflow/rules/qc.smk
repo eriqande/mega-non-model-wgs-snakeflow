@@ -36,8 +36,10 @@ rule samtools_stats:
         "results/bqsr-round-{bqsr_round}/logs/samtools_stats/{sample}.log",
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/samtools_stats/{sample}.bmk",
-    wrapper:
-        "v1.1.0/bio/samtools/stats"
+    conda:
+        "../envs/samtools.yaml"
+    shell:
+        "samtools stats {input} > {output} 2> {log} "
 
 
 # this is a version that can create the same output for bqsr_round > 0
