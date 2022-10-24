@@ -35,6 +35,8 @@ rule dest_scatter_intervals:
         binsize="{int_length}"
     output:
         tsv="results/scatter_config/scatters_{int_length}.tsv"
+    log:
+    	"results/logs/dest_scatter_intervals/log_{int_length}.txt"
     script:
     	"../scripts/sequence-scatter-bins.R"
     
