@@ -75,7 +75,7 @@ params:
         - "ILLUMINACLIP:resources/adapters/TruSeq3-PE-2.fa:2:30:10"
         - "LEADING:3"
         - "TRAILING:3"
-        - "SLIDINGWINDOW:4:15"
+        - "SLIDINGWINDOW:4:20"
         - "MINLEN:36"
     se:
       trimmer:
