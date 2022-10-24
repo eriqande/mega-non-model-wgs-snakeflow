@@ -82,7 +82,7 @@ params:
         # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
         - "LEADING:3"
         - "TRAILING:3"
-        - "SLIDINGWINDOW:4:15"
+        - "SLIDINGWINDOW:4:20"
         - "MINLEN:36"
   vep:
     plugins:
