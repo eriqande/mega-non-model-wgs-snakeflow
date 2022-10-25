@@ -90,7 +90,8 @@ rule make_gvcf_sections:
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/make_gvcfs/{sample}/{sg_or_chrom}.bmk"
     params:
-        java_opts="-Xmx4g"
+        java_opts="-Xmx4g",
+        conf_pars=config["params"]["gatk"]["HaplotypeCaller"]
     resources:
         time="1-00:00:00",
         mem_mb = 4600,
@@ -103,6 +104,7 @@ rule make_gvcf_sections:
         " -O {output.gvcf} "
         " -L {input.interval_list} "
         " --native-pair-hmm-threads {threads} "
+        " {params.conf_pars} "
         " -ERC GVCF > {log.stdout} 2> {log.stderr} "
 
 
@@ -315,7 +317,7 @@ rule bcf_concat:
         "../envs/bcftools.yaml"
     shell:
         " (bcftools concat {params.opts} -Ob {input} > {output.bcf}; "
-        " bcftools index {output.bcf})  2>{log}; "
+        " bcftools index {output.bcf})  2> {log}; "
 
 
 

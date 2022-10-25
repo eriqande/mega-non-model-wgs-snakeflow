@@ -77,8 +77,8 @@ rule hard_filter_indels:
         vcf="results/bqsr-round-{bqsr_round}/hard_filtering/indels-{sg_or_chrom}.vcf.gz",
         idx="results/bqsr-round-{bqsr_round}/hard_filtering/indels-{sg_or_chrom}.vcf.gz.tbi"
     output:
-        vcf=temp("results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz"),
-        idx=temp("results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz.tbi")
+        vcf="results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz",
+        idx="results/bqsr-round-{bqsr_round}/hard_filtering/indels-filtered-{sg_or_chrom}.vcf.gz.tbi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/variantfiltration/indels-{sg_or_chrom}.log",
     benchmark:
