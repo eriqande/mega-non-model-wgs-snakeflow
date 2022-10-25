@@ -79,15 +79,17 @@ rule bcfconcat_known_indels:
 
 # Download the gatk3.8 jar and then run gatk3-register. This is necessary
 # because the licensing for gatk3 doesn't allow the jar to be distributed
-# directly off of conda.
+# directly off of conda.  Apparently this only has to be done for
+# Mac OS X---gatk3-register is not even available on the Linux
+# conda package.  What-evs.
 rule gatk3_register:
     output:
-    	dir=directory("results/bqsr-round-{bqsr_round}/gatk3.8_jar"),
-    	jar="results/bqsr-round-{bqsr_round}/gatk3.8_jar/GenomeAnalysisTK.jar"
+    	dir=directory("results/gatk3.8_jar"),
+    	jar="results/gatk3.8_jar/GenomeAnalysisTK.jar"
     log:
-        "results/bqsr-round-{bqsr_round}/logs/gatk3_register/log.txt"
+        "results/logs/gatk3_register/log.txt"
     benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/gatk3_register/gatk3_register.bmk",
+        "results/benchmarks/gatk3_register/gatk3_register.bmk",
     conda:
         "../envs/gatk3.8.yaml"
     params:
@@ -97,7 +99,8 @@ rule gatk3_register:
         "  bzip2 -d  {output.dir}/GenomeAnalysisTK-3.8-0-ge9d806836.tar.bz2  && "
         "  tar --directory {output.dir} -xvf {output.dir}/GenomeAnalysisTK-3.8-0-ge9d806836.tar && "
         "  mv {output.dir}/GenomeAnalysisTK-3.8-0-ge9d806836/GenomeAnalysisTK.jar {output.dir} && "
-        "  gatk3-register {output.jar} ) 2> {log} "
+        "  if [ $(uname -s) = \"Darwin\" ]; then gatk3-register {output.jar}; fi"
+        "  ) > {log} 2>&1 "
 
 
 
@@ -108,7 +111,7 @@ rule realigner_target_creator:
     input:
     	vcf="results/bqsr-round-{bqsr_round}/known-indels/all-indels.vcf.gz",
     	idx="results/bqsr-round-{bqsr_round}/known-indels/all-indels.vcf.gz.tbi",
-    	jar="results/bqsr-round-{bqsr_round}/gatk3.8_jar/GenomeAnalysisTK.jar"
+    	jar="results/gatk3.8_jar/GenomeAnalysisTK.jar"
     output:
     	"results/bqsr-round-{bqsr_round}/realigner-targets/realigner-targets.intervals"   
     log:
@@ -134,7 +137,7 @@ rule indel_realigner:
     input:
     	vcf="results/bqsr-round-{bqsr_round}/known-indels/all-indels.vcf.gz",
     	idx="results/bqsr-round-{bqsr_round}/known-indels/all-indels.vcf.gz.tbi",
-    	jar="results/bqsr-round-{bqsr_round}/gatk3.8_jar/GenomeAnalysisTK.jar",
+    	jar="results/gatk3.8_jar/GenomeAnalysisTK.jar",
     	intervals="results/bqsr-round-{bqsr_round}/realigner-targets/realigner-targets.intervals",
     	fasta="resources/genome.fasta",
     	bam="results/bqsr-round-{bqsr_round}/overlap_clipped/{sample}.bam",
