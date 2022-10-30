@@ -153,7 +153,8 @@ rule indel_realigner:
     params:
     	jopts="-Xmx4g"
     shell:
-        "gatk3 {params.jopts} -T IndelRealigner  "
+        "gatk3 {params.jopts}  \"-Dsamjdk.compression_level=9\" "
+        " -T IndelRealigner  "
         " -R {input.fasta} "
         " -I {input.bam} "
         " -targetIntervals {input.intervals} "
