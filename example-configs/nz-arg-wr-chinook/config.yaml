@@ -1,0 +1,118 @@
+# Quick notes:
+#   1. I am doing mapping this to Otsh_v1.0.  We did 2.0 for the Yukon and I was not
+#      super impressed by it (pieces of sex chromosome everywhere). Plus, we will
+#      want to be able to compare this to the variants we have called in the 160 California
+#      Chinook.
+#   2. Otsh_v1.0 is "suppressed" on RefSeq, but the link that we used to get it for
+#      Thompson et al. still works fine, so I am using that for the fna and the gff here.
+#
+
+units: example-configs/nz-arg-wr-chinook/units.tsv
+chromosomes: example-configs/nz-arg-wr-chinook/chromosomes.tsv
+scaffold_groups: example-configs/nz-arg-wr-chinook/scaffold_groups.tsv
+scatter_intervals_file: example-configs/nz-arg-wr-chinook/scatters_5000000.tsv
+
+
+# This will typically be left at 0.  Unless you want to do
+# BQSR.
+bqsr_rounds: 0
+
+
+# leave thse as one of your maf_cutoffs so that we can do BQSR still
+# as before, though we probably won't.
+bqsr_maf: 0.01
+
+# these following ones are irrelevant if you are not doing BQSR, but they
+# have to be in the config still
+bqsr_qual: 37
+bqsr_qd: 15
+
+
+# the following must be a list, even if it is just one element
+maf_cutoffs: [0.01]
+
+
+# this next one is here just for quickly writing out rclone statements
+# to put the results back onto google drive.
+rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/nz-arg-wr-chinook"
+
+# this is the default value for the first GenomicsDBImport run.
+# If you want to change it, you should typically change it
+# on the command line.
+genomics_db_import_num: 0
+
+
+# eric modified this to be able to easily handle genomes of non-model
+# organisms that are not yet on enseml, etc.
+ref:
+  # name of the species.  (will simply be put in the SnpEff config).
+  # Put underscores for spaces
+  species_name: Oncorhynchus_tsawytscha
+  # name you want to use for the genome version
+  genome_version_name: Otsh_v1.0
+  # the URL where this can be downloaded, if public and easy to
+  # get with wget.  If not, then you should hand-download
+  # genome.fasta and genome.gff or genome.gtf
+  genome_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/002/872/995/GCF_002872995.1_Otsh_v1.0/GCF_002872995.1_Otsh_v1.0_genomic.fna.gz
+  # if there is a GFF or GTF file, they have to have a .gff or
+  # .gtf extension.  This where you put the URL for it
+  gff_or_gtf_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/002/872/995/GCF_002872995.1_Otsh_v1.0/GCF_002872995.1_Otsh_v1.0_genomic.gff.gz
+
+
+
+
+filtering:
+  # Set to true in order to apply machine learning based recalibration of
+  # quality scores instead of hard filtering.
+  vqsr: false
+  hard:
+    # hard filtering as outlined in GATK docs
+    # (https://gatkforums.broadinstitute.org/gatk/discussion/2806/howto-apply-hard-filters-to-a-call-set)
+    snvs:
+      "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+    indels:
+      "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
+
+processing:
+  remove-duplicates: true
+  # Uncomment and point to a bed file with, e.g., captured regions if necessary,
+  # see https://gatkforums.broadinstitute.org/gatk/discussion/4133/when-should-i-use-l-to-pass-in-a-list-of-intervals.
+  restrict-regions: chr24_26_28.bed
+  # If regions are restricted, uncomment this to enlarge them by the given value in order to include
+  # flanking areas.
+  # region-padding: 100
+
+params:
+  gatk:
+    # the default for haplotype caller is to require very high base quality scores
+    # because BQSR on non-model organisms doesn't work for crap, and Nina's group
+    # found it better to just require high base quality scores.
+    HaplotypeCaller: " --min-base-quality-score 33 --minimum-mapping-quality 20 "
+    BaseRecalibrator: ""
+    GenotypeGVCFs: ""
+    VariantRecalibrator: ""
+  picard:
+    MarkDuplicates: " --TAGGING_POLICY All --CREATE_INDEX "
+  trimmomatic:
+    pe:
+      trimmer:
+        # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
+        - "ILLUMINACLIP:resources/adapters/TruSeq3-PE-2.fa:2:30:10"
+        - "LEADING:3"
+        - "TRAILING:3"
+        - "SLIDINGWINDOW:4:20"
+        - "MINLEN:36"
+    se:
+      trimmer:
+        # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
+        - "LEADING:3"
+        - "TRAILING:3"
+        - "SLIDINGWINDOW:4:20"
+        - "MINLEN:36"
+  vep:
+    plugins:
+      # Add any plugin from https://www.ensembl.org/info/docs/tools/vep/script/vep_plugins.html
+      # Plugin args can be passed as well, e.g. "LoFtool,path/to/custom/scores.txt".
+      - LoFtool
+    # extra command line arguments (e.g. --sift, see docs)
+    extra: ""

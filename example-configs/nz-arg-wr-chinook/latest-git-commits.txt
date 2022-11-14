@@ -1,0 +1,150 @@
+commit a6a156b21476fc75935f7139a9010764f0b6734b
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Fri Aug 26 16:43:12 2022 -0600
+
+    Update rule mark_dp0_as_missing for PL=0,0,0
+    
+    Turns out that there are many sites that have some reads (i.e. DP>0 of AD>0) but still have genotype
+    likelihoods that are flat (0,0,0).  So, I modified
+    this rule so that it calls such sites as missing, so that you can deal with them more easily with bcftools later.
+
+commit e9b2755c52244736a3ab620909913729775d4781
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Wed Jul 20 21:11:50 2022 -0600
+
+    Revamping README after dropping s007
+
+commit 13b68a115bb6e29769c94aac1f569074e6144f24
+Author: Eric C. Anderson (From Sedna) <eric.anderson@noaa.gov>
+Date:   Wed Jul 20 12:42:30 2022 -0700
+
+    Made s008 s007 in the units file, removing s007
+    
+    s007 causes problems with multiqc.  So, now the test
+    data runs to completion.
+
+commit 84bc7a23d9a470e42014c572e3ae089cd7bb142b
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Sun Jul 17 09:32:37 2022 -0600
+
+    Crank memory down some more
+
+commit a602fb68ed1ba5769487c72300d801a92d2a3d04
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Sun Jul 17 09:30:06 2022 -0600
+
+    Reduce mem slightly
+
+commit f0f462b2eb97af25b1fdcd2bf40e8a0d989addd0
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Sun Jul 17 09:24:08 2022 -0600
+
+    reinstate mem_mb for map_reads
+
+commit fb85db1078eef728830245affc4a28baf01c570c
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Sat Jul 16 13:26:05 2022 -0600
+
+    Add log files to some localrules
+    
+    Closes #5
+
+commit 480f8b40a3d485c791423fc7efeeefa8b7213d33
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 16:05:16 2022 -0600
+
+    Oops, clean up a bit more in the README
+
+commit a8e28143846558eec7295d7c4921fcc121b9bbb3
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 16:01:55 2022 -0600
+
+    Forgot to knit the README
+
+commit be1339412f50b0d0d95dbc45642841724c78750c
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 15:58:53 2022 -0600
+
+    Update a few things in the readme
+
+commit d28e6ebd2898b3f2876e43f9b408653058786e62
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 15:41:35 2022 -0600
+
+    Adjusted send_to_gdrive
+    
+    Made sure that a few more files were explicitly in the input.
+
+commit bdbc63b35522b97f075c524f7115cfed887039bd
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 15:03:51 2022 -0600
+
+    rename a rule. make some output temp
+
+commit 8b45af48a848b0bc089b9a5a56ae9178a437af13
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 14:34:14 2022 -0600
+
+    Almost done with scattering, but...
+    
+    Getting weird python/snakemake errors that I have never seen before.  Might be a problem with the conda environment.  Gonna commit here and then checkout main to make sure it wasn't because of something I did.
+
+commit 330ba825008f295d17fb9ddfdc1231e76fb94eca
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Thu Jul 7 10:47:09 2022 -0600
+
+    Declare dependencies on .tbi files
+    
+    After marking many of the .tbi indexes as temp() I discovered that I need to explicitly declare the dependence of downstream rules on those outputs, lest they be removed before the other rules had been able to use them.
+
+commit 0197334fb40cd7135d2583fa9b30e5a7ae9bec10
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Wed Jul 6 09:52:26 2022 -0600
+
+    Add a few more sectional files to temp()
+
+commit 6193cf5fee47a36ab6b3a4a32a8ca2fff1680493
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Tue Jul 5 21:05:11 2022 -0600
+
+    Parallelized gvcf making better
+    
+    See #3 for some details.
+    
+    I checked this against the previous version and the variant summaries are identical, so I think it is good to go.
+
+commit b75d50572892d3907a8f7eacb92561930404c7f3
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Tue Jul 5 15:49:45 2022 -0600
+
+    Update README
+
+commit 9b3f22c7db5d724b18cc8bea02a719899d31512c
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Mon Jun 27 14:30:05 2022 -0600
+
+    Record latest commits before sending to gdrive
+
+commit 358428df1cd006cabd52379043513818e7b4699d
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Mon Jun 27 08:35:20 2022 -0600
+
+    Fix a type (period instead of a comma)!!!
+
+commit 37f3df6793e2483e52a9afd555d96d5bd98f066b
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Mon Jun 27 08:20:38 2022 -0600
+
+    Update gdrive rule to get more files
+
+commit 71ab1b5deecbe9e44fd850a1807eb89469aec3ca
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Sun Jun 26 21:40:02 2022 -0600
+
+    Add the send_to_gdrive rule
+
+commit 8c0a61c48d8d28900f525808486e888e92017260
+Author: Eric C. Anderson <eric.anderson@noaa.gov>
+Date:   Sat Jun 25 08:09:34 2022 -0600
+
+    Try setting recal bam compression to 9
