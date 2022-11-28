@@ -382,6 +382,16 @@ def get_recal_input(bai=False):
         return f
 
 
+# here, we deal with indel realignment by species (or "igrp")
+def get_igrp_sample_names(wildcards):
+    if "indel_grps" not in config or config["indel_grps"] == "":
+        if wildcards.igrp != "__ALL":
+            raise Exception("Requesting igrp that is not \"__ALL\", but indel_grps not defined in config.")
+        else:
+            ret="JustStuff"
+    return ret
+
+
 def get_snpeff_reference():
     return "{}.{}".format(config["ref"]["build"], config["ref"]["snpeff_release"])
 
