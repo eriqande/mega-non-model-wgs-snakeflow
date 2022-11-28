@@ -60,6 +60,7 @@ rule send_to_gdrive:
 
 ## This version is updated to include the ANGSD-ready BAMs, etc.
 ## And now real BQSR (so we drop the recal stuff).
+## ALSO, this won't return results from multiple rounds of BQSR
 # this is a simple rule that checks to make sure that the
 # final requested bcfs, bams, and gvcfs have been produced.
 # Then it tarballs up the qc folders and the benchmark folders
@@ -99,8 +100,8 @@ rule send_to_gdrive2:
 		" rclone copy --dry-run  --drive-stop-on-upload-limit . {params.rclone_base}  "
 		" --include='config/**' "
 		" --include='results/qc_summaries/**' "
-		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{qc,benchmarks,logs}}.tar.gz' "
-		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{bcf,bq_recal_tables,bq_variants}}/**' "
+		" --include='results/bqsr-round-{params.BQR}/{{qc,benchmarks,logs}}.tar.gz' "
+		" --include='results/bqsr-round-{params.BQR}/bcf/**' "
 		" --include='resources/**' "
 		" --include='data/**' "
 		" --include='results/bqsr-round-{params.BQR}/gvcf/*' "
