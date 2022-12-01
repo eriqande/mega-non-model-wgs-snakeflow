@@ -4,7 +4,10 @@ import pandas as pd
 from snakemake.utils import validate
 from snakemake.utils import min_version
 
-
+# The two lines below can be used to get the config information
+# for testing.  Change config file path as appropriate
+#  from snakemake.io import _load_configfile
+#  config = _load_configfile("example-configs/nz-arg-wr-chinook/config.yaml")
 
 min_version("5.18.0")
 
@@ -32,6 +35,8 @@ mafs = list(
             [str(config["bqsr_maf"])]
             )
         )
+
+
 
 units = pd.read_table(config["units"], dtype=str).set_index(
     ["sample", "unit"], drop=False
