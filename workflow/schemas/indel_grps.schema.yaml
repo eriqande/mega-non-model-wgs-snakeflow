@@ -1,0 +1,18 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+
+description: an entry in the scatter intervals sheet
+properties:
+  sample:
+    type: string
+    description: sample identifier (like s001, s0007, etc).
+  sample_id:
+    type: string
+    description: universal sample identifier (like a NMFS DNA ID).
+  indel_grp:
+    type: string
+    description: name of the species or group to place the sample for indel realignment
+
+required:
+  - sample
+  - sample_id
+  - indel_grp

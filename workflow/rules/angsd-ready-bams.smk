@@ -184,11 +184,11 @@ rule indel_realigner:
     	bam="results/bqsr-round-{bqsr_round}/overlap_clipped/{sample}.bam",
     	bai="results/bqsr-round-{bqsr_round}/overlap_clipped/{sample}.bam.bai"
     output:
-    	bam="results/bqsr-round-{bqsr_round}/indel_realigned/{sample}-{igrp}.bam"
+    	bam="results/bqsr-round-{bqsr_round}/indel_realigned/{igrp}/{sample}.bam"
     log:
-        "results/bqsr-round-{bqsr_round}/logs/indel_realigner/{sample}-{igrp}.txt"
+        "results/bqsr-round-{bqsr_round}/logs/indel_realigner/{igrp}/{sample}.txt"
     benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/indel_realigner/{sample}-{igrp}.bmk",
+        "results/bqsr-round-{bqsr_round}/benchmarks/indel_realigner/{igrp}/{sample}.bmk",
     conda:
         "../envs/gatk3.8.yaml"
     params:
