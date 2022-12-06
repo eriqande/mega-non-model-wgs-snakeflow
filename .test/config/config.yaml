@@ -3,6 +3,10 @@ chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv
 scatter_intervals_file: .test/config/scatters_1200000.tsv
 
+# this file is only needed when treating different samples
+# as different species, for indel realignment, etc.
+#indel_grps: ".test/config/igrps.tsv" 
+
 # This will typically be left at 0.  Unless you want to do
 # BQSR.
 bqsr_rounds: 0

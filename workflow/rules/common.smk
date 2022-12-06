@@ -87,7 +87,7 @@ if config["scatter_intervals_file"] != "":
 
 # this is the default, but we update it if the indel_grps is defined in the config
 realigned_bams_output_list=expand("results/bqsr-round-{bq}/indel_realigned/__ALL/{samp}.bam", bq=config["bqsr_rounds"], samp=sample_list)
-indel_grps_list="__ALL"  # this is for the wildcard constraints
+indel_grps_list=["weirdwhacko", "__ALL"]  # this is for the wildcard constraints. For some reason it fails if it is just "__ALL"
 if "indel_grps" in config and config["indel_grps"] != "":
     indel_grps = pd.read_table(config["indel_grps"], dtype=str).set_index("sample", drop=False)
     validate(indel_grps, schema="../schemas/indel_grps.schema.yaml")

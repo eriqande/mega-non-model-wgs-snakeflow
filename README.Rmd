@@ -87,7 +87,7 @@ maf_cutoffs: [0.01, 0.05]
 ```
 
 
-## Some development notes on Indel Realignment
+## Some notes on Indel Realignment
 
 I am working now on making ANGSD-ready BAMs, and I would like to do indel
 realignment, as recommended by Nina's group.  I note in their workflow, they
@@ -115,8 +115,24 @@ Note that there are some intermittent Java failures on the test data set.  I am 
 why this is.  Re-running it will often let it finish appropriately.  Weird.  Must see if the
 same happens on Linux.
 
+### Realignment around species-specific indels
 
-
+Sometimes we map multiple closely-related species to a single reference
+genome.  If we do that, it makes sense to not realign around indels that
+are not actually seen in the species.  To deal with that, you can put the
+`indel_grps` in the config.  This is a path that points to a file that tells
+us which species each of the samples (and sample_id's) belongs to. For example,
+in the test data set if we uncomment the line:
+```yaml
+indel_grps: ".test/config/igrps.tsv" 
+```
+Then, Snakemake understands that it will do indel-realignment only around
+the indels observed in the indviduals that are the same species.  The file
+specifying this (i.e., `.test/config/igrps.tsv` in the above), must be TAB-delimited
+and formatted like this:
+```
+`r paste(readLines(".test/config/igrps.tsv"), collapse = "\n")`
+```
 
 
 ## Quick install and run
