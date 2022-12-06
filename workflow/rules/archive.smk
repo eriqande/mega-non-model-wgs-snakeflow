@@ -53,6 +53,8 @@ rule send_to_gdrive:
 		" --include='data/**' "
 		" --include='results/bqsr-round-{params.BQR}/gvcf/*' "
 		" --include='results/{params.bamdir}/*' "
+		" --include='results/bqsr-round-{params.BQR}/indel_realigned/**' "
+
 
 
 
