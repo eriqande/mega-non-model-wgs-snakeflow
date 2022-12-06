@@ -890,6 +890,29 @@ this—an example from a case where one round of BQSR was done:
 Within each of the `results/bqsr-round-X` directories you will also find
 tarballs of all the log files and all the benchmark files.
 
+You will also find a directory like
+`results/bqsr-round-0/indel_realigned`.
+
+This contains subdirectories of indel-realigned bam files. For example:
+
+    results/bqsr-round-0/indel_realigned
+    ├── __ALL
+    ├── spp-carnatus
+    ├── spp-chrysomelas
+    ├── spp-diaconus
+    ├── spp-flavidus
+    ├── spp-melanops
+    ├── spp-mystinus
+    └── spp-serranoides
+
+In the above case, the subdirectory `__ALL` has bam files that were
+recalibrated using indels discovered in all samples. While subdirectory
+`spp-carnatus` includes only the bam files of those species that are
+listed as *S carnatus* (according to the `indel_grps` file) *AND* the
+indel realignment was done only with indels that were found in the
+individuals in that directory (i.e., that was species-specific indel
+realignment).
+
 ## Assumptions
 
 - Paired end
