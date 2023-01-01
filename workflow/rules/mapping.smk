@@ -44,9 +44,9 @@ rule map_reads:
         sort="samtools",
         sort_order="coordinate",
     resources:
-        time = "23:59:59",
-        mem_mb = 18400
-    threads: 4
+        time = "5-23:59:59",
+        mem_mb = 94400
+    threads: 20
     wrapper:
         "0.59.2/bio/bwa/mem"
 
