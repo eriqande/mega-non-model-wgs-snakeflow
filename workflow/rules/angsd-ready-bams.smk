@@ -193,7 +193,7 @@ rule indel_realigner:
         "../envs/gatk3.8.yaml"
     params:
     	jopts="-Xmx16g",
-        more_params=" --maxReadsInMemory 450000"
+        more_params=" --maxReadsInMemory 450000 "
     resources:
         mem_mb = 19200
     shell:
@@ -204,6 +204,7 @@ rule indel_realigner:
         " -targetIntervals {input.intervals} "
         " -known {input.vcf} "
         " --consensusDeterminationModel KNOWNS_ONLY "
+        " {params.more_params} "
         " -LOD 0.4 " # this is recommended at https://github.com/broadinstitute/gatk-docs/blob/master/gatk3-methods-and-algorithms/Local_Realignment_around_Indels.md
         " -o {output.bam} "
         " > {log} 2>&1 "
