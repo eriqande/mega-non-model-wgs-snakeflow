@@ -192,7 +192,10 @@ rule indel_realigner:
     conda:
         "../envs/gatk3.8.yaml"
     params:
-    	jopts="-Xmx4g"
+    	jopts="-Xmx16g",
+        more_params=" --maxReadsInMemory 450000"
+    resources:
+        mem_mb = 19200
     shell:
         "gatk3 {params.jopts}  \"-Dsamjdk.compression_level=9\" "
         " -T IndelRealigner  "
