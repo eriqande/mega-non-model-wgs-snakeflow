@@ -31,7 +31,7 @@ maf_cutoffs: [0.01]
 
 
 # where to send the results
-rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/CCGP/trout"
+rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/CCGP/trout/all-fish-mapped-to-Arlee"
 
 
 # this is the default value for the first GenomicsDBImport run.
