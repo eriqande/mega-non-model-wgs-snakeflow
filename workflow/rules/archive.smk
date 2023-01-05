@@ -44,7 +44,7 @@ rule send_to_gdrive:
 		" for i in {{0..{params.BQR}}}; do tar -cvf results/bqsr-round-$i/benchmarks.tar results/bqsr-round-$i/benchmarks; gzip results/bqsr-round-$i/benchmarks.tar; done; "
 		" for i in {{0..{params.BQR}}}; do tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results/bqsr-round-$i/logs.tar; done; "
 		"                                                                                                                  "
-		" rclone copy --dry-run  --drive-stop-on-upload-limit . {params.rclone_base}  "
+		" rclone copy --dry-run  --bwlimit 8650k . {params.rclone_base}  "
 		" --include='config/**' "
 		" --include='results/qc_summaries/**' "
 		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{qc,benchmarks,logs}}.tar.gz' "
