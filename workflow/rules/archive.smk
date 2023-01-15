@@ -36,6 +36,7 @@ rule send_to_gdrive:
 		rclone_base = config["rclone_base"],
 		comma_nums = ",".join([str(x) for x in range(0,config["bqsr_rounds"]+1)]),
 		bamdir="bqsr-round-{bq}/{subd}".format(bq = config["bqsr_rounds"], subd = bam_subd(config["bqsr_rounds"])),
+		config_dir=os.path.dirname(config["units"])  # assume we want to copy the whole directory that the units file is in.
 	shell:
 		" git log | head -n 150  > config/latest-git-commits.txt;  "
 		" mkdir -p results/qc_summaries/bqsr-round-{{0..{params.BQR}}}; "
@@ -45,7 +46,7 @@ rule send_to_gdrive:
 		" for i in {{0..{params.BQR}}}; do tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results/bqsr-round-$i/logs.tar; done; "
 		"                                                                                                                  "
 		" rclone copy --dry-run  --bwlimit 8650k . {params.rclone_base}  "
-		" --include='config/**' "
+		" --include='{params.config_dir}/**' "
 		" --include='results/qc_summaries/**' "
 		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{qc,benchmarks,logs}}.tar.gz' "
 		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{bcf,bq_recal_tables,bq_variants}}/**' "

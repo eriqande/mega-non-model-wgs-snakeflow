@@ -672,6 +672,10 @@ And it will print out a command line that does:
     - the `bq_variants` and `bq_recal_tables`
     - Finally, if there is a `data` directory present at the top level we assume that
       is what holds the original fastqs, and we copy all that back, too!
+    - It will also copy the entire contents of the subdirectory that contains the `units`
+      file.  Accordingly, when you set your run up, you should put your config.yaml,
+      your chromosomes and scaffold groups, etc. all in that subdirectory along with
+      units.tsv.
 
 
 For example, on the test data set it prints out something like
