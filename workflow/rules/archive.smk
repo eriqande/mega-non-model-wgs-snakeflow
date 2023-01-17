@@ -36,7 +36,8 @@ rule send_to_gdrive:
 		rclone_base = config["rclone_base"],
 		comma_nums = ",".join([str(x) for x in range(0,config["bqsr_rounds"]+1)]),
 		bamdir="bqsr-round-{bq}/{subd}".format(bq = config["bqsr_rounds"], subd = bam_subd(config["bqsr_rounds"])),
-		config_dir=os.path.dirname(config["units"])  # assume we want to copy the whole directory that the units file is in.
+		config_dir=os.path.dirname(config["units"]),  # assume we want to copy the whole directory that the units file is in.
+		data_comm="--include='data/**'" if config["rclone_data"] else []
 	shell:
 		" git log | head -n 150  > config/latest-git-commits.txt;  "
 		" mkdir -p results/qc_summaries/bqsr-round-{{0..{params.BQR}}}; "
@@ -51,7 +52,7 @@ rule send_to_gdrive:
 		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{qc,benchmarks,logs}}.tar.gz' "
 		" --include='results/bqsr-round-{{{params.comma_nums}}}/{{bcf,bq_recal_tables,bq_variants}}/**' "
 		" --include='resources/**' "
-		" --include='data/**' "
+		" {params.data_comm} "
 		" --include='results/bqsr-round-{params.BQR}/gvcf/*' "
 		" --include='results/{params.bamdir}/*' "
 		" --include='results/bqsr-round-{params.BQR}/indel_realigned/**' "

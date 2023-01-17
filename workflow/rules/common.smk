@@ -108,6 +108,11 @@ if "indel_grps" in config and config["indel_grps"] != "":
     indel_grps_list=ig
 
 
+# down here, if we choose not to do indel realignment in the config
+# then we just set realigned_bams_output_list to an empty list
+if "do_indel_realignment" in config and config["do_indel_realignment"] == False:
+    realigned_bams_output_list = []
+
 
 ##### Wildcard constraints #####
 wildcard_constraints:
