@@ -1,7 +1,7 @@
 units: example-configs/YEWA-Jan-2023/units.tsv
 chromosomes: example-configs/YEWA-Jan-2023/chromosomes.tsv
 scaffold_groups: example-configs/YEWA-Jan-2023/scaffold_groups.tsv
-scatter_intervals_file: ""
+scatter_intervals_file: "example-configs/YEWA-Jan-2023/scatters_5000000.tsv"
 
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
