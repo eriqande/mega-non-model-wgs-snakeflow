@@ -344,4 +344,109 @@ I set the scatters to "" in the config like this:
 scatter_intervals_file: ""
 ```
 And then I committed all the stuff I just created here and pushed it up to the cluster.
+Then, as suggested in the README, did this:
+```sh
+(base) [node21: mega-non-model-wgs-snakeflow]--% pwd
+/home/eanderson/scratch/PROJECTS/YEWA-Jan-2023/mega-non-model-wgs-snakeflow
+(base) [node21: mega-non-model-wgs-snakeflow]--% conda activate snakemake-7.7.0
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% module load R
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% snakemake  --cores 1 --use-conda results/scatter_config/scatters_5000000.tsv --configfile example-configs/YEWA-Jan-2023/config.yaml
 
+# then copy the result to the config area:
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% cp results/scatter_config/scatters_5000000.tsv example-configs/YEWA-Jan-2023/
+```
+After that I also updated the config file to point to that new file:
+```yaml
+scatter_intervals_file: "example-configs/YEWA-Jan-2023/scatters_5000000.tsv"
+```
+
+Now, when it is calling variants from the Genomics Data Bases, it will scatter
+the job over sections of genome that are less that 5 Mb (hence the 5000000 in the
+name).
+
+I committed that and pushed it back up.
+
+And now we are ready to do a dry run:
+```sh
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% snakemake -np --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+```
+
+
+We can check that this makes sense with the numbers of things we have:
+```{r}
+nrow(units)
+```
+
+746 units.  That is the number of trimming and mapping and fastqc jobs we expect.
+
+```{r}
+n_distinct(units$sample)
+```
+
+454 distinct samples.  That is the number of dup-marking and other sorts of
+jobs we expect.
+
+```{r}
+nrow(chromos)
+n_distinct(scaff_groups$id)
+```
+
+9 chromosome and 16 scaffold groups.  So we expect a few jobs doing
+9 or 16, or 25 things.
+
+And, for making gvcf sections, we expect:
+Number of individuals times (number of chroms + number of scaff groups) so:
+25 * 454 = 11,350.
+
+Finally, we expect the total number of GenomicsDB2VCF steps to be the number
+of unique scatter groups:
+```{r}
+scats <- read_tsv("../scatters_5000000.tsv")
+n_distinct(scats$id, scats$scatter_idx)
+```
+
+So, 295 of those jobs.  
+
+Hooray! This is pretty much what we get:
+```sh
+Job stats:
+job                                   count    min threads    max threads
+----------------------------------  -------  -------------  -------------
+all                                       1              1              1
+bcf_concat                                1              1              1
+bcf_concat_mafs                           1              1              1
+bcf_maf_section_summaries                25              1              1
+bcf_section_summaries                    75              1              1
+bung_filtered_vcfs_back_together         25              1              1
+bwa_index                                 1              1              1
+combine_bcftools_stats                    3              1              1
+combine_maf_bcftools_stats                1              1              1
+concat_gvcf_sections                    454              1              1
+fastqc_read1                            746              1              1
+fastqc_read2                            746              1              1
+gather_scattered_vcfs                    25              1              1
+genome_dict                               1              1              1
+genome_faidx                              1              1              1
+genomics_db2vcf_scattered               295              2              2
+genomics_db_import_chromosomes            9              2              2
+genomics_db_import_scaffold_groups       16              2              2
+hard_filter_indels                       25              1              1
+hard_filter_snps                         25              1              1
+maf_filter                               25              1              1
+make_chromo_interval_lists                9              1              1
+make_gvcf_sections                    11350              1              1
+make_indel_vcf                           25              1              1
+make_scaff_group_interval_lists          16              1              1
+make_scatter_interval_lists             295              1              1
+make_snp_vcf                             25              1              1
+map_reads                               746              4              4
+mark_dp0_as_missing                      25              1              1
+mark_duplicates                         454              1              1
+multiqc                                   1              1              1
+samtools_stats                          454              1              1
+trim_reads_pe                           746              1              1
+total                                 16647              1              4
+
+```
+
+That is a whole hell of a lot of stuff to do.
