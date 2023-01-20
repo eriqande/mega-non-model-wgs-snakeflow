@@ -707,4 +707,19 @@ Anyway.  It all looks good now, so let's go ahead and run it for real.
 With any luck, that will take less than 3 hours to finish, so it will be
 all done when I meet with CH and Marina about it.
 
+WTF!  There are a couple of scaffolds still causing problems:
+```
+Exiting because a job execution failed. Look above for error message
+BUG: Out of jobs ready to be started, but not all files built yet. Please check https://github.com/snakemake/snakemake/issues/823 for more information.
+Remaining jobs:
+ - combine_maf_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-pass-maf-0.01.txt
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.003.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.003.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.018.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.018.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.007.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.007.vcf.gz.tbi
+```
 
+That is weird, because the logs show that those actually finished.  So, I think
+that snakemake just fried.
+
+Let's just restart it...When I did so, it recognized those files as being
+complete and all good and continued on. 
