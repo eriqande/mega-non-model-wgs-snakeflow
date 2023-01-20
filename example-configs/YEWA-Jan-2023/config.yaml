@@ -32,7 +32,7 @@ maf_cutoffs: [0.01]
 
 # this next one is here just for quickly writing out rclone statements
 # to put the results back onto google drive.
-rclone_base: "change-when-we-know-where-to-put-it:Boing.Boing"
+rclone_base: "BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023"
 
 # If you want to copy all the fastq files back to rclone_base,
 # then the send_to_gdrive rule will assume it is in a directory
