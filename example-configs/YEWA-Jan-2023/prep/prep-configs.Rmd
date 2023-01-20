@@ -450,3 +450,173 @@ total                                 16647              1              4
 ```
 
 That is a whole hell of a lot of stuff to do.
+
+## Running
+
+It ran without any hitches til the very end.  It took about 36 hours and then
+ended with this message:
+
+```
+[Fri Jan 20 05:35:48 2023]
+Finished job 14676.
+16625 of 16647 steps (99.9%) done
+Exiting because a job execution failed. Look above for error message
+BUG: Out of jobs ready to be started, but not all files built yet. Please check https://github.com/snakemake/snakemake/issues/823 for more information.
+Remaining jobs:
+ - bcf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/sections/scaff_group_015-PASS.txt
+ - combine_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-FAIL.txt
+ - bcf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/sections/scaff_group_015-FAIL.txt
+ - combine_maf_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-pass-maf-0.01.txt
+ - bcf_maf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/maf_sections/scaff_group_015-maf-0.01.txt
+ - bcf_concat: results/bqsr-round-0/bcf/all.bcf, results/bqsr-round-0/bcf/all.bcf.csi
+ - maf_filter: results/bqsr-round-0/hard_filtering/both-filtered-scaff_group_015-maf-0.01.bcf
+ - combine_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-ALL.txt
+ - bcf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/sections/scaff_group_015-ALL.txt
+ - combine_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-PASS.txt
+ - all:
+ - bung_filtered_vcfs_back_together: results/bqsr-round-0/hard_filtering/both-filtered-scaff_group_015.bcf
+ - hard_filter_snps: results/bqsr-round-0/hard_filtering/snps-filtered-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/snps-filtered-scaff_group_015.vcf.gz.tbi
+ - make_snp_vcf: results/bqsr-round-0/hard_filtering/snps-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/snps-scaff_group_015.vcf.gz.tbi
+ - mark_dp0_as_missing: results/bqsr-round-0/vcf_sect_miss_denoted/scaff_group_015.vcf.gz, results/bqsr-round-0/vcf_sect_miss_denoted/scaff_group_015.vcf.gz.tbi
+ - gather_scattered_vcfs: results/bqsr-round-0/vcf_sections/scaff_group_015.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0011.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0011.vcf.gz.tbi
+ - hard_filter_indels: results/bqsr-round-0/hard_filtering/indels-filtered-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/indels-filtered-scaff_group_015.vcf.gz.tbi
+ - make_indel_vcf: results/bqsr-round-0/hard_filtering/indels-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/indels-scaff_group_015.vcf.gz.tbi
+ - bcf_concat_mafs: results/bqsr-round-0/bcf/pass-maf-0.01.bcf, results/bqsr-round-0/bcf/pass-maf-0.01.bcf.csi
+```
+So, it looks like a few of the scatters from scaff_group_015 did not
+complete correctly.
+
+Let's look at the logs:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% tail results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_00{09,10,11}.log
+==> results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_0009.log <==
+18:49:35.435 INFO  ProgressMeter -      SCAF_269:153962             95.7               2740000          28635.7
+18:49:48.328 INFO  ProgressMeter -      SCAF_269:158042             95.9               2744000          28613.3
+18:49:59.346 INFO  ProgressMeter -      SCAF_269:160042             96.1               2746000          28579.4
+18:50:09.643 INFO  ProgressMeter -      SCAF_269:163043             96.3               2749000          28559.6
+18:50:21.009 INFO  ProgressMeter -      SCAF_269:168065             96.4               2754000          28555.4
+18:50:32.907 INFO  ProgressMeter -      SCAF_269:173089             96.6               2759000          28548.5
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),87.920202178,Cpu time(s),76.38541004999944
+18:51:01.586 INFO  ProgressMeter -        SCAF_270:6142             97.1               2765000          28469.8
+18:51:13.403 INFO  ProgressMeter -      SCAF_270:151917             97.3               2775000          28514.9
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),3.2390066599999905,Cpu time(s),3.205452518000013
+
+==> results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_0010.log <==
+18:14:52.276 INFO  ProgressMeter -       SCAF_295:38005             61.0               1762000          28893.6
+18:15:02.856 INFO  ProgressMeter -       SCAF_295:53226             61.2               1771000          28957.4
+18:15:13.969 INFO  ProgressMeter -       SCAF_295:66855             61.3               1780000          29016.7
+18:15:24.333 INFO  ProgressMeter -       SCAF_295:75807             61.5               1787000          29049.0
+18:15:35.843 INFO  ProgressMeter -       SCAF_295:84654             61.7               1795000          29088.3
+18:15:45.982 INFO  ProgressMeter -       SCAF_295:94774             61.9               1802000          29122.0
+18:15:57.082 INFO  ProgressMeter -      SCAF_295:109489             62.1               1812000          29196.3
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),19.06126339699996,Cpu time(s),18.647145529999847
+18:16:35.194 INFO  ProgressMeter -        SCAF_296:3912             62.7               1818000          28996.3
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),1.3211903190000012,Cpu time(s),1.3078250839999974
+
+==> results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_0011.log <==
+17:54:48.283 INFO  ProgressMeter -       SCAF_335:39483             40.9               1125000          27528.7
+17:54:59.195 INFO  ProgressMeter -       SCAF_335:45707             41.0               1131000          27552.9
+17:55:09.237 INFO  ProgressMeter -       SCAF_335:52952             41.2               1138000          27610.9
+17:55:20.198 INFO  ProgressMeter -       SCAF_335:58978             41.4               1144000          27634.0
+17:55:34.596 INFO  ProgressMeter -       SCAF_335:61982             41.6               1147000          27546.8
+17:55:45.327 INFO  ProgressMeter -       SCAF_335:67996             41.8               1153000          27572.4
+17:55:58.419 INFO  ProgressMeter -       SCAF_335:76059             42.0               1161000          27619.6
+17:56:09.376 INFO  ProgressMeter -       SCAF_335:81064             42.2               1166000          27618.6
+17:56:20.063 INFO  ProgressMeter -       SCAF_335:86074             42.4               1171000          27620.5
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),36.0176384479996,Cpu time(s),31.67767033499983
+```
+So, it looks like each one was cut short before they finished.  I suspect that
+there are too many scaffolds in each of those.  They probably ran out of memory.
+Let's look at the slurm logs, etc.
+
+There is nothing suspect in:
+```sh
+tail   results/slurm_logs/genomics_db2vcf_scattered/genomics_db2vcf_scattered-bqsr_round\=0\,scatter\=scat_0009\,sg_or_chrom\=scaff_group_015-476077.err
+
+Removing output files of failed job genomics_db2vcf_scattered since they might be corrupted:
+results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.vcf.gz
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+slurmstepd: error: Detected 1 oom-kill event(s) in step 476077.batch cgroup. Some of your processes may have been killed by the cgroup out-of-memory handler.
+```
+Yep! That was an out of memory error.
+
+So, we could try giving it more memory, but I think it simply has to do with
+the number of scaffolds within those scatter groups.  So, we can just break
+up those scatter groups a little more.
+
+First, let's see what happens if we do a new dry run to confirm what
+we need to finish up here:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake -np  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries               1              1              1
+bcf_section_summaries                   3              1              1
+bung_filtered_vcfs_back_together        1              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                   1              1              1
+genomics_db2vcf_scattered               3              2              2
+hard_filter_indels                      1              1              1
+hard_filter_snps                        1              1              1
+maf_filter                              1              1              1
+make_indel_vcf                          1              1              1
+make_snp_vcf                            1              1              1
+mark_dp0_as_missing                     1              1              1
+total                                  22              1              2
+```
+
+Yep, it is just those three genomics_db2vcf jobs that failed:
+
+- scaff_group_015 
+    - scat_0009
+    - scat_0010
+    - scat_0011
+
+We can count up how many scaffolds are in each of those:
+```{r}
+scats %>%
+  count(id, scatter_idx) %>%
+  filter(id == "scaff_group_015")
+```
+
+So, there were 26, 38, and 28 scaffolds in each of those.
+
+I am just going to make a new scatters file puts each of those
+scaffolds in their own scatter group.  That will then run
+quickly.
+
+First, copy the scatters file to have the prefix "FirstRun-OutOfMemory-scaff_group_015-"
+```sh
+cp example-configs/YEWA-Jan-2023/scatters_5000000.tsv example-configs/YEWA-Jan-2023/FirstRun-OutOfMemory-scaff_group_015-scatters_5000000.tsv
+```
+
+And then we just break out the ones that need it into one
+scatter per scaffold.  We just rename those scatters like
+scat_0009.1, scat_0009.2, etc.
+```{r}
+new_scats <- scats %>%
+  group_by(id, scatter_idx) %>%
+  mutate(
+    new_scatter_idx = case_when(
+      id == "scaff_group_015" & scatter_idx %in% c("scat_0009", "scat_0010", "scat_0011") ~ sprintf("%s.%03d", scatter_idx, 1:n()),
+      TRUE ~ scatter_idx
+    )
+  ) %>%
+  ungroup() %>%
+  mutate(scatter_idx = new_scatter_idx) %>%
+  select(-new_scatter_idx)
+  
+
+write_tsv(new_scats, file = "../scatters_5000000.tsv")  
+```
+
