@@ -399,9 +399,10 @@ Number of individuals times (number of chroms + number of scaff groups) so:
 25 * 454 = 11,350.
 
 Finally, we expect the total number of GenomicsDB2VCF steps to be the number
-of unique scatter groups:
+of unique scatter groups (Note that we use the old scatters file here, so that
+things stay consistent when I run this notebook.
 ```{r}
-scats <- read_tsv("../scatters_5000000.tsv")
+scats <- read_tsv("../FirstRun-OutOfMemory-scaff_group_015-scatters_5000000.tsv")
 n_distinct(scats$id, scats$scatter_idx)
 ```
 
@@ -589,7 +590,7 @@ scats %>%
   filter(id == "scaff_group_015")
 ```
 
-So, there were 26, 38, and 28 scaffolds in each of those.
+So, there were 26, 39, and 28 scaffolds in each of those.
 
 I am just going to make a new scatters file puts each of those
 scaffolds in their own scatter group.  That will then run
@@ -619,4 +620,91 @@ new_scats <- scats %>%
 
 write_tsv(new_scats, file = "../scatters_5000000.tsv")  
 ```
+
+So, then I pushed those changes up and pulled them to the cluster and
+did a new dry run:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake -np  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries              25              1              1
+bcf_section_summaries                  75              1              1
+bung_filtered_vcfs_back_together       25              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                  25              1              1
+genomics_db2vcf_scattered             385              2              2
+hard_filter_indels                     25              1              1
+hard_filter_snps                       25              1              1
+maf_filter                             25              1              1
+make_indel_vcf                         25              1              1
+make_scatter_interval_lists           385              1              1
+make_snp_vcf                           25              1              1
+mark_dp0_as_missing                    25              1              1
+total                                1077              1              2
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+```
+
+So, that is a bit lame.  This version of snakemake must be noting that the
+scatters file has changed, so it want to re-run all the jobs that depend
+on it, so it wants to re-run all the genomics_db2vcf_scattered jobs that
+were already finished.
+
+We can deal with that by setting the modification time of the scatters
+file to two days ago.
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% touch -d "Wed Jan 18 06:51:59 PST 2023" example-configs/YEWA-Jan-2023/scatters_5000000.tsv
+```
+
+Then we try another dry run:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake -np  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries               1              1              1
+bcf_section_summaries                   3              1              1
+bung_filtered_vcfs_back_together        1              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                   1              1              1
+genomics_db2vcf_scattered              93              2              2
+hard_filter_indels                      1              1              1
+hard_filter_snps                        1              1              1
+maf_filter                              1              1              1
+make_indel_vcf                          1              1              1
+make_scatter_interval_lists            93              1              1
+make_snp_vcf                            1              1              1
+mark_dp0_as_missing                     1              1              1
+total                                 205              1              2
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+
+
+```
+
+That is exactly what it should look like, since  26 + 39 + 28 = 93.
+
+While I am at it, I should note that it takes a few minutes each time we
+run this for snakemake to build the DAG for the job.
+
+Anyway.  It all looks good now, so let's go ahead and run it for real.
+
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+```
+
+With any luck, that will take less than 3 hours to finish, so it will be
+all done when I meet with CH and Marina about it.
+
 
