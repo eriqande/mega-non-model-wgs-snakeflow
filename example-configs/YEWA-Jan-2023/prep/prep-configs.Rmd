@@ -722,4 +722,55 @@ That is weird, because the logs show that those actually finished.  So, I think
 that snakemake just fried.
 
 Let's just restart it...When I did so, it recognized those files as being
-complete and all good and continued on. 
+complete and all good and continued on.  And it finished.
+
+## Copy everything back to sharepoint
+
+I have put the right rclone address into the config, so now I can do:
+```sh
+snakemake -np  send_to_gdrive --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+# which gave me this response:
+ git log | head -n 150  > example-configs/YEWA-Jan-2023/latest-git-commits.txt;   mkdir -p results/qc_summaries/bqsr-round-{0..0};  for i in {0..0}; do cp -r results/bqsr-round-$i/qc/{multiqc.html,bcftools_stats/*.txt} results/qc_summaries/bqsr-round-$i/; done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/qc.tar results/bqsr-round-$i/qc; gzip results/bqsr-round-$i/qc.tar;  done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/benchmarks.tar results/bqsr-round-$i/benchmarks; gzip results/bqsr-round-$i/benchmarks.tar; done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results/bqsr-round-$i/logs.tar; done;                                                                                                                    rclone copy --dry-run  --bwlimit 8650k . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023   --include='example-configs/YEWA-Jan-2023/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-{0}/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-{0}/{bcf,bq_recal_tables,bq_variants}/**'  --include='resources/**'    --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/indel_realigned/**'
+```
+
+So, I wanted to copy the BCF files up there first. I did:
+```sh
+rclone copy . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023 --include='results/bqsr-round-{0}/bcf/**'
+```
+That will take about 3 hours, then I will start on all the rest...
+
+Here we are just doing the whole schmeer:
+```sh
+rclone copy --dry-run  . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023   --include='example-configs/YEWA-Jan-2023/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-{0}/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-{0}/{bcf,bq_recal_tables,bq_variants}/**'  --include='resources/**'    --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/indel_realigned/**'
+```
+The dry-run says 1854 files and 1.295 Tb.  So we will start this and it will take
+a good long time.
+
+But, right now it is going at about 25 Mb/sec.  So, that is not too bad...
+
+We shall see if there is a daily limit on uploads.
+
+
+So, that got done pretty quickly, which is good, but SharePoint modifies certain
+types of files when they are uploaded, so that rclone's checksum and size checks
+file.  That happens with html files:
+```
+2023-01-23 09:44:13 ERROR : example-configs/YEWA-Jan-2023/prep/prep-configs.nb.html: corrupted on transfer: sizes differ 842046 vs 842261
+2023-01-23 09:44:26 ERROR : results/qc_summaries/bqsr-round-0/multiqc.html: corrupted on transfer: sizes differ 12300744 vs 12300959
+```
+Completely on SharePoint's part.  Whatever, it is a known problem:
+
+https://rclone.org/onedrive/#unexpected-file-size-hash-differences-on-sharepoint
+
+So, I will run it one final time with these extra options, so as to get those
+two files copied:
+```sh
+--ignore-checksum --ignore-size
+```
+
+This got those files up there:
+```sh
+rclone copy --ignore-checksum --ignore-size  . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023   --include='example-configs/YEWA-Jan-2023/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-{0}/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-{0}/{bcf,bq_recal_tables,bq_variants}/**'  --include='resources/**'    --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/indel_realigned/**'
+```
+

@@ -39,7 +39,7 @@ rule send_to_gdrive:
 		config_dir=os.path.dirname(config["units"]),  # assume we want to copy the whole directory that the units file is in.
 		data_comm="--include='data/**'" if config["rclone_data"] else []
 	shell:
-		" git log | head -n 150  > config/latest-git-commits.txt;  "
+		" git log | head -n 150  > {params.config_dir}/latest-git-commits.txt;  "
 		" mkdir -p results/qc_summaries/bqsr-round-{{0..{params.BQR}}}; "
 		" for i in {{0..{params.BQR}}}; do cp -r results/bqsr-round-$i/qc/{{multiqc.html,bcftools_stats/*.txt}} results/qc_summaries/bqsr-round-$i/; done; "
 		" for i in {{0..{params.BQR}}}; do tar -cvf results/bqsr-round-$i/qc.tar results/bqsr-round-$i/qc; gzip results/bqsr-round-$i/qc.tar;  done; "
