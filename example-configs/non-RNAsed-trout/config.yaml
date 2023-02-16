@@ -5,7 +5,7 @@ scatter_intervals_file: example-configs/non-RNAsed-trout/scatters_5000000.tsv
 
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
-indel_grps: example-configs/non-RNAsed-trout/igrps-species.tsv 
+#indel_grps: example-configs/non-RNAsed-trout/igrps-species.tsv 
 
 
 
