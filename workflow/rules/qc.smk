@@ -57,7 +57,7 @@ rule samtools_stats:
 #         "v1.1.0/bio/samtools/stats"
 
 
-rule multiqc:
+rule multiqc_dir:
     input:
         get_multiqc_inputs
     output:
@@ -69,7 +69,7 @@ rule multiqc:
     resources:
         mem_mb = 36800
     wrapper:
-        "v1.3.1/bio/multiqc"
+        "v1.23.3/bio/multiqc"
 
 
 
