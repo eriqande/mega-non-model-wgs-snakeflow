@@ -1,0 +1,16 @@
+---
+title: "The non-RNAsed trout"
+output: html_notebook
+---
+
+These data were run with the first installment of the CCGP Chubs.
+
+A little bit of detail about the initial maneuvers can be found at
+```
+example-configs/CCGP-chub/prep/chub-prep.Rmd
+```
+
+
+The scaffolds and everything that we want to use are the same as in the CCGP-trout
+project, so I just copied that over and then had to just make the units file.
+
