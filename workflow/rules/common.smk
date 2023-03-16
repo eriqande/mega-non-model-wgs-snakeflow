@@ -15,7 +15,7 @@ min_version("5.18.0")
 report: "../report/workflow.rst"
 
 
-container: "continuumio/miniconda3:4.8.2"
+#container: "continuumio/miniconda3:4.8.2"
 
 
 ###### Config file and sample sheets #####
