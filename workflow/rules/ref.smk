@@ -28,8 +28,6 @@ rule genome_faidx:
         "results/bqsr-round-0/benchmarks/genome_faidx/genome_faidx.bmk",
     conda:
         "../envs/samtools.yaml"
-    container:
-        "docker://staphb/samtools:1.15"
     shell:
         "samtools faidx {input}"
 
@@ -45,8 +43,6 @@ rule genome_dict:
         "results/bqsr-round-0/benchmarks/genome_dict/genome_dict.bmk"
     conda:
         "../envs/samtools.yaml"
-    container:
-        "docker://staphb/samtools:1.15"
     shell:
         "samtools dict {input} > {output} 2> {log} "
 

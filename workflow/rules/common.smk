@@ -16,7 +16,7 @@ report: "../report/workflow.rst"
 
 
 #container: "continuumio/miniconda3:4.8.2"
-
+containerized: "docker://noaainformatics.azurecr.io/meganon:1.0.0"
 
 ###### Config file and sample sheets #####
 #configfile: config["config"]
