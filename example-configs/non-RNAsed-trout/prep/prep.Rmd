@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+# Making units file
+
+```{r}
+units <- read_tsv("files.txt", col_names = c("kb", "fq")) %>% 
+  extract(
+    fq, 
+    into = c("sample_id", "lane", "read"),
+    regex = "data/(M[0-9]+)_.*L00([0-9])_R([12])_.*gz",
+    remove = FALSE, 
+    convert = TRUE
+  ) %>%
+  pivot_wider(
+    names_from = read,
+    values_from = c(fq, kb),
+    names_sep = ""
+  ) %>%
+  mutate(
+    sample = sprintf("%03s", 1:n()),
+    unit = 1,
+    library = "nonRNAse",
+    flowcell = "HMKFTDSX5",
+    sample_id = str_c(sample_id, "_nonRNAsed"), # do this to make it easy to merge VCFs later with the RNAsed samples, if we want.
+    barcode = sample_id,
+    platform = "ILLUMINA"
+  ) %>%
+  select(sample, unit, library, flowcell, platform, barcode, sample_id, lane, fq1, fq2, kb1, kb2)
+
+
+write_tsv(units, file = "../units.tsv")
+```
+
+
+
+
+sample	unit	library	flowcell	platform	barcode	sample_id	lane	fq1	fq2	kb1	kb2

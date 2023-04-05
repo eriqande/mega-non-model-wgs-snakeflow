@@ -1,32 +1,58 @@
 mega-non-model-wgs-snakeflow
 ================
 
--   [Major Update/Upgrade Notes (New)](#major-updateupgrade-notes-new)
--   [Major Update/Upgrade Notes (Old)](#major-updateupgrade-notes-old)
--   [Quick install and run](#quick-install-and-run)
-    -   [So, what just happened there](#so-what-just-happened-there)
--   [Condensed DAG for the workflow](#condensed-dag-for-the-workflow)
--   [Rulegraph for the workflow](#rulegraph-for-the-workflow)
--   [Running this with SLURM](#running-this-with-slurm)
--   [What the user must do and values to be set,
-    etc](#what-the-user-must-do-and-values-to-be-set-etc)
-    -   [`units.tsv`](#unitstsv)
-    -   [`chromosomes.tsv`](#chromosomestsv)
-    -   [`scaffold_groups.tsv`](#scaffold_groupstsv)
-    -   [`config.yaml`](#configyaml)
--   [Bootstrapped Base Quality Score
-    Recalibration](#bootstrapped-base-quality-score-recalibration)
-    -   [What values should be chosen?](#what-values-should-be-chosen)
--   [Offloading results to google
-    drive](#offloading-results-to-google-drive)
-    -   [Google Drive Directory
-        Structure](#google-drive-directory-structure)
--   [Assumptions](#assumptions)
--   [Things fixed or added relative to JK’s snakemake
-    workflow](#things-fixed-or-added-relative-to-jks-snakemake-workflow)
--   [Stepwise addition of new samples to the Workflow (and the Genomics
-    Data
-    bases)](#stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases)
+- <a href="#major-updateupgrade-notes-new"
+  id="toc-major-updateupgrade-notes-new">Major Update/Upgrade Notes
+  (New)</a>
+- <a href="#major-updateupgrade-notes-old"
+  id="toc-major-updateupgrade-notes-old">Major Update/Upgrade Notes
+  (Old)</a>
+- <a href="#some-notes-on-indel-realignment"
+  id="toc-some-notes-on-indel-realignment">Some notes on Indel
+  Realignment</a>
+  - <a href="#realignment-around-species-specific-indels"
+    id="toc-realignment-around-species-specific-indels">Realignment around
+    species-specific indels</a>
+- <a href="#quick-install-and-run" id="toc-quick-install-and-run">Quick
+  install and run</a>
+  - <a href="#so-what-just-happened-there"
+    id="toc-so-what-just-happened-there">So, what just happened there</a>
+- <a href="#condensed-dag-for-the-workflow"
+  id="toc-condensed-dag-for-the-workflow">Condensed DAG for the
+  workflow</a>
+- <a href="#rulegraph-for-the-workflow"
+  id="toc-rulegraph-for-the-workflow">Rulegraph for the workflow</a>
+- <a href="#running-this-with-slurm"
+  id="toc-running-this-with-slurm">Running this with SLURM</a>
+- <a href="#what-the-user-must-do-and-values-to-be-set-etc"
+  id="toc-what-the-user-must-do-and-values-to-be-set-etc">What the user
+  must do and values to be set, etc</a>
+  - <a href="#unitstsv" id="toc-unitstsv"><code>units.tsv</code></a>
+  - <a href="#chromosomestsv"
+    id="toc-chromosomestsv"><code>chromosomes.tsv</code></a>
+  - <a href="#scaffold_groupstsv"
+    id="toc-scaffold_groupstsv"><code>scaffold_groups.tsv</code></a>
+  - <a href="#configyaml" id="toc-configyaml"><code>config.yaml</code></a>
+- <a href="#bootstrapped-base-quality-score-recalibration"
+  id="toc-bootstrapped-base-quality-score-recalibration">Bootstrapped Base
+  Quality Score Recalibration</a>
+  - <a href="#what-values-should-be-chosen"
+    id="toc-what-values-should-be-chosen">What values should be chosen?</a>
+- <a href="#offloading-results-to-google-drive"
+  id="toc-offloading-results-to-google-drive">Offloading results to google
+  drive</a>
+  - <a href="#google-drive-directory-structure"
+    id="toc-google-drive-directory-structure">Google Drive Directory
+    Structure</a>
+- <a href="#assumptions" id="toc-assumptions">Assumptions</a>
+- <a href="#things-fixed-or-added-relative-to-jks-snakemake-workflow"
+  id="toc-things-fixed-or-added-relative-to-jks-snakemake-workflow">Things
+  fixed or added relative to JK’s snakemake workflow</a>
+- <a
+  href="#stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases"
+  id="toc-stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases">Stepwise
+  addition of new samples to the Workflow (and the Genomics Data
+  bases)</a>
 
 ## Major Update/Upgrade Notes (New)
 
@@ -92,25 +118,25 @@ main changes:
 
 ## Major Update/Upgrade Notes (Old)
 
--   I have now pulled the `bqsr-directory-sructure` branch into main.
-    This lets us easily do one or more rounds of “bootstrapped base
-    quality score recalibration.” The directory structure has been
-    modified rather simply. For each round of BQSR (0 = no BQSR; 1 =
-    using variants from 0 to do a round of BQSR and call variants from
-    the results, 2 = using the variants from 1 to do another round of
-    BQSR and call variants from the result; etc.), the entire old
-    directory structure (except for the `slurm_logs`) get placed into a
-    trunk directory of `bqsr-round-x` where `x` is 0 or 1 or 2, etc.
--   There are a few files/steps that could be marked as temporary, but I
-    haven’t done that yet, because, while developing, it can be useful
-    to have some of those stages for re-running from that point.
--   The way I have done the directory structure, there doesn’t seem to
-    be a good way to mark, for example, the gVCFs from the 0-round of
-    BQSR be deleted after the 1-round has been done, without also
-    triggering deletion of the 1-round’s GVCFs. So, for now, this has to
-    be done by hand.
--   Some new things are required in the config file now. Basically the
-    new additions looks like this:
+- I have now pulled the `bqsr-directory-sructure` branch into main. This
+  lets us easily do one or more rounds of “bootstrapped base quality
+  score recalibration.” The directory structure has been modified rather
+  simply. For each round of BQSR (0 = no BQSR; 1 = using variants from 0
+  to do a round of BQSR and call variants from the results, 2 = using
+  the variants from 1 to do another round of BQSR and call variants from
+  the result; etc.), the entire old directory structure (except for the
+  `slurm_logs`) get placed into a trunk directory of `bqsr-round-x`
+  where `x` is 0 or 1 or 2, etc.
+- There are a few files/steps that could be marked as temporary, but I
+  haven’t done that yet, because, while developing, it can be useful to
+  have some of those stages for re-running from that point.
+- The way I have done the directory structure, there doesn’t seem to be
+  a good way to mark, for example, the gVCFs from the 0-round of BQSR be
+  deleted after the 1-round has been done, without also triggering
+  deletion of the 1-round’s GVCFs. So, for now, this has to be done by
+  hand.
+- Some new things are required in the config file now. Basically the new
+  additions looks like this:
 
 ``` yaml
 bqsr_rounds: 2
@@ -121,6 +147,69 @@ bqsr_qd: 15
 # the following must be a list, even if it is just one element
 maf_cutoffs: [0.01, 0.05]
 ```
+
+## Some notes on Indel Realignment
+
+I am working now on making ANGSD-ready BAMs, and I would like to do
+indel realignment, as recommended by Nina’s group. I note in their
+workflow, they submit all the bamfiles to RealignorTargetCreator and
+then realign all the bam files together, [in these
+lines](https://github.com/therkildsen-lab/data-processing/blob/61eca5aea336f6594b44427ace58a419e0290696/scripts/realign_indels.sh#L34-L58):
+
+It seems to me like that would not parallelize well.
+
+However, since we already have created VCF files with all the known
+indels in them it makes sense to just use those. Those will hold all the
+indels found found from this particular set of bams, and so they should
+give a similar result.
+[Here](https://github.com/broadinstitute/gatk-docs/blob/master/gatk3-methods-and-algorithms/Local_Realignment_around_Indels.md)
+is a note on the legacy GATK website about this. It points out most of
+the indels within an indivdiual will already be known if you have a
+fairly complete set of indels, so it is permissible in large projects to
+realign one lane at a time. (Ha! For the folks at the Broad, one lane
+typically means one sample).
+
+In our case, since the known indels come from using HaplotypeCaller on
+all the samples, it will hold all the indels that are believed to exist
+after filtering. It seems like that should be good enough. (If not
+potentially better). And it also means that we can deploy jobs across
+individuals, which, with 100s of individuals should let us do this a
+little more quickly.
+
+This has been implemented, and the angsd-ready BAMs (overlap-clipped and
+indel-realigned) are now part of the default output and go into
+`results/bqsr-round-{bqsr_round}/indel_realigned/{sample}.bam`.
+
+Note that there are some intermittent Java failures on the test data
+set. I am not sure why this is. Re-running it will often let it finish
+appropriately. Weird. Must see if the same happens on Linux.
+
+### Realignment around species-specific indels
+
+Sometimes we map multiple closely-related species to a single reference
+genome. If we do that, it makes sense to not realign around indels that
+are not actually seen in the species. To deal with that, you can put the
+`indel_grps` in the config. This is a path that points to a file that
+tells us which species each of the samples (and sample_id’s) belongs to.
+For example, in the test data set if we uncomment the line:
+
+``` yaml
+indel_grps: ".test/config/igrps.tsv" 
+```
+
+Then, Snakemake understands that it will do indel-realignment only
+around the indels observed in the indviduals that are the same species.
+The file specifying this (i.e., `.test/config/igrps.tsv` in the above),
+must be TAB-delimited and formatted like this:
+
+    sample  sample_id   indel_grp
+    s001    T199967 spp1
+    s002    T199968 spp1
+    s003    T199969 spp1
+    s004    T199970 spp1
+    s005    T199971 spp2
+    s006    T199972 spp2
+    s007    T199974 spp2
 
 ## Quick install and run
 
@@ -172,11 +261,11 @@ conda activate snakemake-7.7.0
  snakemake --cores 20 --use-conda  -np --configfile .test/config/config.yaml
 ```
 
--   The `--configfile` option tells snakemake to find all the
-    configurations for the run in `.test/config/config.yaml`. This runs
-    a very small test data set of 8 samples from fastq to VCF.
--   The `-np` option tells snakemake to do a dry run and also to print
-    all the shell commands that it would use.
+- The `--configfile` option tells snakemake to find all the
+  configurations for the run in `.test/config/config.yaml`. This runs a
+  very small test data set of 8 samples from fastq to VCF.
+- The `-np` option tells snakemake to do a dry run and also to print all
+  the shell commands that it would use.
 
 After you run that command, there should be a lot of output (one little
 block for each job) and then a summary at the end that looks something
@@ -332,10 +421,10 @@ new data sets.
 
 All the files generated by the workflow are stored in
 
--   `resources`: downloaded and indexed genomes, etc. This also contains
-    some adapter sequence files for trimmomatic that are distributed
-    with this repo.
--   `results`: all the logs, all the outputs, etc.
+- `resources`: downloaded and indexed genomes, etc. This also contains
+  some adapter sequence files for trimmomatic that are distributed with
+  this repo.
+- `results`: all the logs, all the outputs, etc.
 
 A number of files are temporary files and are deleted after all
 downstream products they depend on have been produced. There are many
@@ -468,22 +557,22 @@ helper script at `workflow/prepare/make_chromosomes_and_scaffolds.R`:
 The user must make a `config.yaml` file. It serves a lot of purposes,
 like:
 
--   giving the relative path to the `units.tsv`, `chromosomes.tsv`, and
-    `scaffold_groups.tsv` files. (When we say “relative” path here we
-    mean relative to the top level of the repo directory where the
-    snakemake command will be given.)
--   Giving the URL from which the reference genome can be downloaded.
-    (If there is not a URL for it, then just copy the reference FASTA
-    file to `resources/genome.fasta`).
--   The location of the adapter file for Trimmomatic must be specified.
-    The correct one to use depends on what sequencing platform your data
-    come from.
--   The BQSR parameters as described in the next section.
--   The google drive directory to copy results back to, if desired. See
-    below.
--   Some parameters can be set here; however, some of the YAML blocks
-    here are vestigial and need to be cleaned up. Not all of these
-    options actually change things. For now, ask Eric for help…
+- giving the relative path to the `units.tsv`, `chromosomes.tsv`, and
+  `scaffold_groups.tsv` files. (When we say “relative” path here we mean
+  relative to the top level of the repo directory where the snakemake
+  command will be given.)
+- Giving the URL from which the reference genome can be downloaded. (If
+  there is not a URL for it, then just copy the reference FASTA file to
+  `resources/genome.fasta`).
+- The location of the adapter file for Trimmomatic must be specified.
+  The correct one to use depends on what sequencing platform your data
+  come from.
+- The BQSR parameters as described in the next section.
+- The google drive directory to copy results back to, if desired. See
+  below.
+- Some parameters can be set here; however, some of the YAML blocks here
+  are vestigial and need to be cleaned up. Not all of these options
+  actually change things. For now, ask Eric for help…
 
 The current `config.yaml` file in the test directory can be viewed at:
 
@@ -585,28 +674,27 @@ All this is to say that this is a pretty inexact science. Nonetheless,
 we have a few parameters that can be set in the config to select the
 “known variants” set:
 
--   `bqsr_maf`. Sites with a minor allele frequency less than this will
-    not be included in the known variants set. The idea is that you are
-    more confident that a variant is real if it actually was observed in
-    more than one or just a few individuals. Not only that, but, of all
-    the true variants found in an individual, only somewhat less than
-    `2 * bqsr_maf` will be discarded because of this filter.
-    Accordingly, the default value in the test config is 0.0225, which
-    means that about 3.5% of the mismatches in any actual variants in
-    any *individual* will still be called mismatches. That seems OK to
-    me.
+- `bqsr_maf`. Sites with a minor allele frequency less than this will
+  not be included in the known variants set. The idea is that you are
+  more confident that a variant is real if it actually was observed in
+  more than one or just a few individuals. Not only that, but, of all
+  the true variants found in an individual, only somewhat less than
+  `2 * bqsr_maf` will be discarded because of this filter. Accordingly,
+  the default value in the test config is 0.0225, which means that about
+  3.5% of the mismatches in any actual variants in any *individual* will
+  still be called mismatches. That seems OK to me.
 
--   `bqsr_qual`. Only sites with a variant quality (QUAL) score equal to
-    or greater than this value will be retained in the known-variants
-    set. For the test data set, this is set at 37, but should be larger
-    (perhaps 100) for data sets with more depth and more individuals.
+- `bqsr_qual`. Only sites with a variant quality (QUAL) score equal to
+  or greater than this value will be retained in the known-variants set.
+  For the test data set, this is set at 37, but should be larger
+  (perhaps 100) for data sets with more depth and more individuals.
 
--   `bqsr_qd`. Only sites with a `QD`—a variant quality score,
-    normalized by the number of reads—will be retained. `INFO/QD` is
-    calculated by GATK. If it is low, it means that a variant has been
-    called but the base quality scores for that variant are low on most,
-    if not all, of the reads supporting that variant. The value in the
-    .test data set is 15, but the effect of that should be investigated.
+- `bqsr_qd`. Only sites with a `QD`—a variant quality score, normalized
+  by the number of reads—will be retained. `INFO/QD` is calculated by
+  GATK. If it is low, it means that a variant has been called but the
+  base quality scores for that variant are low on most, if not all, of
+  the reads supporting that variant. The value in the .test data set is
+  15, but the effect of that should be investigated.
 
 ### What values should be chosen?
 
@@ -728,18 +816,18 @@ And it will print out a command line that does:
 2.  tarballs up the `qc`, `benchmarks`, and `logs` directories in all
     bqsr-round-X directories
 3.  uses rclone to copy:
-    -   the bams and gvcfs (and their indexes) from the final round of
-        BQSR,
-    -   the BCF files (and their indexes) from the final and all all
-        previous rounds of BQSR
-    -   the `qc` and `benchmark` tarballs from the ry bqsr-round-X
-        directory,
-    -   the `qc_summaries` directory,
-    -   the `resources` directory with the indexed genome
-    -   the `bq_variants` and `bq_recal_tables`
-    -   Finally, if there is a `data` directory present at the top level
-        we assume that is what holds the original fastqs, and we copy
-        all that back, too!
+    - the bams and gvcfs (and their indexes) from the final round of
+      BQSR,
+    - the BCF files (and their indexes) from the final and all all
+      previous rounds of BQSR
+    - the `qc` and `benchmark` tarballs from the ry bqsr-round-X
+      directory,
+    - the `qc_summaries` directory,
+    - the `resources` directory with the indexed genome
+    - the `bq_variants` and `bq_recal_tables`
+    - Finally, if there is a `data` directory present at the top level
+      we assume that is what holds the original fastqs, and we copy all
+      that back, too!
 
 For example, on the test data set it prints out something like this (but
 not exactly this, because I keep tweaking it):
@@ -802,18 +890,41 @@ this—an example from a case where one round of BQSR was done:
 Within each of the `results/bqsr-round-X` directories you will also find
 tarballs of all the log files and all the benchmark files.
 
+You will also find a directory like
+`results/bqsr-round-0/indel_realigned`.
+
+This contains subdirectories of indel-realigned bam files. For example:
+
+    results/bqsr-round-0/indel_realigned
+    ├── __ALL
+    ├── spp-carnatus
+    ├── spp-chrysomelas
+    ├── spp-diaconus
+    ├── spp-flavidus
+    ├── spp-melanops
+    ├── spp-mystinus
+    └── spp-serranoides
+
+In the above case, the subdirectory `__ALL` has bam files that were
+recalibrated using indels discovered in all samples. While subdirectory
+`spp-carnatus` includes only the bam files of those species that are
+listed as *S carnatus* (according to the `indel_grps` file) *AND* the
+indel realignment was done only with indels that were found in the
+individuals in that directory (i.e., that was species-specific indel
+realignment).
+
 ## Assumptions
 
--   Paired end
+- Paired end
 
 ## Things fixed or added relative to JK’s snakemake workflow
 
--   fastqc on both reads
--   don’t bother with single end
--   add adapters so illumina clip can work
--   benchmark each rule
--   use genomicsDBimport
--   allow for merging of lots of small scaffolds into genomicsDB
+- fastqc on both reads
+- don’t bother with single end
+- add adapters so illumina clip can work
+- benchmark each rule
+- use genomicsDBimport
+- allow for merging of lots of small scaffolds into genomicsDB
 
 ## Stepwise addition of new samples to the Workflow (and the Genomics Data bases)
 

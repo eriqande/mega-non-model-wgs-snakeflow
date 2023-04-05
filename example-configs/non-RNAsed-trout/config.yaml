@@ -1,15 +1,14 @@
-units: .test/config/units.tsv
-chromosomes: .test/config/chromosomes.tsv
-scaffold_groups: .test/config/scaffold_groups.tsv
-scatter_intervals_file: .test/config/scatters_1200000.tsv
+units: example-configs/non-RNAsed-trout/units.tsv
+chromosomes: example-configs/non-RNAsed-trout/chromosomes.tsv
+scaffold_groups: example-configs/non-RNAsed-trout/scaffold_groups.tsv
+scatter_intervals_file: example-configs/non-RNAsed-trout/scatters_5000000.tsv
 
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
-#indel_grps: ".test/config/igrps.tsv" 
+#indel_grps: example-configs/non-RNAsed-trout/igrps-species.tsv 
 
-# if you don't want to produce indel-realigned BAMs, set the
-# following to False
-do_indel_realignment: True
+
+
 
 # This will typically be left at 0.  Unless you want to do
 # BQSR.
@@ -30,16 +29,9 @@ bqsr_qd: 15
 maf_cutoffs: [0.01]
 
 
-# this next one is here just for quickly writing out rclone statements
-# to put the results back onto google drive.
-rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test"
 
-# If you want to copy all the fastq files back to rclone_base,
-# then the send_to_gdrive rule will assume it is in a directory
-# called 'data' at the top-level of the directory, and it will
-# copy its contents to rclone_base.  If you don't want the contents
-# of the 'data' directory to be copied with the send_to_gdrive 
-# rule, set the following parameter to False. 
+# where to send the results
+rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/nonRNAsed_trout"
 rclone_data: True
 
 # this is the default value for the first GenomicsDBImport run.
@@ -53,16 +45,16 @@ genomics_db_import_num: 0
 ref:
   # name of the species.  (will simply be put in the SnpEff config).
   # Put underscores for spaces
-  species_name: Oncorhynchus_tsawytscha
+  species_name: Oncorhynchus_mykiss
   # name you want to use for the genome version
-  genome_version_name: Otsh_v2_reduced
+  genome_version_name: USDA_OmykA_1.1
   # the URL where this can be downloaded, if public and easy to
   # get with wget.  If not, then you should hand-download
   # genome.fasta and genome.gff or genome.gtf
-  genome_url: https://github.com/eriqande/mega-non-model-wgs-snakeflow/raw/main/.test/genome/mini-test-genome.fna.gz
+  genome_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/013/265/735/GCF_013265735.2_USDA_OmykA_1.1/GCF_013265735.2_USDA_OmykA_1.1_genomic.fna.gz
   # if there is a GFF or GTF file, they have to have a .gff or
   # .gtf extension.  This where you put the URL for it
-  gff_or_gtf_url: ""
+  gff_or_gtf_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/013/265/735/GCF_013265735.2_USDA_OmykA_1.1/GCF_013265735.2_USDA_OmykA_1.1_genomic.gff.gz
 
 
 filtering:

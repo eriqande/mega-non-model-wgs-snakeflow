@@ -4,7 +4,10 @@ import pandas as pd
 from snakemake.utils import validate
 from snakemake.utils import min_version
 
-
+# The two lines below can be used to get the config information
+# for testing.  Change config file path as appropriate
+#  from snakemake.io import _load_configfile
+#  config = _load_configfile("example-configs/nz-arg-wr-chinook/config.yaml")
 
 min_version("5.18.0")
 
@@ -32,6 +35,8 @@ mafs = list(
             [str(config["bqsr_maf"])]
             )
         )
+
+
 
 units = pd.read_table(config["units"], dtype=str).set_index(
     ["sample", "unit"], drop=False
@@ -80,6 +85,35 @@ if config["scatter_intervals_file"] != "":
     scatter_wc_constraint="|".join(unique_scats)
 
 
+
+### Deal with the indel_grps if present (i.e. groupings of the samples
+### into different species so that indel realignment is done species by species).
+### At the same time we do this, we are also going to define the lists of output bams
+
+# this is the default, but we update it if the indel_grps is defined in the config
+realigned_bams_output_list=expand("results/bqsr-round-{bq}/indel_realigned/__ALL/{samp}.bam", bq=config["bqsr_rounds"], samp=sample_list)
+indel_grps_list=["weirdwhacko", "__ALL"]  # this is for the wildcard constraints. For some reason it fails if it is just "__ALL"
+if "indel_grps" in config and config["indel_grps"] != "":
+    indel_grps = pd.read_table(config["indel_grps"], dtype=str).set_index("sample", drop=False)
+    validate(indel_grps, schema="../schemas/indel_grps.schema.yaml")
+
+    # check to make sure that every sample is accounted for
+    if(set(sample_list) != set(indel_grps["sample"].unique())):
+      raise Exception("Every sample in units must be represented in the indel_grps file")
+
+    # update the realigned_bams_output_list
+    sm=indel_grps['sample'].tolist()
+    ig=indel_grps['indel_grp'].tolist()
+    realigned_bams_output_list=["results/bqsr-round-{bq}/indel_realigned/{ig}/{samp}.bam".format(bq=config["bqsr_rounds"], ig=ig[i], samp=sm[i]) for i in range(len(ig))]
+    indel_grps_list=ig
+
+
+# down here, if we choose not to do indel realignment in the config
+# then we just set realigned_bams_output_list to an empty list
+if "do_indel_realignment" in config and config["do_indel_realignment"] == False:
+    realigned_bams_output_list = []
+
+
 ##### Wildcard constraints #####
 wildcard_constraints:
     sample="|".join(sample_list),
@@ -89,7 +123,8 @@ wildcard_constraints:
     sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes),
     filter_condition="ALL|PASS|FAIL",
     maf="|".join(mafs),
-    scatter=scatter_wc_constraint
+    scatter=scatter_wc_constraint,
+    igrp="|".join(indel_grps_list)
 
 
 
@@ -380,6 +415,21 @@ def get_recal_input(bai=False):
             return []
     else:
         return f
+
+
+# here, we deal with indel realignment by species (or "igrp")
+def get_igrp_sample_names(wildcards):
+    if "indel_grps" not in config or config["indel_grps"] == "":
+        if wildcards.igrp != "__ALL":
+            raise Exception("Requesting igrp that is not \"__ALL\", but indel_grps not defined in config.")
+        else:
+            ret="JustStuffNotNeeded: IDs gotten through Unix in the rule if __ALL"
+    else:
+        if wildcards.igrp == "__ALL":
+          raise Exception("You can't request igrp \"__ALL\" when indel_grps is defined in the config. ")
+        else:
+          ret=indel_grps.loc[indel_grps['indel_grp'] == wildcards.igrp]["sample_id"].unique().tolist()
+    return ret
 
 
 def get_snpeff_reference():

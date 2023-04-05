@@ -1,17 +1,9 @@
-library(tidyverse)
+# redirect output and messages/errors to the log
+log <- file(snakemake@log[[1]], open="wt")
+sink(log, type = "output")
+sink(log, type = "message")
 
-# here is a little code to make it easy to work interactively with this
-# Rmarkdown document to try to find problems.  WHen you run it in snakemake,
-# it save the snakemake S4 class object.  When there is no snakemake object,
-# it reads it from the file that was previously saved.
-rsdir <- ".rmd_snakemake"
-dir.create(rsdir, showWarnings = FALSE)
-rdsfile <- file.path(rsdir, "sequence-scatter-bins.rds")
-if(exists("snakemake")) {
-  saveRDS(snakemake, file = rdsfile)
-} else {
-  snakemake <- readRDS(file = rdsfile)
-}
+library(tidyverse)
 
 
 # these are while developing

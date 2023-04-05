@@ -1,7 +1,7 @@
-units: .test/config/units.tsv
-chromosomes: .test/config/chromosomes.tsv
-scaffold_groups: .test/config/scaffold_groups.tsv
-scatter_intervals_file: .test/config/scatters_1200000.tsv
+units: example-configs/YEWA-Jan-2023/units.tsv
+chromosomes: example-configs/YEWA-Jan-2023/chromosomes.tsv
+scaffold_groups: example-configs/YEWA-Jan-2023/scaffold_groups.tsv
+scatter_intervals_file: "example-configs/YEWA-Jan-2023/scatters_5000000.tsv"
 
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
@@ -9,7 +9,7 @@ scatter_intervals_file: .test/config/scatters_1200000.tsv
 
 # if you don't want to produce indel-realigned BAMs, set the
 # following to False
-do_indel_realignment: True
+do_indel_realignment: FALSE
 
 # This will typically be left at 0.  Unless you want to do
 # BQSR.
@@ -32,7 +32,7 @@ maf_cutoffs: [0.01]
 
 # this next one is here just for quickly writing out rclone statements
 # to put the results back onto google drive.
-rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test"
+rclone_base: "BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023"
 
 # If you want to copy all the fastq files back to rclone_base,
 # then the send_to_gdrive rule will assume it is in a directory
@@ -40,7 +40,7 @@ rclone_base: "gdrive-rclone:Bioinformatic-Project-Archives/mega-flow-test"
 # copy its contents to rclone_base.  If you don't want the contents
 # of the 'data' directory to be copied with the send_to_gdrive 
 # rule, set the following parameter to False. 
-rclone_data: True
+rclone_data: False
 
 # this is the default value for the first GenomicsDBImport run.
 # If you want to change it, you should typically change it
@@ -53,13 +53,13 @@ genomics_db_import_num: 0
 ref:
   # name of the species.  (will simply be put in the SnpEff config).
   # Put underscores for spaces
-  species_name: Oncorhynchus_tsawytscha
+  species_name: Setophaga_petechia
   # name you want to use for the genome version
-  genome_version_name: Otsh_v2_reduced
+  genome_version_name: YEWA_from_whitney
   # the URL where this can be downloaded, if public and easy to
   # get with wget.  If not, then you should hand-download
   # genome.fasta and genome.gff or genome.gtf
-  genome_url: https://github.com/eriqande/mega-non-model-wgs-snakeflow/raw/main/.test/genome/mini-test-genome.fna.gz
+  genome_url: got-it-from-whitney-via-google-drive
   # if there is a GFF or GTF file, they have to have a .gff or
   # .gtf extension.  This where you put the URL for it
   gff_or_gtf_url: ""

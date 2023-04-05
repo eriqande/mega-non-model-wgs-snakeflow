@@ -1,0 +1,776 @@
+---
+title: "Prepping the Configs for YEWA"
+output: html_notebook
+---
+
+This is going to happen in:
+```
+/home/eanderson/scratch/PROJECTS/YEWA-Jan-2023
+```
+First thing I do is clone the mega-non-model repo:
+```sh
+git clone git@github.com:eriqande/mega-non-model-wgs-snakeflow.git
+cd mega-non-model-wgs-snakeflow/
+```
+
+From here on out, everything that I do is done with this:
+```sh
+/home/eanderson/scratch/PROJECTS/YEWA-Jan-2023/mega-non-model-wgs-snakeflow
+```
+as the working directory (or "top-level" directory).
+
+
+## Downloading the fastqs
+
+Now I am going to download all the different files from Sharepoint into the
+directory `data`, using rclone.
+
+First we check with a dry-run:
+```sh
+rclone copy --dry-run BGP-sharepoint:Genetic_and_Environmental_Data/Novoseq_fastq_2_download data \
+    --include='YEWA_redo_Novoseq_01032023/**' \
+    --include='YEWA_transfer/YEWA_LCWG_Plate1_11032021/**' \
+    --include='YEWA_transfer/YEWA_LCWG_Plate2_03212022_03312022/Rayne_7572_220328A7/**'
+```
+Which tells us, in summary, that this will do:
+```
+Transferred:   	  982.207 GiB / 982.207 GiB, 100%, 40.710 GiB/s, ETA 0s
+Transferred:         1727 / 1727, 100%
+Elapsed time:        28.1s
+2023/01/15 14:45:21 NOTICE:
+Transferred:   	  982.207 GiB / 982.207 GiB, 100%, 40.710 GiB/s, ETA 0s
+Transferred:         1727 / 1727, 100%
+Elapsed time:        28.1s
+```
+So, about a Tb of data.  And it looks like it has the three main directories worth 
+of data.  So, we will go ahead and launch this:
+```sh
+rclone copy BGP-sharepoint:Genetic_and_Environmental_Data/Novoseq_fastq_2_download data     --include='YEWA_redo_Novoseq_01032023/**'     --include='YEWA_transfer/YEWA_LCWG_Plate1_11032021/**'     --include='YEWA_transfer/YEWA_LCWG_Plate2_03212022_03312022/Rayne_7572_220328A7/**'
+```
+This is coming down at 6 to 7 Mb/sec.  A lot slower than we often saw with Google Drive.
+It is estimated to take about 22 hours to get that done.  OK.  But then it started
+saying about two days, with download speeds of 5 Mb.  Seriously throttled.
+
+Maybe I need to register my own ID with sharepoint.
+
+So, I killed the transfer and now I am following the directions
+at: https://rclone.org/onedrive/#creating-client-id-for-onedrive-personal
+
+
+I have an app named `New Rclone` that has this as the "application (client) ID"
+2a6f216e-16ca-480f-80ee-4399895362a2
+
+My rclone secret has the "value" CRA8Q************************** (censored)
+
+And the secret ID is: 57edd5ef-**************************** (censored)
+
+My tenant ID is: afb58802-ff7a-4bb1-ab21-367ff2ecfc8b
+
+So my auth_url will be:
+
+https://login.microsoftonline.com/afb58802-ff7a-4bb1-ab21-367ff2ecfc8b/oauth2/v2.0/authorize
+
+and my token URL will be:
+
+https://login.microsoftonline.com/afb58802-ff7a-4bb1-ab21-367ff2ecfc8b/oauth2/v2.0/token
+
+This was a huge nightmare because rclone couldn't handle the encoded token that came
+back.  I ended up putting the encoded token into the website at https://jwt.io/
+and decoding it into a token, which I then edited with nano into the rclone config
+file, and I also had to add the drive_id and drive_type into there, too.
+
+With that I was finally able to access the SharePoint with my remote: `BGP-SharePoint-ID`.
+
+I will do a quick test to see if it is any faster now.
+
+No change.  I also tried adding a --user-agent option:
+```sh
+rclone copy --user-agent "ISV|rclone.org|rclone/v1.61.1"   BGP-SharePoint-ID:Genetic_and_Environmental_Data/Novoseq_fastq_2_download data     --include='YEWA_redo_Novoseq_01032023/**'     --include='YEWA_transfer/YEWA_LCWG_Plate1_11032021/**'     --include='YEWA_transfer/YEWA_LCWG_Plate2_03212022_03312022/Rayne_7572_220328A7/**'
+```
+All I am getting is 6.4 Mb/sec.  Still gonna take about two days...
+
+## Making the units file
+
+Once all the downloads were complete, I listed all the non-undetermined fastqs that
+we will be dealing with in this way:
+```sh
+ls -l  data/*/*fastq.gz data/YEWA_transfer/YEWA_LCWG_Plate1_11032021/raw_data/*/*.fq.gz data/YEWA_transfer/YEWA_LCWG_Plate2_03212022_03312022/Rayne_7572_220328A7/*.fastq.gz | awk '!/Undetermined/'
+```
+and I put those into the example-configs in:
+```
+example-configs/YEWA-Jan-2023/prep/inputs/fq-listsings.txt
+```
+
+And now we can start processing that stuff  Since the file names
+don't all follow the same conventions, we have to do slightly different
+things with the `.fq.gz` ones versus the `.fastq.gz` ones.  We throw in
+a little `case_when()` for those situations.
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+
+files <- read_table("inputs/fq-listsings.txt", col_names = FALSE) %>%
+  select(X9, X5) %>%
+  mutate(kb = X5/1000) %>%
+  rename(fq = X9) %>%
+  select(fq, kb) %>%
+  mutate(base = basename(fq)) %>%
+  mutate(
+    sample_id = case_when(
+      str_detect(base, "\\.fq\\.gz") ~ str_match(base, "^s(.*)_[12]\\.fq\\.gz")[,2],
+      str_detect(base, "\\.fastq\\.gz") ~ str_match(base, "^(.*)_S[0-9]+.*\\.fastq\\.gz")[,2],
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  mutate(
+    read = case_when(
+      str_detect(base, "\\.fq\\.gz") ~ str_match(base, "^.*_([12])\\.fq\\.gz")[,2],
+      str_detect(base, "\\.fastq\\.gz") ~ str_match(base, "^.*_R([12])_001*\\.fastq\\.gz")[,2],
+      TRUE ~ NA_character_
+    )
+  ) 
+```
+
+Now, because the naming of the files does not always have the lane, etc., and
+we want to machine name (not really necessary, but we can get it easily from
+the first line of each file), I make a file that has that info that we can join
+onto the path:
+```sh
+for i in  data/*/*fastq.gz data/YEWA_transfer/YEWA_LCWG_Plate1_11032021/raw_data/*/*.fq.gz data/YEWA_transfer/YEWA_LCWG_Plate2_03212022_03312022/Rayne_7572_220328A7/*.fastq.gz; do zcat $i | awk -v f=$i 'BEGIN {OFS="\t"} NR==1 {print f, $1; exit}'; done | awk '!/Undetermined/'
+```
+The results of that have been put into:
+```
+example-configs/YEWA-Jan-2023/prep/inputs/seq-tags-per-path.tsv
+```
+And we can make it nice like this:
+```{r}
+seq_ids <- read_tsv("inputs/seq-tags-per-path.tsv", col_names = c("fq", "id")) %>%
+  separate(
+    id, 
+    into = c("x1", "x2", "flowcell", "lane"), 
+    sep = ":", 
+    extra = "drop"
+  ) %>%
+  select(-x1, -x2) %>%
+  mutate(platform = "ILLUMINA")
+```
+
+And we can now join those and pivot them to get fq1 fq2 kb1 and kb2 all on the same
+line, and then assign snakemake sample numbers to them.
+```{r}
+files_wide <- files %>%
+  left_join(seq_ids, by = "fq") %>%
+  select(-base) %>%
+  pivot_wider(
+    values_from = c(fq, kb),
+    names_from = read,
+    names_sep = ""
+  ) %>%
+  arrange(sample_id, flowcell, lane) %>%
+  mutate(
+    sample = sprintf("s%04d", as.integer(factor(sample_id, levels = unique(sample_id)))),
+    .before = sample_id
+  )
+```
+
+We will, at the same time, add libraries to them.  It looks like birds were either
+done on "Plate1" or "Plate2", and the reseqs were done on a new library prep that
+we will call Plate3.
+Let us confirm that.  We see if anyone was done on both Plate1 and Plate2:
+```{r}
+check_plates <- files_wide %>%
+  mutate(
+    plate = case_when(
+      str_detect(fq1, "Plate1") ~ 1L,
+      str_detect(fq1, "Plate2") ~ 2L,
+      TRUE ~ NA_integer_
+    ),
+    .after = sample
+  ) %>%
+  group_by(sample, sample_id) %>%
+  summarise(plate_str = paste(plate, collapse = ",")) %>%
+  ungroup()
+```
+
+And now we can count the configurations:
+```{r}
+check_plates %>%
+  count(plate_str)
+```
+
+Kristen thought that there might be 10 new birds on there.  I have an email
+in to CH and Marina for confirmation on that (I spoke to Marina and, yes, they
+put 10 new birds in there)
+
+At any rate, our different libraries will be Plate1, Plate2,
+and Plate3.  We make a data frame to join:
+```{r}
+lib_tib <- check_plates %>%
+  select(sample, plate_str) %>%
+  mutate(
+    library = case_when(
+      plate_str == "1" ~ "Plate1",
+      plate_str %in% c("2,2", "2,2,NA") ~ "Plate2",
+      plate_str == "NA" ~ "Plate3",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+So, now we can make our units file.  For barcodes I am just going to do the
+sample_id + library.  It just needs to be unique for those.
+```{r}
+units_all <- files_wide %>%
+  mutate(
+    library = case_when(
+      str_detect(fq1, "Plate1") ~ "Plate1",
+      str_detect(fq1, "Plate2") ~ "Plate2",
+      TRUE ~ "Plate3"
+    ),
+    .after = sample
+  ) %>%
+  group_by(sample) %>%
+  mutate(unit = 1:n(), .after = sample) %>%
+  ungroup() %>%
+  mutate(
+    barcode = str_c(sample, sample_id, library, sep = "-")
+  ) %>%
+  select(sample, unit, library, flowcell, platform, lane, sample_id, barcode, fq1, fq2, kb1, kb2)
+```
+
+Now, when we previously called variants in some of these birds, we found one that
+took way too long and produced a lot of private variants, that we suspected was
+a hybrid or mis-identified individual.  That was s0141 in the previous run of these
+things, which corresponded to `s2113ywar`.  So, we are going to remove 2113ywar.
+
+Here is the one that we will be tossing:
+```{r}
+units_all %>%
+  filter(sample_id == "2113ywar")
+```
+
+So, let's do that:
+```{r}
+units <- units_all %>%
+  filter(sample_id != "2113ywar")
+```
+And, finally, we write that out:
+```{r}
+write_tsv(units, file = "../units.tsv")
+```
+
+## Getting the reference genome
+
+Since it is not available publicly, we have to download it ourselves.
+I just grab the one that we used last time:
+```sh
+rclone copy  BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/resources/genome.fasta resources/
+```
+
+I also copied the fai file into the `prep/inputs` directory.
+
+## Making chromosomes and scaffold groups
+
+We do this with R.  As always, it is important to look at the format
+in `.test/chromosomes.tsv` and `.test/scaffold_groups.tsv` to know the format.
+```{r}
+# as I did before, we will let anything over 30 Mb be a "chromosome" and then
+# we will shoot for scaffold groups < 50 Mb in total.
+fai <- read_tsv(
+  "inputs/genome.fasta.fai", col_names = c("chrom", "len", "x1", "x2", "x3")) %>%
+  select(-starts_with("x")) %>%
+  mutate(cumlen = cumsum(len))
+
+# here are the lengths:
+fai %>%
+  mutate(x = 1:n()) %>%
+  ggplot(aes(x=x, y = len)) + geom_col()
+```
+Proceeding:
+```{r}
+chromos <- fai %>%
+  filter(len >= 3e7) %>%
+  rename(num_bases = len) %>%
+  select(-cumlen)
+
+write_tsv(chromos, file = "../chromosomes.tsv")
+
+
+# now, get the scaff groups
+scaffs <- fai %>%
+  filter(len < 3e7)
+
+bin_length <- 5e07
+
+scaff_groups <- scaffs %>%
+  mutate(
+    cumul = cumsum(len),
+    part = as.integer(cumul / bin_length) + 1L
+  ) %>%
+  mutate(
+    id = sprintf("scaff_group_%03d", part),
+    .before = chrom
+  ) %>%
+  select(-part, -cumlen)
+
+# let's just see the total lengths of those scaff_groups
+# and also the number of scaffolds in each
+scaff_groups %>%
+  group_by(id) %>%
+  summarise(
+    tot_bp = sum(len),
+    num_scaff = n()
+  )
+```
+Good, that is not too many scaff groups, and also not too many scaffolds
+per any one group.
+```{r}
+write_tsv(scaff_groups, file = "../scaffold_groups.tsv")
+```
+
+
+## Setting up the config.yaml file
+
+As always, it is important to start from .test/config/config.yaml, because that
+is the most up-to-date.  So I copied that to 
+```
+example-configs/YEWA-Jan-2023/config.yaml
+```
+And then I edited it as appropriate.
+
+## Getting the scatters file
+
+I set the scatters to "" in the config like this:
+```yaml
+scatter_intervals_file: ""
+```
+And then I committed all the stuff I just created here and pushed it up to the cluster.
+Then, as suggested in the README, did this:
+```sh
+(base) [node21: mega-non-model-wgs-snakeflow]--% pwd
+/home/eanderson/scratch/PROJECTS/YEWA-Jan-2023/mega-non-model-wgs-snakeflow
+(base) [node21: mega-non-model-wgs-snakeflow]--% conda activate snakemake-7.7.0
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% module load R
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% snakemake  --cores 1 --use-conda results/scatter_config/scatters_5000000.tsv --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+# then copy the result to the config area:
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% cp results/scatter_config/scatters_5000000.tsv example-configs/YEWA-Jan-2023/
+```
+After that I also updated the config file to point to that new file:
+```yaml
+scatter_intervals_file: "example-configs/YEWA-Jan-2023/scatters_5000000.tsv"
+```
+
+Now, when it is calling variants from the Genomics Data Bases, it will scatter
+the job over sections of genome that are less that 5 Mb (hence the 5000000 in the
+name).
+
+I committed that and pushed it back up.
+
+And now we are ready to do a dry run:
+```sh
+(snakemake-7.7.0) [node21: mega-non-model-wgs-snakeflow]--% snakemake -np --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+```
+
+
+We can check that this makes sense with the numbers of things we have:
+```{r}
+nrow(units)
+```
+
+746 units.  That is the number of trimming and mapping and fastqc jobs we expect.
+
+```{r}
+n_distinct(units$sample)
+```
+
+454 distinct samples.  That is the number of dup-marking and other sorts of
+jobs we expect.
+
+```{r}
+nrow(chromos)
+n_distinct(scaff_groups$id)
+```
+
+9 chromosome and 16 scaffold groups.  So we expect a few jobs doing
+9 or 16, or 25 things.
+
+And, for making gvcf sections, we expect:
+Number of individuals times (number of chroms + number of scaff groups) so:
+25 * 454 = 11,350.
+
+Finally, we expect the total number of GenomicsDB2VCF steps to be the number
+of unique scatter groups (Note that we use the old scatters file here, so that
+things stay consistent when I run this notebook.
+```{r}
+scats <- read_tsv("../FirstRun-OutOfMemory-scaff_group_015-scatters_5000000.tsv")
+n_distinct(scats$id, scats$scatter_idx)
+```
+
+So, 295 of those jobs.  
+
+Hooray! This is pretty much what we get:
+```sh
+Job stats:
+job                                   count    min threads    max threads
+----------------------------------  -------  -------------  -------------
+all                                       1              1              1
+bcf_concat                                1              1              1
+bcf_concat_mafs                           1              1              1
+bcf_maf_section_summaries                25              1              1
+bcf_section_summaries                    75              1              1
+bung_filtered_vcfs_back_together         25              1              1
+bwa_index                                 1              1              1
+combine_bcftools_stats                    3              1              1
+combine_maf_bcftools_stats                1              1              1
+concat_gvcf_sections                    454              1              1
+fastqc_read1                            746              1              1
+fastqc_read2                            746              1              1
+gather_scattered_vcfs                    25              1              1
+genome_dict                               1              1              1
+genome_faidx                              1              1              1
+genomics_db2vcf_scattered               295              2              2
+genomics_db_import_chromosomes            9              2              2
+genomics_db_import_scaffold_groups       16              2              2
+hard_filter_indels                       25              1              1
+hard_filter_snps                         25              1              1
+maf_filter                               25              1              1
+make_chromo_interval_lists                9              1              1
+make_gvcf_sections                    11350              1              1
+make_indel_vcf                           25              1              1
+make_scaff_group_interval_lists          16              1              1
+make_scatter_interval_lists             295              1              1
+make_snp_vcf                             25              1              1
+map_reads                               746              4              4
+mark_dp0_as_missing                      25              1              1
+mark_duplicates                         454              1              1
+multiqc                                   1              1              1
+samtools_stats                          454              1              1
+trim_reads_pe                           746              1              1
+total                                 16647              1              4
+
+```
+
+That is a whole hell of a lot of stuff to do.
+
+## Running
+
+It ran without any hitches til the very end.  It took about 36 hours and then
+ended with this message:
+
+```
+[Fri Jan 20 05:35:48 2023]
+Finished job 14676.
+16625 of 16647 steps (99.9%) done
+Exiting because a job execution failed. Look above for error message
+BUG: Out of jobs ready to be started, but not all files built yet. Please check https://github.com/snakemake/snakemake/issues/823 for more information.
+Remaining jobs:
+ - bcf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/sections/scaff_group_015-PASS.txt
+ - combine_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-FAIL.txt
+ - bcf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/sections/scaff_group_015-FAIL.txt
+ - combine_maf_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-pass-maf-0.01.txt
+ - bcf_maf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/maf_sections/scaff_group_015-maf-0.01.txt
+ - bcf_concat: results/bqsr-round-0/bcf/all.bcf, results/bqsr-round-0/bcf/all.bcf.csi
+ - maf_filter: results/bqsr-round-0/hard_filtering/both-filtered-scaff_group_015-maf-0.01.bcf
+ - combine_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-ALL.txt
+ - bcf_section_summaries: results/bqsr-round-0/qc/bcftools_stats/sections/scaff_group_015-ALL.txt
+ - combine_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-PASS.txt
+ - all:
+ - bung_filtered_vcfs_back_together: results/bqsr-round-0/hard_filtering/both-filtered-scaff_group_015.bcf
+ - hard_filter_snps: results/bqsr-round-0/hard_filtering/snps-filtered-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/snps-filtered-scaff_group_015.vcf.gz.tbi
+ - make_snp_vcf: results/bqsr-round-0/hard_filtering/snps-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/snps-scaff_group_015.vcf.gz.tbi
+ - mark_dp0_as_missing: results/bqsr-round-0/vcf_sect_miss_denoted/scaff_group_015.vcf.gz, results/bqsr-round-0/vcf_sect_miss_denoted/scaff_group_015.vcf.gz.tbi
+ - gather_scattered_vcfs: results/bqsr-round-0/vcf_sections/scaff_group_015.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0011.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0011.vcf.gz.tbi
+ - hard_filter_indels: results/bqsr-round-0/hard_filtering/indels-filtered-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/indels-filtered-scaff_group_015.vcf.gz.tbi
+ - make_indel_vcf: results/bqsr-round-0/hard_filtering/indels-scaff_group_015.vcf.gz, results/bqsr-round-0/hard_filtering/indels-scaff_group_015.vcf.gz.tbi
+ - bcf_concat_mafs: results/bqsr-round-0/bcf/pass-maf-0.01.bcf, results/bqsr-round-0/bcf/pass-maf-0.01.bcf.csi
+```
+So, it looks like a few of the scatters from scaff_group_015 did not
+complete correctly.
+
+Let's look at the logs:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% tail results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_00{09,10,11}.log
+==> results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_0009.log <==
+18:49:35.435 INFO  ProgressMeter -      SCAF_269:153962             95.7               2740000          28635.7
+18:49:48.328 INFO  ProgressMeter -      SCAF_269:158042             95.9               2744000          28613.3
+18:49:59.346 INFO  ProgressMeter -      SCAF_269:160042             96.1               2746000          28579.4
+18:50:09.643 INFO  ProgressMeter -      SCAF_269:163043             96.3               2749000          28559.6
+18:50:21.009 INFO  ProgressMeter -      SCAF_269:168065             96.4               2754000          28555.4
+18:50:32.907 INFO  ProgressMeter -      SCAF_269:173089             96.6               2759000          28548.5
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),87.920202178,Cpu time(s),76.38541004999944
+18:51:01.586 INFO  ProgressMeter -        SCAF_270:6142             97.1               2765000          28469.8
+18:51:13.403 INFO  ProgressMeter -      SCAF_270:151917             97.3               2775000          28514.9
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),3.2390066599999905,Cpu time(s),3.205452518000013
+
+==> results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_0010.log <==
+18:14:52.276 INFO  ProgressMeter -       SCAF_295:38005             61.0               1762000          28893.6
+18:15:02.856 INFO  ProgressMeter -       SCAF_295:53226             61.2               1771000          28957.4
+18:15:13.969 INFO  ProgressMeter -       SCAF_295:66855             61.3               1780000          29016.7
+18:15:24.333 INFO  ProgressMeter -       SCAF_295:75807             61.5               1787000          29049.0
+18:15:35.843 INFO  ProgressMeter -       SCAF_295:84654             61.7               1795000          29088.3
+18:15:45.982 INFO  ProgressMeter -       SCAF_295:94774             61.9               1802000          29122.0
+18:15:57.082 INFO  ProgressMeter -      SCAF_295:109489             62.1               1812000          29196.3
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),19.06126339699996,Cpu time(s),18.647145529999847
+18:16:35.194 INFO  ProgressMeter -        SCAF_296:3912             62.7               1818000          28996.3
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),1.3211903190000012,Cpu time(s),1.3078250839999974
+
+==> results/bqsr-round-0/logs/gatk/genotypegvcfs/scaff_group_015/scat_0011.log <==
+17:54:48.283 INFO  ProgressMeter -       SCAF_335:39483             40.9               1125000          27528.7
+17:54:59.195 INFO  ProgressMeter -       SCAF_335:45707             41.0               1131000          27552.9
+17:55:09.237 INFO  ProgressMeter -       SCAF_335:52952             41.2               1138000          27610.9
+17:55:20.198 INFO  ProgressMeter -       SCAF_335:58978             41.4               1144000          27634.0
+17:55:34.596 INFO  ProgressMeter -       SCAF_335:61982             41.6               1147000          27546.8
+17:55:45.327 INFO  ProgressMeter -       SCAF_335:67996             41.8               1153000          27572.4
+17:55:58.419 INFO  ProgressMeter -       SCAF_335:76059             42.0               1161000          27619.6
+17:56:09.376 INFO  ProgressMeter -       SCAF_335:81064             42.2               1166000          27618.6
+17:56:20.063 INFO  ProgressMeter -       SCAF_335:86074             42.4               1171000          27620.5
+GENOMICSDB_TIMER,GenomicsDB iterator next() timer,Wall-clock time(s),36.0176384479996,Cpu time(s),31.67767033499983
+```
+So, it looks like each one was cut short before they finished.  I suspect that
+there are too many scaffolds in each of those.  They probably ran out of memory.
+Let's look at the slurm logs, etc.
+
+There is nothing suspect in:
+```sh
+tail   results/slurm_logs/genomics_db2vcf_scattered/genomics_db2vcf_scattered-bqsr_round\=0\,scatter\=scat_0009\,sg_or_chrom\=scaff_group_015-476077.err
+
+Removing output files of failed job genomics_db2vcf_scattered since they might be corrupted:
+results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.vcf.gz
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+slurmstepd: error: Detected 1 oom-kill event(s) in step 476077.batch cgroup. Some of your processes may have been killed by the cgroup out-of-memory handler.
+```
+Yep! That was an out of memory error.
+
+So, we could try giving it more memory, but I think it simply has to do with
+the number of scaffolds within those scatter groups.  So, we can just break
+up those scatter groups a little more.
+
+First, let's see what happens if we do a new dry run to confirm what
+we need to finish up here:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake -np  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries               1              1              1
+bcf_section_summaries                   3              1              1
+bung_filtered_vcfs_back_together        1              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                   1              1              1
+genomics_db2vcf_scattered               3              2              2
+hard_filter_indels                      1              1              1
+hard_filter_snps                        1              1              1
+maf_filter                              1              1              1
+make_indel_vcf                          1              1              1
+make_snp_vcf                            1              1              1
+mark_dp0_as_missing                     1              1              1
+total                                  22              1              2
+```
+
+Yep, it is just those three genomics_db2vcf jobs that failed:
+
+- scaff_group_015 
+    - scat_0009
+    - scat_0010
+    - scat_0011
+
+We can count up how many scaffolds are in each of those:
+```{r}
+scats %>%
+  count(id, scatter_idx) %>%
+  filter(id == "scaff_group_015")
+```
+
+So, there were 26, 39, and 28 scaffolds in each of those.
+
+I am just going to make a new scatters file puts each of those
+scaffolds in their own scatter group.  That will then run
+quickly.
+
+First, copy the scatters file to have the prefix "FirstRun-OutOfMemory-scaff_group_015-"
+```sh
+cp example-configs/YEWA-Jan-2023/scatters_5000000.tsv example-configs/YEWA-Jan-2023/FirstRun-OutOfMemory-scaff_group_015-scatters_5000000.tsv
+```
+
+And then we just break out the ones that need it into one
+scatter per scaffold.  We just rename those scatters like
+scat_0009.1, scat_0009.2, etc.
+```{r}
+new_scats <- scats %>%
+  group_by(id, scatter_idx) %>%
+  mutate(
+    new_scatter_idx = case_when(
+      id == "scaff_group_015" & scatter_idx %in% c("scat_0009", "scat_0010", "scat_0011") ~ sprintf("%s.%03d", scatter_idx, 1:n()),
+      TRUE ~ scatter_idx
+    )
+  ) %>%
+  ungroup() %>%
+  mutate(scatter_idx = new_scatter_idx) %>%
+  select(-new_scatter_idx)
+  
+
+write_tsv(new_scats, file = "../scatters_5000000.tsv")  
+```
+
+So, then I pushed those changes up and pulled them to the cluster and
+did a new dry run:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake -np  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries              25              1              1
+bcf_section_summaries                  75              1              1
+bung_filtered_vcfs_back_together       25              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                  25              1              1
+genomics_db2vcf_scattered             385              2              2
+hard_filter_indels                     25              1              1
+hard_filter_snps                       25              1              1
+maf_filter                             25              1              1
+make_indel_vcf                         25              1              1
+make_scatter_interval_lists           385              1              1
+make_snp_vcf                           25              1              1
+mark_dp0_as_missing                    25              1              1
+total                                1077              1              2
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+```
+
+So, that is a bit lame.  This version of snakemake must be noting that the
+scatters file has changed, so it want to re-run all the jobs that depend
+on it, so it wants to re-run all the genomics_db2vcf_scattered jobs that
+were already finished.
+
+We can deal with that by setting the modification time of the scatters
+file to two days ago.
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% touch -d "Wed Jan 18 06:51:59 PST 2023" example-configs/YEWA-Jan-2023/scatters_5000000.tsv
+```
+
+Then we try another dry run:
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake -np  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries               1              1              1
+bcf_section_summaries                   3              1              1
+bung_filtered_vcfs_back_together        1              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                   1              1              1
+genomics_db2vcf_scattered              93              2              2
+hard_filter_indels                      1              1              1
+hard_filter_snps                        1              1              1
+maf_filter                              1              1              1
+make_indel_vcf                          1              1              1
+make_scatter_interval_lists            93              1              1
+make_snp_vcf                            1              1              1
+mark_dp0_as_missing                     1              1              1
+total                                 205              1              2
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+
+
+```
+
+That is exactly what it should look like, since  26 + 39 + 28 = 93.
+
+While I am at it, I should note that it takes a few minutes each time we
+run this for snakemake to build the DAG for the job.
+
+Anyway.  It all looks good now, so let's go ahead and run it for real.
+
+```sh
+(snakemake-7.7.0) [node01: mega-non-model-wgs-snakeflow]--% snakemake  --profile hpcc-profiles/slurm/sedna --configfile example-configs/YEWA-Jan-2023/config.yaml
+```
+
+With any luck, that will take less than 3 hours to finish, so it will be
+all done when I meet with CH and Marina about it.
+
+WTF!  There are a couple of scaffolds still causing problems:
+```
+Exiting because a job execution failed. Look above for error message
+BUG: Out of jobs ready to be started, but not all files built yet. Please check https://github.com/snakemake/snakemake/issues/823 for more information.
+Remaining jobs:
+ - combine_maf_bcftools_stats: results/bqsr-round-0/qc/bcftools_stats/all-pass-maf-0.01.txt
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.003.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.003.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.018.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0009.018.vcf.gz.tbi
+ - genomics_db2vcf_scattered: results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.007.vcf.gz, results/bqsr-round-0/vcf_sections/scaff_group_015/scat_0010.007.vcf.gz.tbi
+```
+
+That is weird, because the logs show that those actually finished.  So, I think
+that snakemake just fried.
+
+Let's just restart it...When I did so, it recognized those files as being
+complete and all good and continued on.  And it finished.
+
+## Copy everything back to sharepoint
+
+I have put the right rclone address into the config, so now I can do:
+```sh
+snakemake -np  send_to_gdrive --configfile example-configs/YEWA-Jan-2023/config.yaml
+
+# which gave me this response:
+ git log | head -n 150  > example-configs/YEWA-Jan-2023/latest-git-commits.txt;   mkdir -p results/qc_summaries/bqsr-round-{0..0};  for i in {0..0}; do cp -r results/bqsr-round-$i/qc/{multiqc.html,bcftools_stats/*.txt} results/qc_summaries/bqsr-round-$i/; done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/qc.tar results/bqsr-round-$i/qc; gzip results/bqsr-round-$i/qc.tar;  done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/benchmarks.tar results/bqsr-round-$i/benchmarks; gzip results/bqsr-round-$i/benchmarks.tar; done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results/bqsr-round-$i/logs.tar; done;                                                                                                                    rclone copy --dry-run  --bwlimit 8650k . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023   --include='example-configs/YEWA-Jan-2023/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-{0}/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-{0}/{bcf,bq_recal_tables,bq_variants}/**'  --include='resources/**'    --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/indel_realigned/**'
+```
+
+So, I wanted to copy the BCF files up there first. I did:
+```sh
+rclone copy . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023 --include='results/bqsr-round-{0}/bcf/**'
+```
+That will take about 3 hours, then I will start on all the rest...
+
+Here we are just doing the whole schmeer:
+```sh
+rclone copy --dry-run  . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023   --include='example-configs/YEWA-Jan-2023/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-{0}/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-{0}/{bcf,bq_recal_tables,bq_variants}/**'  --include='resources/**'    --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/indel_realigned/**'
+```
+The dry-run says 1854 files and 1.295 Tb.  So we will start this and it will take
+a good long time.
+
+But, right now it is going at about 25 Mb/sec.  So, that is not too bad...
+
+We shall see if there is a daily limit on uploads.
+
+
+So, that got done pretty quickly, which is good, but SharePoint modifies certain
+types of files when they are uploaded, so that rclone's checksum and size checks
+file.  That happens with html files:
+```
+2023-01-23 09:44:13 ERROR : example-configs/YEWA-Jan-2023/prep/prep-configs.nb.html: corrupted on transfer: sizes differ 842046 vs 842261
+2023-01-23 09:44:26 ERROR : results/qc_summaries/bqsr-round-0/multiqc.html: corrupted on transfer: sizes differ 12300744 vs 12300959
+```
+Completely on SharePoint's part.  Whatever, it is a known problem:
+
+https://rclone.org/onedrive/#unexpected-file-size-hash-differences-on-sharepoint
+
+So, I will run it one final time with these extra options, so as to get those
+two files copied:
+```sh
+--ignore-checksum --ignore-size
+```
+
+This got those files up there:
+```sh
+rclone copy --ignore-checksum --ignore-size  . BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/YEWA/snakemake-run-Jan-2023   --include='example-configs/YEWA-Jan-2023/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-{0}/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-{0}/{bcf,bq_recal_tables,bq_variants}/**'  --include='resources/**'    --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/indel_realigned/**'
+```
+

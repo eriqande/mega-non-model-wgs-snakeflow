@@ -87,6 +87,53 @@ maf_cutoffs: [0.01, 0.05]
 ```
 
 
+## Some notes on Indel Realignment
+
+I am working now on making ANGSD-ready BAMs, and I would like to do indel
+realignment, as recommended by Nina's group.  I note in their workflow, they
+submit all the bamfiles to RealignorTargetCreator and then realign all the
+bam files together, [in these lines](https://github.com/therkildsen-lab/data-processing/blob/61eca5aea336f6594b44427ace58a419e0290696/scripts/realign_indels.sh#L34-L58):
+
+It seems to me like that would not parallelize well.
+
+However, since we already have created VCF files with all the known indels in them
+it makes sense to just use those.  Those will hold all the indels found found from this
+particular set of bams, and so they should give a similar result. [Here](https://github.com/broadinstitute/gatk-docs/blob/master/gatk3-methods-and-algorithms/Local_Realignment_around_Indels.md) is a note
+on the legacy GATK website about this.  It points out most of the indels within an indivdiual will
+already be known if you have a fairly complete set of indels, so it is permissible in large projects
+to realign one lane at a time.  (Ha! For the folks at the Broad, one lane typically means one sample).
+
+In our case, since the known indels come from using HaplotypeCaller on all the samples, it will
+hold all the indels that are believed to exist after filtering.  It seems like that should
+be good enough. (If not potentially better).  And it also means that we can deploy jobs across
+individuals, which, with 100s of individuals should let us do this a little more quickly.
+
+This has been implemented, and the angsd-ready BAMs (overlap-clipped and indel-realigned) are now
+part of the default output and go into `results/bqsr-round-{bqsr_round}/indel_realigned/{sample}.bam`.
+
+Note that there are some intermittent Java failures on the test data set.  I am not sure
+why this is.  Re-running it will often let it finish appropriately.  Weird.  Must see if the
+same happens on Linux.
+
+### Realignment around species-specific indels
+
+Sometimes we map multiple closely-related species to a single reference
+genome.  If we do that, it makes sense to not realign around indels that
+are not actually seen in the species.  To deal with that, you can put the
+`indel_grps` in the config.  This is a path that points to a file that tells
+us which species each of the samples (and sample_id's) belongs to. For example,
+in the test data set if we uncomment the line:
+```yaml
+indel_grps: ".test/config/igrps.tsv" 
+```
+Then, Snakemake understands that it will do indel-realignment only around
+the indels observed in the indviduals that are the same species.  The file
+specifying this (i.e., `.test/config/igrps.tsv` in the above), must be TAB-delimited
+and formatted like this:
+```
+`r paste(readLines(".test/config/igrps.tsv"), collapse = "\n")`
+```
+
 
 ## Quick install and run
 
@@ -625,6 +672,10 @@ And it will print out a command line that does:
     - the `bq_variants` and `bq_recal_tables`
     - Finally, if there is a `data` directory present at the top level we assume that
       is what holds the original fastqs, and we copy all that back, too!
+    - It will also copy the entire contents of the subdirectory that contains the `units`
+      file.  Accordingly, when you set your run up, you should put your config.yaml,
+      your chromosomes and scaffold groups, etc. all in that subdirectory along with
+      units.tsv.
 
 
 For example, on the test data set it prints out something like
@@ -684,6 +735,27 @@ BQSR was done:
 ```
 Within each of the `results/bqsr-round-X` directories you will
 also find tarballs of all the log files and all the benchmark files.
+
+You will also find a directory like `results/bqsr-round-0/indel_realigned`.
+
+This contains subdirectories of indel-realigned bam files.  For example:
+```
+results/bqsr-round-0/indel_realigned
+├── __ALL
+├── spp-carnatus
+├── spp-chrysomelas
+├── spp-diaconus
+├── spp-flavidus
+├── spp-melanops
+├── spp-mystinus
+└── spp-serranoides
+
+```
+In the above case, the subdirectory `__ALL` has bam files that were recalibrated
+using indels discovered in all samples.  While subdirectory `spp-carnatus` includes
+only the bam files of those species that are listed as _S carnatus_ (according to the
+`indel_grps` file) _AND_ the indel realignment was done only with indels that were found
+in the individuals in that directory (i.e., that was species-specific indel realignment).
 
 
 ## Assumptions

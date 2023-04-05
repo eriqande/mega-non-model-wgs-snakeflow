@@ -52,6 +52,7 @@ rule map_reads:
     wrapper:
         "v1.23.3/bio/bwa/mem"
 
+
 rule mark_duplicates:
     input:
         get_all_bams_of_common_sample
