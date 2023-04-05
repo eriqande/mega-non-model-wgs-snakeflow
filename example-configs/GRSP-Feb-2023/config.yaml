@@ -9,7 +9,7 @@ scatter_intervals_file: "example-configs/GRSP-Feb-2023/scatters_5000000.tsv"
 
 # if you don't want to produce indel-realigned BAMs, set the
 # following to False
-do_indel_realignment: FALSE
+do_indel_realignment: FALSE 
 
 # This will typically be left at 0.  Unless you want to do
 # BQSR.
