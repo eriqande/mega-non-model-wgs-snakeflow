@@ -60,8 +60,8 @@ rule make_scatter_interval_lists:
 #     resources:
 #         time="3-00:00:00",
 #         mem_mb = 4600,
-#         cpus = 1
-#     threads: 1
+#         cpus = 2
+#     threads: 2
 #     shell:
 #         "gatk --java-options \"{params.java_opts}\" HaplotypeCaller "
 #         " -R {input.ref} "
@@ -90,12 +90,14 @@ rule make_gvcf_sections:
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/make_gvcfs/{sample}/{sg_or_chrom}.bmk"
     params:
-        java_opts="-Xmx4g"
+        java_opts="-Xmx30g",
+        conf_pars=config["params"]["gatk"]["HaplotypeCaller"]
     resources:
         time="1-00:00:00",
-        mem_mb = 4600,
-        cpus = 1
-    threads: 1
+        mem_mb = 30400,
+        cpus = 8,
+		tmpdir = "results/bqsr-round-0/tmp"
+    threads: 8
     shell:
         "gatk --java-options \"{params.java_opts}\" HaplotypeCaller "
         " -R {input.ref} "
@@ -103,6 +105,7 @@ rule make_gvcf_sections:
         " -O {output.gvcf} "
         " -L {input.interval_list} "
         " --native-pair-hmm-threads {threads} "
+        " {params.conf_pars} "
         " -ERC GVCF > {log.stdout} 2> {log.stderr} "
 
 
@@ -124,8 +127,6 @@ rule concat_gvcf_sections:
     shell:
         " bcftools concat {params.opts} -O z {input} > {output.gvcf} 2>{log}; "
         " bcftools index -t {output.gvcf} "
-
-
 
 
 
@@ -154,12 +155,13 @@ rule genomics_db_import_chromosomes:
         import_num=get_GDB_import_number,
         histories=lambda wc: expand("results/bqsr-round-{bqsr_round}/gdb_accounting/histories/{chr}/{sample}.txt", bqsr_round = wc.bqsr_round, chr=wc.chromo, sample=get_samples_for_GDB_import(wc)),
         my_opts=chromo_import_gdb_opts,
-        java_opts="-Xmx4g",  # optional
+        java_opts="-Xmx15g",  # optional
     resources:
-        mem_mb = 9400,
-        cpus = 2,
-        time = "36:00:00"
-    threads: 2
+        mem_mb = 15200,
+        cpus = 4,
+        time = "24:00:00",
+		tmpdir = "results/bqsr-round-0/gvcf_sections"
+    threads: 4
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -194,12 +196,13 @@ rule genomics_db_import_scaffold_groups:
         import_num=get_GDB_import_number,
         histories=lambda wc: expand("results/bqsr-round-{bq}/gdb_accounting/histories/{sg}/{sample}.txt", bq = wc.bqsr_round, sg=wc.scaff_group, sample=get_samples_for_GDB_import(wc)),
         my_opts=scaff_group_import_gdb_opts,
-        java_opts="-Xmx4g",  # optional
+        java_opts="-Xmx22g",  # optional
     resources:
-        mem_mb = 9400,
-        cpus = 2,
-        time = "36:00:00"
-    threads: 2
+        mem_mb = 22800,
+        cpus = 6,
+        time = "24:00:00",
+	tmpdir = "results/bqsr-round-0/tmp"
+    threads: 6
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -222,7 +225,7 @@ rule genomics_db2vcf_scattered:
     input:
         genome="resources/genome.fasta",
         scatters="results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list",
-        receipts=expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
+        #receipts=expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
     output:
         vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz"),
         tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz.tbi")
@@ -232,13 +235,14 @@ rule genomics_db2vcf_scattered:
         "results/bqsr-round-{bqsr_round}/benchmarks/genomics_db2vcf/{sg_or_chrom}/{scatter}.bmk",
     params:
         gendb="results/bqsr-round-{bqsr_round}/genomics_db/{sg_or_chrom}",
-        java_opts="-Xmx8g",  # I might need to consider a temp directory, too in which case, put it in the config.yaml
+        java_opts="-Xmx75g",  # I might need to consider a temp directory, too in which case, put it in the config.yaml
         pextra=" --genomicsdb-shared-posixfs-optimizations --only-output-calls-starting-in-intervals "
     resources:
-        mem_mb = 11750,
-        cpus = 2,
-        time = "1-00:00:00"
-    threads: 2
+        mem_mb = 76000,
+        cpus = 20,
+        time = "1-00:00:00",
+	tmpdir = "results/bqsr-round-0/vcf_sections"
+    threads: 20
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
@@ -263,6 +267,8 @@ rule gather_scattered_vcfs:
         "results/bqsr-round-{bqsr_round}/benchmarks/gather_scattered_vcfs/{sg_or_chrom}.bmk",
     params:
         opts=" --naive "
+    resources:
+        tmpdir = "results/bqsr-round-0/tmp"
     conda:
         "../envs/bcftools.yaml"
     shell:
@@ -288,6 +294,8 @@ rule mark_dp0_as_missing:
         "results/bqsr-round-{bqsr_round}/logs/mark_dp0_as_missing/{sg_or_chrom}.log",
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/mark_dp0_as_missing/{sg_or_chrom}.bmk"
+    resources:
+        tmpdir = "results/bqsr-round-0/vcf_sect_miss_denoted"
     conda:
         "../envs/bcftools.yaml"
     shell:
@@ -303,8 +311,8 @@ rule bcf_concat:
     input:
         expand("results/bqsr-round-{{bqsr_round}}/hard_filtering/both-filtered-{sgc}.bcf", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        bcf=protected("results/bqsr-round-{bqsr_round}/bcf/all.bcf"),
-        tbi=protected("results/bqsr-round-{bqsr_round}/bcf/all.bcf.csi")
+        bcf="results/bqsr-round-{bqsr_round}/bcf/all.bcf",
+        tbi="results/bqsr-round-{bqsr_round}/bcf/all.bcf.csi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/bcf_concat/bcf_concat_log.txt"
     benchmark:
@@ -315,7 +323,7 @@ rule bcf_concat:
         "../envs/bcftools.yaml"
     shell:
         " (bcftools concat {params.opts} -Ob {input} > {output.bcf}; "
-        " bcftools index {output.bcf})  2>{log}; "
+        " bcftools index {output.bcf})  2> {log}; "
 
 
 
@@ -338,8 +346,3 @@ rule bcf_concat_mafs:
     shell:
         " (bcftools concat {params.opts} -Ob {input} > {output.bcf}; "
         " bcftools index {output.bcf})  2>{log}; "
-
-
-
-
-
