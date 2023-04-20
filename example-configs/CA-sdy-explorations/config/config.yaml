@@ -1,7 +1,7 @@
 units: example-configs/CA-sdy-explorations/config/units.tsv
 chromosomes: example-configs/CA-sdy-explorations/config/chromosomes.tsv
 scaffold_groups: example-configs/CA-sdy-explorations/config/scaffold_groups.tsv
-scatter_intervals_file: example-configs/CA-sdy-explorations/config/scatters_1200000.tsv
+scatter_intervals_file: example-configs/CA-sdy-explorations/config/scatters_2000000.tsv
 
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
