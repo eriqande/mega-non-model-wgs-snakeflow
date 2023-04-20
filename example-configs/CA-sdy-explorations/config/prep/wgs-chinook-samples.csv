@@ -1,0 +1,161 @@
+vcf_name,ID_Berk,NMFS_DNA_ID,BOX_ID,BOX_POSITION,Population,Concentration (ng/ul),run_type
+DPCh_plate1_A01_S1,CH_Plate1_1A,T144767,T1512,1A,Salmon River Fall,23.4,Fall
+DPCh_plate1_A02_S2,CH_Plate1_2A,T144804,T1512,5F,Salmon River Fall,67.4,Fall
+DPCh_plate1_A03_S3,CH_Plate1_3A,T145109,T1515,7G,Salmon River Spring,3.52,Spring
+DPCh_plate1_A04_S4,CH_Plate1_4A,T145118,T1515,8H,Salmon River Spring,10.3,Spring
+DPCh_plate1_A05_S5,CH_Plate1_5A,T144863,T1513,1A,Feather River Hatchery Fall,220,Fall
+DPCh_plate1_A06_S6,CH_Plate1_6A,T144906,T1513,6D,Feather River Hatchery Fall,180,Fall
+DPCh_plate1_A07_S7,CH_Plate1_7A,T145128,T1515,10B,Feather River Hatchery Spring,149,Spring
+DPCh_plate1_A08_S8,CH_Plate1_8A,T145142,T1515,11H,Feather River Hatchery Spring,185,Spring
+DPCh_plate1_A09_S9,CH_Plate1_9A,T144959,T1514,1A,Trinity River Hatchery Spring,104,Spring
+DPCh_plate1_A10_S10,CH_Plate1_10A,T144980,T1514,3F,Trinity River Hatchery Spring,92.4,Spring
+DPCh_plate1_A11_S11,CH_Plate1_11A,T145151,T1516,1A,Trinity River Hatchery Fall,116,Fall
+DPCh_plate1_A12_S12,CH_Plate1_12A,T145192,T1516,6B,Trinity River Hatchery Fall,51,Fall
+DPCh_plate1_B01_S13,CH_Plate1_1B,T144770,T1512,1D,Salmon River Fall,13.5,Fall
+DPCh_plate1_B02_S14,CH_Plate1_2B,T144805,T1512,5G,Salmon River Fall,103,Fall
+DPCh_plate1_B03_S15,CH_Plate1_3B,T145111,T1515,8A,Salmon River Spring,10.6,Spring
+DPCh_plate1_B04_S16,CH_Plate1_4B,T145119,T1515,9A,Salmon River Spring,55,Spring
+DPCh_plate1_B05_S17,CH_Plate1_5B,T144870,T1513,1H,Feather River Hatchery Fall,129,Fall
+DPCh_plate1_B06_S18,CH_Plate1_6B,T144911,T1513,7A,Feather River Hatchery Fall,101,Fall
+DPCh_plate1_B07_S19,CH_Plate1_7B,T145130,T1515,10D,Feather River Hatchery Spring,198,Spring
+DPCh_plate1_B08_S20,CH_Plate1_8B,T145144,T1515,12B,Feather River Hatchery Spring,104,Spring
+DPCh_plate1_B09_S21,CH_Plate1_9B,T144960,T1514,1B,Trinity River Hatchery Spring,107,Spring
+DPCh_plate1_B10_S22,CH_Plate1_10B,T144981,T1514,3G,Trinity River Hatchery Spring,58.8,Spring
+DPCh_plate1_B11_S23,CH_Plate1_11B,T145152,T1516,1B,Trinity River Hatchery Fall,69.2,Fall
+DPCh_plate1_B12_S24,CH_Plate1_12B,T145193,T1516,6C,Trinity River Hatchery Fall,76,Fall
+DPCh_plate1_C01_S25,CH_Plate1_1C,T144774,T1512,1H,Salmon River Fall,5.82,Fall
+DPCh_plate1_C02_S26,CH_Plate1_2C,T144806,T1512,5H,Salmon River Fall,143,Fall
+DPCh_plate1_C03_S27,CH_Plate1_3C,T145112,T1515,8B,Salmon River Spring,19.4,Spring
+DPCh_plate1_C04_S28,CH_Plate1_4C,T145120,T1515,9B,Salmon River Spring,13.3,Spring
+DPCh_plate1_C05_S29,CH_Plate1_5C,T144871,T1513,2A,Feather River Hatchery Fall,152,Fall
+DPCh_plate1_C06_S30,CH_Plate1_6C,T144920,T1513,8B,Feather River Hatchery Fall,100,Fall
+DPCh_plate1_C07_S31,CH_Plate1_7C,T145131,T1515,10E,Feather River Hatchery Spring,194,Spring
+DPCh_plate1_C08_S32,CH_Plate1_8C,T145145,T1515,12C,Feather River Hatchery Spring,198,Spring
+DPCh_plate1_C09_S33,CH_Plate1_9C,T144961,T1514,1C,Trinity River Hatchery Spring,124,Spring
+DPCh_plate1_C10_S34,CH_Plate1_10C,T144989,T1514,4G,Trinity River Hatchery Spring,64.2,Spring
+DPCh_plate1_C11_S35,CH_Plate1_11C,T145153,T1516,1C,Trinity River Hatchery Fall,62.6,Fall
+DPCh_plate1_C12_S36,CH_Plate1_12C,T145200,T1516,7B,Trinity River Hatchery Fall,58.8,Fall
+DPCh_plate1_D01_S37,CH_Plate1_1D,T144777,T1512,2C,Salmon River Fall,41.4,Fall
+DPCh_plate1_D02_S38,CH_Plate1_2D,T144831,T1512,9A,Salmon River Fall,43.4,Fall
+DPCh_plate1_D03_S39,CH_Plate1_3D,T145113,T1515,8C,Salmon River Spring,9.02,Spring
+DPCh_plate1_D04_S40,CH_Plate1_4D,T145121,T1515,9C,Salmon River Spring,6.62,Spring
+DPCh_plate1_D05_S41,CH_Plate1_5D,T144879,T1513,3A,Feather River Hatchery Fall,101,Fall
+DPCh_plate1_D06_S42,CH_Plate1_6D,T144924,T1513,8F,Feather River Hatchery Fall,144,Fall
+DPCh_plate1_D07_S43,CH_Plate1_7D,T145133,T1515,10G,Feather River Hatchery Spring,228,Spring
+DPCh_plate1_D08_S44,CH_Plate1_8D,T145146,T1515,12D,Feather River Hatchery Spring,123,Spring
+DPCh_plate1_D09_S45,CH_Plate1_9D,T144967,T1514,2A,Trinity River Hatchery Spring,80.4,Spring
+DPCh_plate1_D10_S46,CH_Plate1_10D,T144990,T1514,4H,Trinity River Hatchery Spring,101,Spring
+DPCh_plate1_D11_S47,CH_Plate1_11D,T145163,T1516,2E,Trinity River Hatchery Fall,56.2,Fall
+DPCh_plate1_D12_S48,CH_Plate1_12D,T145214,T1516,8H,Trinity River Hatchery Fall,55.2,Fall
+DPCh_plate1_E01_S49,CH_Plate1_1E,T144778,T1512,2D,Salmon River Fall,5.7,Fall
+DPCh_plate1_E02_S50,CH_Plate1_2E,T144841,T1512,10C,Salmon River Fall,89,Fall
+DPCh_plate1_E03_S51,CH_Plate1_3E,T145114,T1515,8D,Salmon River Spring,15.7,Spring
+DPCh_plate1_E04_S52,CH_Plate1_4E,T145123,T1515,9E,Salmon River Spring,10.8,Spring
+DPCh_plate1_E05_S53,CH_Plate1_5E,T144893,T1513,4G,Feather River Hatchery Fall,131,Fall
+DPCh_plate1_E06_S54,CH_Plate1_6E,T144934,T1513,9H,Feather River Hatchery Fall,146,Fall
+DPCh_plate1_E07_S55,CH_Plate1_7E,T145136,T1515,11B,Feather River Hatchery Spring,137,Spring
+DPCh_plate1_E08_S56,CH_Plate1_8E,T145147,T1515,12E,Feather River Hatchery Spring,196,Spring
+DPCh_plate1_E09_S57,CH_Plate1_9E,T144968,T1514,2B,Trinity River Hatchery Spring,94.8,Spring
+DPCh_plate1_E10_S58,CH_Plate1_10E,T144991,T1514,5A,Trinity River Hatchery Spring,103,Spring
+DPCh_plate1_E11_S59,CH_Plate1_11E,T145167,T1516,3A,Trinity River Hatchery Fall,51.6,Fall
+DPCh_plate1_E12_S60,CH_Plate1_12E,T145218,T1516,9D,Trinity River Hatchery Fall,48.8,Fall
+DPCh_plate1_F01_S61,CH_Plate1_1F,T144782,T1512,2H,Salmon River Fall,6.3,Fall
+DPCh_plate1_F02_S62,CH_Plate1_2F,T144844,T1512,10F,Salmon River Fall,40.8,Fall
+DPCh_plate1_F03_S63,CH_Plate1_3F,T145115,T1515,8E,Salmon River Spring,43,Spring
+DPCh_plate1_F04_S64,CH_Plate1_4F,T145124,T1515,9F,Salmon River Spring,24.6,Spring
+DPCh_plate1_F05_S65,CH_Plate1_5F,T144896,T1513,5B,Feather River Hatchery Fall,89,Fall
+DPCh_plate1_F06_S66,CH_Plate1_6F,T144951,T1513,12A,Feather River Hatchery Fall,119,Fall
+DPCh_plate1_F07_S67,CH_Plate1_7F,T145139,T1515,11E,Feather River Hatchery Spring,106,Spring
+DPCh_plate1_F08_S68,CH_Plate1_8F,T145148,T1515,12F,Feather River Hatchery Spring,122,Spring
+DPCh_plate1_F09_S69,CH_Plate1_9F,T144969,T1514,2C,Trinity River Hatchery Spring,97.4,Spring
+DPCh_plate1_F10_S70,CH_Plate1_10F,T144996,T1514,5F,Trinity River Hatchery Spring,81.4,Spring
+DPCh_plate1_F11_S71,CH_Plate1_11F,T145171,T1516,3E,Trinity River Hatchery Fall,85.8,Fall
+DPCh_plate1_F12_S72,CH_Plate1_12F,T145241,T1516,12C,Trinity River Hatchery Fall,74.6,Fall
+DPCh_plate1_G01_S73,CH_Plate1_1G,T144790,T1512,3H,Salmon River Fall,38.8,Fall
+DPCh_plate1_G02_S74,CH_Plate1_2G,T144847,T1512,11A,Salmon River Fall,78,Fall
+DPCh_plate1_G03_S75,CH_Plate1_3G,T145116,T1515,8F,Salmon River Spring,2.12,Spring
+DPCh_plate1_G04_S76,CH_Plate1_4G,T145125,T1515,9G,Salmon River Spring,5.8,Spring
+DPCh_plate1_G05_S77,CH_Plate1_5G,T144897,T1513,5C,Feather River Hatchery Fall,114,Fall
+DPCh_plate1_G06_S78,CH_Plate1_6G,T144952,T1513,12B,Feather River Hatchery Fall,116,Fall
+DPCh_plate1_G07_S79,CH_Plate1_7G,T145140,T1515,11F,Feather River Hatchery Spring,122,Spring
+DPCh_plate1_G08_S80,CH_Plate1_8G,T145149,T1515,12G,Feather River Hatchery Spring,84.6,Spring
+DPCh_plate1_G09_S81,CH_Plate1_9G,T144974,T1514,2H,Trinity River Hatchery Spring,55.2,Spring
+DPCh_plate1_G10_S82,CH_Plate1_10G,T144997,T1514,5G,Trinity River Hatchery Spring,76.2,Spring
+DPCh_plate1_G11_S83,CH_Plate1_11G,T145189,T1516,5G,Trinity River Hatchery Fall,44.4,Fall
+DPCh_plate1_G12_S84,CH_Plate1_12G,T145242,T1516,12D,Trinity River Hatchery Fall,69.4,Fall
+DPCh_plate1_H01_S85,CH_Plate1_1H,T144798,T1512,4H,Salmon River Fall,55.4,Fall
+DPCh_plate1_H02_S86,CH_Plate1_2H,T144861,T1512,12G,Salmon River Fall,30.6,Fall
+DPCh_plate1_H03_S87,CH_Plate1_3H,T145117,T1515,8G,Salmon River Spring,5.56,Spring
+DPCh_plate1_H04_S88,CH_Plate1_4H,T145126,T1515,9H,Salmon River Spring,7.3,Spring
+DPCh_plate1_H05_S89,CH_Plate1_5H,T144902,T1513,5H,Feather River Hatchery Fall,166,Fall
+DPCh_plate1_H06_S90,CH_Plate1_6H,T144958,T1513,12H,Feather River Hatchery Fall,83.4,Fall
+DPCh_plate1_H07_S91,CH_Plate1_7H,T145141,T1515,11G,Feather River Hatchery Spring,206,Spring
+DPCh_plate1_H08_S92,CH_Plate1_8H,T145150,T1515,12H,Feather River Hatchery Spring,100,Spring
+DPCh_plate1_H09_S93,CH_Plate1_9H,T144979,T1514,3E,Trinity River Hatchery Spring,64.8,Spring
+DPCh_plate1_H10_S94,CH_Plate1_10H,T145003,T1514,6E,Trinity River Hatchery Spring,79.8,Spring
+DPCh_plate1_H11_S95,CH_Plate1_11H,T145190,T1516,5H,Trinity River Hatchery Fall,49.8,Fall
+DPCh_plate1_H12_S96,CH_Plate1_12H,T145243,T1516,12E,Trinity River Hatchery Fall,52.4,Fall
+DPCh_plate2_A01_S97,CH_Plate2_1A,T145057,T1515,1C,San Joaquin River Fall,84.6,Fall
+DPCh_plate2_A02_S98,CH_Plate2_2A,T145065,T1515,2C,San Joaquin River Fall,59,Fall
+DPCh_plate2_A03_S99,CH_Plate2_3A,T145082,T1515,4D,Coleman Hatchery Late Fall,126,Late Fall
+DPCh_plate2_A04_S100,CH_Plate2_4A,T145092,T1515,5F,Coleman Hatchery Late Fall,74.8,Late Fall
+DPCh_plate2_A05_S101,CH_Plate2_5A,T148319,T1549,1A,Sacramento River Winter,65.6,Winter
+DPCh_plate2_A06_S102,CH_Plate2_6A,T148342,T1549,3H,Sacramento River Winter,57.6,Winter
+DPCh_plate2_A07_S103,CH_Plate2_7A,T148361,T1549,6C,Butte Creek Spring,73.8,Spring
+DPCh_plate2_A08_S104,CH_Plate2_8A,T148374,T1549,7H,Butte Creek Spring,43.6,Spring
+DPCh_plate2_B01_S105,CH_Plate2_1B,T145058,T1515,1D,San Joaquin River Fall,72.4,Fall
+DPCh_plate2_B02_S106,CH_Plate2_2B,T145066,T1515,2D,San Joaquin River Fall,44.6,Fall
+DPCh_plate2_B03_S107,CH_Plate2_3B,T145084,T1515,4F,Coleman Hatchery Late Fall,113,Late Fall
+DPCh_plate2_B04_S108,CH_Plate2_4B,T145097,T1515,6C,Coleman Hatchery Late Fall,98.6,Late Fall
+DPCh_plate2_B05_S109,CH_Plate2_5B,T148321,T1549,1C,Sacramento River Winter,84.2,Winter
+DPCh_plate2_B06_S110,CH_Plate2_6B,T148345,T1549,4C,Sacramento River Winter,68.4,Winter
+DPCh_plate2_B07_S111,CH_Plate2_7B,T148367,T1549,7A,Butte Creek Spring,85.4,Spring
+DPCh_plate2_B08_S112,CH_Plate2_8B,T148386,T1549,9D,Butte Creek Spring,48.2,Spring
+DPCh_plate2_C01_S113,CH_Plate2_1C,T145059,T1515,1E,San Joaquin River Fall,56,Fall
+DPCh_plate2_C02_S114,CH_Plate2_2C,T145067,T1515,2E,San Joaquin River Fall,56.8,Fall
+DPCh_plate2_C03_S115,CH_Plate2_3C,T145085,T1515,4G,Coleman Hatchery Late Fall,111,Late Fall
+DPCh_plate2_C04_S116,CH_Plate2_4C,T145100,T1515,6F,Coleman Hatchery Late Fall,88.4,Late Fall
+DPCh_plate2_C05_S117,CH_Plate2_5C,T148325,T1549,1G,Sacramento River Winter,60.4,Winter
+DPCh_plate2_C06_S118,CH_Plate2_6C,T148346,T1549,4D,Sacramento River Winter,85.6,Winter
+DPCh_plate2_C07_S119,CH_Plate2_7C,T148368,T1549,7B,Butte Creek Spring,51.2,Spring
+DPCh_plate2_C08_S120,CH_Plate2_8C,T148391,T1549,10A,Butte Creek Spring,85.6,Spring
+DPCh_plate2_D01_S121,CH_Plate2_1D,T145060,T1515,1F,San Joaquin River Fall,113,Fall
+DPCh_plate2_D02_S122,CH_Plate2_2D,T145068,T1515,2F,San Joaquin River Fall,159,Fall
+DPCh_plate2_D03_S123,CH_Plate2_3D,T145086,T1515,4H,Coleman Hatchery Late Fall,75.8,Late Fall
+DPCh_plate2_D04_S124,CH_Plate2_4D,T145101,T1515,6G,Coleman Hatchery Late Fall,93.2,Late Fall
+DPCh_plate2_D05_S125,CH_Plate2_5D,T148326,T1549,1H,Sacramento River Winter,77,Winter
+DPCh_plate2_D06_S126,CH_Plate2_6D,T148347,T1549,4E,Sacramento River Winter,92.8,Winter
+DPCh_plate2_D07_S127,CH_Plate2_7D,T148369,T1549,7C,Butte Creek Spring,100,Spring
+DPCh_plate2_D08_S128,CH_Plate2_8D,T148392,T1549,10B,Butte Creek Spring,42.8,Spring
+DPCh_plate2_E01_S129,CH_Plate2_1E,T145061,T1515,1G,San Joaquin River Fall,179,Fall
+DPCh_plate2_E02_S130,CH_Plate2_2E,T145069,T1515,2G,San Joaquin River Fall,94.6,Fall
+DPCh_plate2_E03_S131,CH_Plate2_3E,T145087,T1515,5A,Coleman Hatchery Late Fall,77.6,Late Fall
+DPCh_plate2_E04_S132,CH_Plate2_4E,T145102,T1515,6H,Coleman Hatchery Late Fall,90.2,Late Fall
+DPCh_plate2_E05_S133,CH_Plate2_5E,T148333,T1549,2G,Sacramento River Winter,78.2,Winter
+DPCh_plate2_E06_S134,CH_Plate2_6E,T148350,T1549,4H,Sacramento River Winter,78,Winter
+DPCh_plate2_E07_S135,CH_Plate2_7E,T148370,T1549,7D,Butte Creek Spring,116,Spring
+DPCh_plate2_E08_S136,CH_Plate2_8E,T148396,T1549,10F,Butte Creek Spring,28.4,Spring
+DPCh_plate2_F01_S137,CH_Plate2_1F,T145062,T1515,1H,San Joaquin River Fall,92.4,Fall
+DPCh_plate2_F02_S138,CH_Plate2_2F,T145070,T1515,2H,San Joaquin River Fall,98.8,Fall
+DPCh_plate2_F03_S139,CH_Plate2_3F,T145088,T1515,5B,Coleman Hatchery Late Fall,104,Late Fall
+DPCh_plate2_F04_S140,CH_Plate2_4F,T145103,T1515,7A,Coleman Hatchery Late Fall,133,Late Fall
+DPCh_plate2_F05_S141,CH_Plate2_5F,T148335,T1549,3A,Sacramento River Winter,92.2,Winter
+DPCh_plate2_F06_S142,CH_Plate2_6F,T148351,T1549,5A,Sacramento River Winter,59,Winter
+DPCh_plate2_F07_S143,CH_Plate2_7F,T148371,T1549,7E,Butte Creek Spring,56.8,Spring
+DPCh_plate2_F08_S144,CH_Plate2_8F,T148397,T1549,10G,Butte Creek Spring,46.8,Spring
+DPCh_plate2_G01_S145,CH_Plate2_1G,T145063,T1515,2A,San Joaquin River Fall,141,Fall
+DPCh_plate2_G02_S146,CH_Plate2_2G,T145071,T1515,3A,San Joaquin River Fall,98.2,Fall
+DPCh_plate2_G03_S147,CH_Plate2_3G,T145089,T1515,5C,Coleman Hatchery Late Fall,104,Late Fall
+DPCh_plate2_G04_S148,CH_Plate2_4G,T145104,T1515,7B,Coleman Hatchery Late Fall,155,Late Fall
+DPCh_plate2_G05_S149,CH_Plate2_5G,T148337,T1549,3C,Sacramento River Winter,70,Winter
+DPCh_plate2_G06_S150,CH_Plate2_6G,T148352,T1549,5B,Sacramento River Winter,80.4,Winter
+DPCh_plate2_G07_S151,CH_Plate2_7G,T148372,T1549,7F,Butte Creek Spring,44.8,Spring
+DPCh_plate2_G08_S152,CH_Plate2_8G,T148407,T1549,12A,Butte Creek Spring,43.8,Spring
+DPCh_plate2_H01_S153,CH_Plate2_1H,T145064,T1515,2B,San Joaquin River Fall,116,Fall
+DPCh_plate2_H02_S154,CH_Plate2_2H,T145073,T1515,3C,San Joaquin River Fall,123,Fall
+DPCh_plate2_H03_S155,CH_Plate2_3H,T145091,T1515,5E,Coleman Hatchery Late Fall,45.4,Late Fall
+DPCh_plate2_H04_S156,CH_Plate2_4H,T145105,T1515,7C,Coleman Hatchery Late Fall,105,Late Fall
+DPCh_plate2_H05_S157,CH_Plate2_5H,T148340,T1549,3F,Sacramento River Winter,62.8,Winter
+DPCh_plate2_H06_S158,CH_Plate2_6H,T148353,T1549,5C,Sacramento River Winter,72,Winter
+DPCh_plate2_H07_S159,CH_Plate2_7H,T148373,T1549,7G,Butte Creek Spring,39.2,Spring
+DPCh_plate2_H08_S160,CH_Plate2_8H,T148412,T1549,12F,Butte Creek Spring,37,Spring
