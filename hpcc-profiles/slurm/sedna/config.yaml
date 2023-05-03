@@ -23,7 +23,7 @@ keep-going: True
 rerun-incomplete: True
 printshellcmds: True
 use-conda: True
-cluster-status: status-sacct.sh
+cluster-status: status-sacct-robust.sh
 cluster-cancel: scancel
 cluster-cancel-nargs: 1000
 
