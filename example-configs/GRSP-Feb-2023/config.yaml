@@ -1,0 +1,122 @@
+units: example-configs/GRSP-Feb-2023/units.tsv
+chromosomes: example-configs/GRSP-Feb-2023/chromosomes.tsv
+scaffold_groups: example-configs/GRSP-Feb-2023/scaffold_groups.tsv
+scatter_intervals_file: "example-configs/GRSP-Feb-2023/scatters_5000000.tsv"
+
+# this file is only needed when treating different samples
+# as different species, for indel realignment, etc.
+#indel_grps: ".test/config/igrps.tsv" 
+
+# if you don't want to produce indel-realigned BAMs, set the
+# following to False
+do_indel_realignment: FALSE 
+
+# This will typically be left at 0.  Unless you want to do
+# BQSR.
+bqsr_rounds: 0
+
+
+# leave thse as one of your maf_cutoffs so that we can do BQSR still
+# as before, though we probably won't.
+bqsr_maf: 0.05
+
+# these following ones are irrelevant if you are not doing BQSR, but they
+# have to be in the config still
+bqsr_qual: 37
+bqsr_qd: 15
+
+
+# the following must be a list, even if it is just one element
+maf_cutoffs: [0.05]
+
+
+# this next one is here just for quickly writing out rclone statements
+# to put the results back onto google drive.
+rclone_base: "BGP-SharePoint-ID:Genetic_and_Environmental_Data/Species_genetic_data/GRSP/snakemake-run-Feb-2023"
+
+# If you want to copy all the fastq files back to rclone_base,
+# then the send_to_gdrive rule will assume it is in a directory
+# called 'data' at the top-level of the directory, and it will
+# copy its contents to rclone_base.  If you don't want the contents
+# of the 'data' directory to be copied with the send_to_gdrive 
+# rule, set the following parameter to False. 
+rclone_data: False
+
+# this is the default value for the first GenomicsDBImport run.
+# If you want to change it, you should typically change it
+# on the command line.
+genomics_db_import_num: 0
+
+
+# eric modified this to be able to easily handle genomes of non-model
+# organisms that are not yet on enseml, etc.
+ref:
+  # name of the species.  (will simply be put in the SnpEff config).
+  # Put underscores for spaces
+  species_name: Zonotrichia_albicollis
+  # name you want to use for the genome version
+  genome_version_name: WTSP_from_ensembl
+  # the URL where this can be downloaded, if public and easy to
+  # get with wget.  If not, then you should hand-download
+  # genome.fasta and genome.gff or genome.gtf
+  genome_url: got-it-from-ensemble-via-google-drive
+  # if there is a GFF or GTF file, they have to have a .gff or
+  # .gtf extension.  This where you put the URL for it
+  gff_or_gtf_url: ""
+
+
+filtering:
+  # Set to true in order to apply machine learning based recalibration of
+  # quality scores instead of hard filtering.
+  vqsr: false
+  hard:
+    # hard filtering as outlined in GATK docs
+    # (https://gatkforums.broadinstitute.org/gatk/discussion/2806/howto-apply-hard-filters-to-a-call-set)
+    snvs:
+      "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+    indels:
+      "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
+
+processing:
+  remove-duplicates: true
+  # Uncomment and point to a bed file with, e.g., captured regions if necessary,
+  # see https://gatkforums.broadinstitute.org/gatk/discussion/4133/when-should-i-use-l-to-pass-in-a-list-of-intervals.
+  # restrict-regions: chr24_26_28.bed
+  # If regions are restricted, uncomment this to enlarge them by the given value in order to include
+  # flanking areas.
+  # region-padding: 100
+
+params:
+  gatk:
+    # the default for haplotype caller is to require very high base quality scores
+    # because BQSR on non-model organisms doesn't work for crap, and Nina's group
+    # found it better to just require high base quality scores.
+    HaplotypeCaller: " --min-base-quality-score 33 --minimum-mapping-quality 20 "
+    BaseRecalibrator: ""
+    GenotypeGVCFs: ""
+    VariantRecalibrator: ""
+  picard:
+    MarkDuplicates: " --TAGGING_POLICY All --CREATE_INDEX "
+  trimmomatic:
+    pe:
+      trimmer:
+        # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
+        - "ILLUMINACLIP:resources/adapters/TruSeq3-PE-2.fa:2:30:10"
+        - "LEADING:3"
+        - "TRAILING:3"
+        - "SLIDINGWINDOW:4:20"
+        - "MINLEN:36"
+    se:
+      trimmer:
+        # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
+        - "LEADING:3"
+        - "TRAILING:3"
+        - "SLIDINGWINDOW:4:20"
+        - "MINLEN:36"
+  vep:
+    plugins:
+      # Add any plugin from https://www.ensembl.org/info/docs/tools/vep/script/vep_plugins.html
+      # Plugin args can be passed as well, e.g. "LoFtool,path/to/custom/scores.txt".
+      - LoFtool
+    # extra command line arguments (e.g. --sift, see docs)
+    extra: ""

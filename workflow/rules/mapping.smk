@@ -33,24 +33,24 @@ rule map_reads:
         ],
         idx=rules.bwa_index.output,
     output:
-        temp("results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam"),
+        "results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam",
     log:
         "results/bqsr-round-{bqsr_round}/logs/map_reads/{sample}---{unit}.log",
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/map_reads/{sample}---{unit}.bmk"
     params:
-        index=lambda w, input: os.path.splitext(input.idx[0])[0],
         extra=get_read_group,
-        sort="samtools",
+        sorting="samtools",
         sort_order="coordinate",
-    resources:
-        time = "23:59:59",
-        mem_mb = 18400
+        sort_extra=""
     threads: 4
+    resources:
+        time="10:00:00",
+        mem_mb = 15200,
+        cpus = 4,
+	tmpdir = "results/bqsr-round-{bqsr_round}/mapped"
     wrapper:
-        "0.59.2/bio/bwa/mem"
-
-
+        "v1.23.3/bio/bwa/mem"
 
 
 rule mark_duplicates:
@@ -67,7 +67,10 @@ rule mark_duplicates:
     params:
         extra=config["params"]["picard"]["MarkDuplicates"],
     resources:
-        cpus = 1
+        time="10:00:00",
+	mem_mb = 38000,
+        cpus = 10,
+        tmpdir = "results/bqsr-round-0/tmp"
     wrapper:
         "v1.1.0/bio/picard/markduplicates"
 
