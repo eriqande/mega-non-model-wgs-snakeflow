@@ -86,7 +86,7 @@ rule send_to_gdrive2:
 		expand("results/bqsr-round-{bq}/qc/multiqc.html", bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
 		expand("results/bqsr-round-{bq}/qc/bcftools_stats/all-pass-maf-{maf}.txt", maf=config["bqsr_maf"], bq=[str(x) for x in range(0, int(config["bqsr_rounds"])+1)]),
 		expand("results/bqsr-round-{bq}/{subd}/{s}.{b}", bq=config["bqsr_rounds"], subd=bam_subd(config["bqsr_rounds"]), s = sample_list, b = ["bam", "bai"]),
-		expand("results/bqsr-round-{bq}/indel_realigned/{s}.{b}", bq=config["bqsr_rounds"], s = sample_list, b = ["bam", "bai"]),
+		expand("results/bqsr-round-{bq}/overlap_clipped/{s}.{b}", bq=config["bqsr_rounds"], s = sample_list, b = ["bam", "bam.bai"]),
 		expand("results/bqsr-round-{bq}/gvcf/{s}.g.vcf.{ext}", bq=config["bqsr_rounds"], s=sample_list, ext=["gz", "gz.tbi"]),
 	params:
 		BQR = config["bqsr_rounds"],
@@ -110,6 +110,6 @@ rule send_to_gdrive2:
 		" --include='data/**' "
 		" --include='results/bqsr-round-{params.BQR}/gvcf/*' "
 		" --include='results/{params.bamdir}/*' "
-		" --include='results/bqsr-round-{params.BQR}/indel_realigned/*' "
+		" --include='results/bqsr-round-{params.BQR}/overlap_clipped/*' "
 
 
