@@ -39,17 +39,13 @@ rule map_reads:
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/map_reads/{sample}---{unit}.bmk"
     params:
-        index=lambda w, input: os.path.splitext(input.idx[0])[0],
         extra=get_read_group,
-        sort="samtools",
+        sorting="samtools",
         sort_order="coordinate",
-    resources:
-        time = "23:59:59",
-        mem_mb = 18400
+        sort_extra=""
     threads: 4
     wrapper:
-        "0.59.2/bio/bwa/mem"
-
+        "v1.23.3/bio/bwa/mem"
 
 
 
