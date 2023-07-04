@@ -34,44 +34,6 @@ rule make_scatter_interval_lists:
         " ' {input.scatters_file} > {output} 2> {log};"
 
 
-# this is the straight-up simple version that I use to just create
-# a GVCF from the bam in mkdup, over all the regions.  Note that I give it
-# 72 hours by default because I want it to be long enough for all possible
-# bam files.
-# rule make_gvcfs:
-#     input:
-#         bam="results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam",
-#         bai="results/bqsr-round-{bqsr_round}/mkdup/{sample}.bai",
-#         ref="resources/genome.fasta",
-#         idx="resources/genome.dict",
-#         fai="resources/genome.fasta.fai"
-#     output:
-#         gvcf=protected("results/bqsr-round-{bqsr_round}/gvcf/{sample}.g.vcf.gz"),
-#         idx=protected("results/bqsr-round-{bqsr_round}/gvcf/{sample}.g.vcf.gz.tbi"),
-#     conda:
-#         "../envs/gatk4.2.6.1.yaml"
-#     log:
-#         stderr="results/bqsr-round-{bqsr_round}/logs/gatk/haplotypecaller/{sample}.stderr",
-#         stdout="results/bqsr-round-{bqsr_round}/logs/gatk/haplotypecaller/{sample}.stdout",
-#     benchmark:
-#         "results/bqsr-round-{bqsr_round}/benchmarks/make_gvcfs/{sample}.bmk"
-#     params:
-#         java_opts="-Xmx4g"
-#     resources:
-#         time="3-00:00:00",
-#         mem_mb = 4600,
-#         cpus = 1
-#     threads: 1
-#     shell:
-#         "gatk --java-options \"{params.java_opts}\" HaplotypeCaller "
-#         " -R {input.ref} "
-#         " -I {input.bam} "
-#         " -O {output.gvcf} "
-#         " --native-pair-hmm-threads {threads} "
-#         " -ERC GVCF > {log.stdout} 2> {log.stderr} "
-
-
-
 rule make_gvcf_sections:
     input:
         unpack(get_bams_for_calling),
