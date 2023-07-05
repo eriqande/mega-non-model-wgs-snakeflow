@@ -53,8 +53,8 @@ rule mark_duplicates:
     input:
         get_all_bams_of_common_sample
     output:
-        bam=protected("results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam"),
-        bai=protected("results/bqsr-round-{bqsr_round}/mkdup/{sample}.bai"),
+        bam="results/bqsr-round-{bqsr_round}/mkdup/{sample}.bam",
+        bai="results/bqsr-round-{bqsr_round}/mkdup/{sample}.bai",
         metrics="results/bqsr-round-{bqsr_round}/qc/mkdup/{sample}.metrics.txt",
     log:
         "results/bqsr-round-{bqsr_round}/logs/picard/mkdup/{sample}.log",

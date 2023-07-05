@@ -103,8 +103,8 @@ rule bcfconcat_known_indels:
     input:
     	expand("results/bqsr-round-{{bqsr_round}}/known-indel-sections/{{igrp}}/{sgc}.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        vcf=protected("results/bqsr-round-{bqsr_round}/known-indels/{igrp}/all-indels.vcf.gz"),
-        idx=protected("results/bqsr-round-{bqsr_round}/known-indels/{igrp}/all-indels.vcf.gz.tbi")
+        vcf="results/bqsr-round-{bqsr_round}/known-indels/{igrp}/all-indels.vcf.gz",
+        idx="results/bqsr-round-{bqsr_round}/known-indels/{igrp}/all-indels.vcf.gz.tbi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/bcfconcat_known_indels/{igrp}.txt"
     benchmark:

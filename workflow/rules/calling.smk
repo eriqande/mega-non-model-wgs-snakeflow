@@ -42,8 +42,8 @@ rule make_gvcf_sections:
         fai="resources/genome.fasta.fai",
         interval_list="results/bqsr-round-{bqsr_round}/interval_lists/{sg_or_chrom}.list"
     output:
-        gvcf=temp("results/bqsr-round-{bqsr_round}/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz"),
-        idx=temp("results/bqsr-round-{bqsr_round}/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz.tbi"),
+        gvcf="results/bqsr-round-{bqsr_round}/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz",
+        idx="results/bqsr-round-{bqsr_round}/gvcf_sections/{sample}/{sg_or_chrom}.g.vcf.gz.tbi",
     conda:
         "../envs/gatk4.2.6.1.yaml"
     log:
@@ -75,8 +75,8 @@ rule concat_gvcf_sections:
     input: 
         expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{{sample}}/{sgc}.g.vcf.gz", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        gvcf=protected("results/bqsr-round-{bqsr_round}/gvcf/{sample}.g.vcf.gz"),
-        idx=protected("results/bqsr-round-{bqsr_round}/gvcf/{sample}.g.vcf.gz.tbi")
+        gvcf="results/bqsr-round-{bqsr_round}/gvcf/{sample}.g.vcf.gz",
+        idx="results/bqsr-round-{bqsr_round}/gvcf/{sample}.g.vcf.gz.tbi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/concat_gvcf_sections/{sample}.txt"
     benchmark:
@@ -188,8 +188,8 @@ rule genomics_db2vcf_scattered:
         scatters="results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list",
         receipts=expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
     output:
-        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz"),
-        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz.tbi")
+        vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz",
+        tbi="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz.tbi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/genotypegvcfs/{sg_or_chrom}/{scatter}.log",
     benchmark:
@@ -219,8 +219,8 @@ rule gather_scattered_vcfs:
         vcf=lambda wc: get_scattered_vcfs(wc, ""),
         tbi=lambda wc: get_scattered_vcfs(wc, ".tbi"),
     output:
-        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"),
-        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi")
+        vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz",
+        tbi="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz.tbi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/gather_scattered_vcfs/{sg_or_chrom}.txt"
     benchmark:
@@ -246,8 +246,8 @@ rule mark_dp0_as_missing:
     input:
         vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}.vcf.gz"
     output:
-        vcf=temp("results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz"),
-        tbi=temp("results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi")
+        vcf="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz",
+        tbi="results/bqsr-round-{bqsr_round}/vcf_sect_miss_denoted/{sg_or_chrom}.vcf.gz.tbi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/mark_dp0_as_missing/{sg_or_chrom}.log",
     benchmark:
@@ -267,8 +267,8 @@ rule bcf_concat:
     input:
         expand("results/bqsr-round-{{bqsr_round}}/hard_filtering/both-filtered-{sgc}.bcf", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        bcf=protected("results/bqsr-round-{bqsr_round}/bcf/all.bcf"),
-        tbi=protected("results/bqsr-round-{bqsr_round}/bcf/all.bcf.csi")
+        bcf="results/bqsr-round-{bqsr_round}/bcf/all.bcf",
+        tbi="results/bqsr-round-{bqsr_round}/bcf/all.bcf.csi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/bcf_concat/bcf_concat_log.txt"
     benchmark:
@@ -289,8 +289,8 @@ rule bcf_concat_mafs:
     input:
         expand("results/bqsr-round-{{bqsr_round}}/hard_filtering/both-filtered-{sgc}-maf-{{maf}}.bcf", sgc = unique_chromosomes + unique_scaff_groups)
     output:
-        bcf=protected("results/bqsr-round-{bqsr_round}/bcf/pass-maf-{maf}.bcf"),
-        tbi=protected("results/bqsr-round-{bqsr_round}/bcf/pass-maf-{maf}.bcf.csi")
+        bcf="results/bqsr-round-{bqsr_round}/bcf/pass-maf-{maf}.bcf",
+        tbi="results/bqsr-round-{bqsr_round}/bcf/pass-maf-{maf}.bcf.csi"
     log:
         "results/bqsr-round-{bqsr_round}/logs/bcf_concat_mafs/maf-{maf}.txt"
     benchmark:
