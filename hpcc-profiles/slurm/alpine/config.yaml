@@ -58,7 +58,7 @@ set-resources:
   genomics_db2vcf_scattered:
     mem_mb: 11000
   genomics_db2vcf_scattered:
-    time: "23:59:59""
+    time: "23:59:59"
   multiqc_dir:
     mem_mb: 37000
   bwa_index:
