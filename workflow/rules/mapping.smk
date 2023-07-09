@@ -44,6 +44,8 @@ rule map_reads:
         sort_order="coordinate",
         sort_extra=""
     threads: 4
+    resources:
+        mem_mb=19200
     wrapper:
         "v1.23.3/bio/bwa/mem"
 
