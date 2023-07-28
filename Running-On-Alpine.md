@@ -975,3 +975,64 @@ total                                  1324              1              2
 ```
 
 It seems to be working great.
+
+It did as much as it could but it threw two errors on genomics_db2vcf
+rule runs. sacct says that both of the jobs finished, so it must just be
+a job latency thing.
+
+It said:
+
+``` sh
+sacct failed to return the status for jobid 2527084
+Maybe you need to use scontrol instead?
+Failed to obtain job status. See above for error message.
+WorkflowError:
+Failed to obtain job status. See above for error message.
+  File "/projects/eriq@colostate.edu/mambaforge/envs/snakemake-7.30.1/lib/python3.11/asyncio/runners.py", line 190, in run
+  File "/projects/eriq@colostate.edu/mambaforge/envs/snakemake-7.30.1/lib/python3.11/asyncio/runners.py", line 118, in run
+  File "/projects/eriq@colostate.edu/mambaforge/envs/snakemake-7.30.1/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2023-07-28T105355.438230.snakemake.log
+```
+
+``` sh
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% grep Error .snakemake/log/2023-07-28T105355.438230.snakemake.log  | awk '/executing/ {err[$4] = sprintf("%s%s", err[$4], $10)} END {for(i in err) print i, err[i]}'
+genomics_db2vcf_scattered 2525063,2525064,
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--%
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--%
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--%
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% sacct -j 2525063,2525064
+JobID           JobName  Partition    Account  AllocCPUS      State ExitCode
+------------ ---------- ---------- ---------- ---------- ---------- --------
+2525063      smk-genom+     amilan csu-gener+          2  COMPLETED      0:0
+2525063.bat+      batch            csu-gener+          2  COMPLETED      0:0
+2525063.ext+     extern            csu-gener+          2  COMPLETED      0:0
+2525064      smk-genom+     amilan csu-gener+          2  COMPLETED      0:0
+2525064.bat+      batch            csu-gener+          2  COMPLETED      0:0
+2525064.ext+     extern            csu-gener+          2  COMPLETED      0:0
+```
+
+I checked the log of one of those and GATK clearly reported that it had
+finished.
+
+When I did a dry-run it showed 500 or so jobs to go. But there are still
+a few jobs running in SLURM:
+
+    (snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% myjobs 40
+           JOBID PARTITION                                     NAME       USER ST            TIME  NODES   NODELIST(REASON)  CPUS   MIN_MEMORY   TIME_LIMIT    TIME_LEFT PRIORITY
+         2524840    amilan smk-make_gvcf_sections-bqsr_round=0,samp eriq@colos  R         3:31:13      1    c3cpu-c11-u15-2     1        3600M   1-00:00:00     20:28:47 0.00000394601375
+         2524820    amilan smk-make_gvcf_sections-bqsr_round=0,samp eriq@colos  R         3:31:51      1    c3cpu-c11-u13-1     1        3600M   1-00:00:00     20:28:09 0.00000394601375
+         2524710    amilan smk-make_gvcf_sections-bqsr_round=0,samp eriq@colos  R         3:36:02      1      c3cpu-c9-u3-3     1        3600M   1-00:00:00     20:23:58 0.00000393949449
+         2524716    amilan smk-make_gvcf_sections-bqsr_round=0,samp eriq@colos  R         3:36:02      1     c3cpu-c11-u1-1     1        3600M   1-00:00:00     20:23:58 0.00000393949449
+         2524626    amilan smk-make_gvcf_sections-bqsr_round=0,samp eriq@colos  R         3:39:07      1      c3cpu-c9-u1-4     1        3600M   1-00:00:00     20:20:53 0.00000393926166
+         2524629    amilan smk-make_gvcf_sections-bqsr_round=0,samp eriq@colos  R         3:39:07      1      c3cpu-c9-u1-4     1        3600M   1-00:00:00     20:20:53 0.00000393926166
+         2525981    amilan smk-genomics_db_import_chromosomes-bqsr_ eriq@colos  R         1:58:18      1      c3cpu-c9-u1-1     2        7480M   1-00:00:00     22:01:42 0.00000393856317
+         2525942    amilan smk-genomics_db_import_chromosomes-bqsr_ eriq@colos  R         2:04:23      1      c3cpu-c9-u1-2     2        7480M   1-00:00:00     21:55:37 0.00000393856317
+         2525803    amilan smk-genomics_db_import_chromosomes-bqsr_ eriq@colos  R         2:19:09      1      c3cpu-c9-u1-1     2        7480M   1-00:00:00     21:40:51 0.00000393856317
+         2527010    amilan smk-genomics_db_import_scaffold_groups-b eriq@colos  R         1:01:49      1      c3cpu-c9-u1-1     2       11000M   1-00:00:00     22:58:11 0.00000393716619
+         2527016    amilan smk-genomics_db_import_chromosomes-bqsr_ eriq@colos  R         1:00:18      1      c3cpu-c9-u1-2     2        7480M   1-00:00:00     22:59:42 0.00000393693335
+         2526759    amilan smk-genomics_db_import_chromosomes-bqsr_ eriq@colos  R         1:28:07      1      c3cpu-c9-u1-1     2        7480M   1-00:00:00     22:31:53 0.00000393693335
+
+So, that is a weird error. I am going to let the currently running jobs
+finish, and then check with sacct that they finished OK.
