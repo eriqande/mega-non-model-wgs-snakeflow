@@ -1,6 +1,8 @@
 ---
 title: "Running this Workflow on Alpine"
-output: github_document
+output:
+  github_document:
+    toc: true
 author:  "Eric C. Anderson"
 ---
 
@@ -681,3 +683,265 @@ TotalCoreHours: 8875.77
 ```
 OK!
 
+
+
+# Reboot!  The sample IDs were not the same between runs
+
+There were about 70 birds that had been re-run, but the seq center put a
+Z in front of their names, so I didn't realize they were the same birds.
+So, the units file will need to be re-made to show two units for each of those
+birds.
+```{r, eval=FALSE}
+# doing this on my laptop
+library(tidyverse)
+
+old_units <- read_tsv("~/Documents/git-repos/mega-non-model-configs/SWTH-2023-07-05/config/OLD_units.tsv")
+
+# learn a bit about these.  There are 74 samples starting with a Z
+old_units %>%
+  count(str_detect(sample, "^Z"))
+```
+
+So, which of those are re-runs?
+```{r, eval=FALSE}
+old_units %>%
+  mutate(noZ = str_remove(sample, "^Z")) %>%
+  count(noZ) %>%
+  count(n)
+```
+
+So, all 74 of those are re-runs.  Thus, we can just take the Z off the sample and
+sample_id fields and then put them together and amend the units column:
+```{r, eval=FALSE}
+new_units <- old_units %>%
+  mutate(
+    sample = str_remove(sample, "^Z"),
+    sample_id = str_remove(sample_id, "^Z")
+  ) %>%
+  arrange(sample, library) %>%
+  group_by(sample) %>%
+  mutate(unit = 1:n())
+```
+
+But, I need to ask CH if these were completely new library preps or not, because
+that affects the duplicate marking stage.  OK! They were completely new library preps,
+so new_units is correct as it it, with different library preps in there for the resequences.
+
+So, now I can save that as the units file
+```{r, eval=FALSE}
+write_tsv(new_units, file = "~/Documents/git-repos/mega-non-model-configs/SWTH-2023-07-05/config/units.tsv")
+```
+
+Then, when I used that new units file with:
+```sh
+snakemake -np --profile  hpcc-profiles/slurm/alpine  --configfile config/config.yaml
+```
+it said everything was done.  I am a little surprised by that, because it seems like it
+should notice that the inputs are different to some of the rules.  But perhaps not, since
+the file modification times are not any different on all those.  So, there are various
+ways that I could conceive of dealing with that...
+
+For fun, I could try touching the data files for the 74 "Z" fastqs.  But the problem with that is
+that it will trigger new fastqc runs that are not necessary.  But, that might be the cleanest way to do it
+anyway.  I will try:
+```sh
+(base) [login11: SWTH_Novoseq_Plate2]--% pwd
+/home/eriq@colostate.edu/scratch/mega-non-model-wgs-snakeflow/data/SWTH_Novoseq_Plate2
+(base) [login11: SWTH_Novoseq_Plate2]--% touch  Z*/*fq.gz
+
+# that was two files for each of the 74 reruns:
+(base) [login11: SWTH_Novoseq_Plate2]--% ls -l   Z*/*fq.gz | wc
+    148    1332   20164
+
+```
+
+
+Now, when I give it a dry run, I see:
+```sh
+Job stats:
+job                     count    min threads    max threads
+--------------------  -------  -------------  -------------
+all                         1              1              1
+clip_overlaps              74              1              1
+concat_gvcf_sections       74              1              1
+fastqc_read1               74              1              1
+fastqc_read2               74              1              1
+make_gvcf_sections       3108              1              1
+map_reads                 148              4              4
+mark_duplicates            74              1              1
+multiqc_dir                 1              1              1
+samtools_stats             74              1              1
+trim_reads_pe             148              1              1
+total                    3850              1              4
+
+```
+Note that there are 41 "chromosomes" and 1 scaffold group. And 74 * 42 = 3108.
+
+So, that looks to be right.  It is going to have to re-trim everything, because
+I deleted the trimmed files, but that is not such a big deal.
+
+Also, those fastqc's do have to be redone because the naming of them
+have changed.
+
+But, what is interesting here is that this has not triggered a re-run of the
+genomics data bases and beyond.  I expect that is because of the way that I
+rigged things so that I could add individuals to the genomics data bases.
+At some point I should jettison that stuff.  But for now I can just delete all
+the genomicsDBs.  They have to be redone anyway!
+
+```sh
+(base) [login11: bqsr-round-0]--% pwd
+/home/eriq@colostate.edu/scratch/mega-non-model-wgs-snakeflow/results/bqsr-round-0
+(base) [login11: bqsr-round-0]--% rm -rf gdb_intervals gdb_accounting genomics_db
+```
+
+Now that I have done that, my dry run looks like:
+```sh
+Job stats:
+job                                   count    min threads    max threads
+----------------------------------  -------  -------------  -------------
+all                                       1              1              1
+bcf_concat                                1              1              1
+bcf_concat_mafs                           1              1              1
+bcf_maf_section_summaries                42              1              1
+bcf_section_summaries                   126              1              1
+bung_filtered_vcfs_back_together         42              1              1
+clip_overlaps                            74              1              1
+combine_bcftools_stats                    3              1              1
+combine_maf_bcftools_stats                1              1              1
+concat_gvcf_sections                     74              1              1
+fastqc_read1                             74              1              1
+fastqc_read2                             74              1              1
+gather_scattered_vcfs                    42              1              1
+genomics_db2vcf_scattered               494              2              2
+genomics_db_import_chromosomes           41              2              2
+genomics_db_import_scaffold_groups        1              2              2
+hard_filter_indels                       42              1              1
+hard_filter_snps                         42              1              1
+maf_filter                               42              1              1
+make_gvcf_sections                     3108              1              1
+make_indel_vcf                           42              1              1
+make_snp_vcf                             42              1              1
+map_reads                               148              4              4
+mark_dp0_as_missing                      42              1              1
+mark_duplicates                          74              1              1
+multiqc_dir                               1              1              1
+samtools_stats                           74              1              1
+trim_reads_pe                           148              1              1
+total                                  4896              1              4
+
+```
+That looks just about right!  It also looks like I have removed all of the
+`protected()` statements in the workflow, so this should not run into any
+problems.  Let's load this bad boy up!
+
+```sh
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% snakemake -p --profile  hpcc-profiles/slurm/alpine  --configfile config/config.yaml
+```
+
+By morning that had ended with some failures.  It was easy to find them:
+```sh
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% grep Error .snakemake/log/2023-07-27T160926.747195.snakemake.log  | awk '/executing/ {err[$4] = sprintf("%s%s", err[$4], $10)} END {for(i in err) print i, err[i]}'
+
+mark_duplicates 2516965,2517268,2517263,2517378,2517370,2518710
+```
+And those were out of memory, and some that just failed.
+```sh
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% sacct -j 2516965,2517268,2517263,2517378,2517370,2518710
+JobID           JobName  Partition    Account  AllocCPUS      State ExitCode
+------------ ---------- ---------- ---------- ---------- ---------- --------
+2516965      smk-mark_+     amilan csu-gener+          1 OUT_OF_ME+    0:125
+2516965.bat+      batch            csu-gener+          1 OUT_OF_ME+    0:125
+2516965.ext+     extern            csu-gener+          1  COMPLETED      0:0
+2517263      smk-mark_+     amilan csu-gener+          1     FAILED      1:0
+2517263.bat+      batch            csu-gener+          1     FAILED      1:0
+2517263.ext+     extern            csu-gener+          1  COMPLETED      0:0
+2517268      smk-mark_+     amilan csu-gener+          1     FAILED      1:0
+2517268.bat+      batch            csu-gener+          1     FAILED      1:0
+2517268.ext+     extern            csu-gener+          1  COMPLETED      0:0
+2517370      smk-mark_+     amilan csu-gener+          1 OUT_OF_ME+    0:125
+2517370.bat+      batch            csu-gener+          1 OUT_OF_ME+    0:125
+2517370.ext+     extern            csu-gener+          1  COMPLETED      0:0
+2517378      smk-mark_+     amilan csu-gener+          1 OUT_OF_ME+    0:125
+2517378.bat+      batch            csu-gener+          1 OUT_OF_ME+    0:125
+2517378.ext+     extern            csu-gener+          1  COMPLETED      0:0
+2518710      smk-mark_+     amilan csu-gener+          1 OUT_OF_ME+    0:125
+2518710.bat+      batch            csu-gener+          1 OUT_OF_ME+    0:125
+2518710.ext+     extern            csu-gener+          1  COMPLETED      0:0
+```
+
+So, I will just change the profile to give mark_duplicates more memory and then
+I will restart.
+
+Here is what remains:
+```sh
+Job stats:
+job                                   count    min threads    max threads
+----------------------------------  -------  -------------  -------------
+all                                       1              1              1
+bcf_concat                                1              1              1
+bcf_concat_mafs                           1              1              1
+bcf_maf_section_summaries                42              1              1
+bcf_section_summaries                   126              1              1
+bung_filtered_vcfs_back_together         42              1              1
+clip_overlaps                             6              1              1
+combine_bcftools_stats                    3              1              1
+combine_maf_bcftools_stats                1              1              1
+concat_gvcf_sections                      6              1              1
+gather_scattered_vcfs                    42              1              1
+genomics_db2vcf_scattered               494              2              2
+genomics_db_import_chromosomes           41              2              2
+genomics_db_import_scaffold_groups        1              2              2
+hard_filter_indels                       42              1              1
+hard_filter_snps                         42              1              1
+maf_filter                               42              1              1
+make_gvcf_sections                      252              1              1
+make_indel_vcf                           42              1              1
+make_snp_vcf                             42              1              1
+mark_dp0_as_missing                      42              1              1
+mark_duplicates                           6              1              1
+multiqc_dir                               1              1              1
+samtools_stats                            6              1              1
+total                                  1324              1              2
+
+```
+
+It seems to be working great.
+
+It did as much as it could but it threw two errors on genomics_db2vcf rule runs.
+sacct says that both of the jobs finished, so it must just be a job latency thing.
+
+It said:
+```sh
+sacct failed to return the status for jobid 2527084
+Maybe you need to use scontrol instead?
+Failed to obtain job status. See above for error message.
+WorkflowError:
+Failed to obtain job status. See above for error message.
+  File "/projects/eriq@colostate.edu/mambaforge/envs/snakemake-7.30.1/lib/python3.11/asyncio/runners.py", line 190, in run
+  File "/projects/eriq@colostate.edu/mambaforge/envs/snakemake-7.30.1/lib/python3.11/asyncio/runners.py", line 118, in run
+  File "/projects/eriq@colostate.edu/mambaforge/envs/snakemake-7.30.1/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2023-07-28T105355.438230.snakemake.log
+```
+
+```sh
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% grep Error .snakemake/log/2023-07-28T105355.438230.snakemake.log  | awk '/executing/ {err[$4] = sprintf("%s%s", err[$4], $10)} END {for(i in err) print i, err[i]}'
+genomics_db2vcf_scattered 2525063,2525064,
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--%
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--%
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--%
+(snakemake-7.30.1) [login11: mega-non-model-wgs-snakeflow]--% sacct -j 2525063,2525064
+JobID           JobName  Partition    Account  AllocCPUS      State ExitCode
+------------ ---------- ---------- ---------- ---------- ---------- --------
+2525063      smk-genom+     amilan csu-gener+          2  COMPLETED      0:0
+2525063.bat+      batch            csu-gener+          2  COMPLETED      0:0
+2525063.ext+     extern            csu-gener+          2  COMPLETED      0:0
+2525064      smk-genom+     amilan csu-gener+          2  COMPLETED      0:0
+2525064.bat+      batch            csu-gener+          2  COMPLETED      0:0
+2525064.ext+     extern            csu-gener+          2  COMPLETED      0:0
+```
+I checked the log of one of those and GATK clearly reported that it had finished.
+
+When I did a dry-run, 
