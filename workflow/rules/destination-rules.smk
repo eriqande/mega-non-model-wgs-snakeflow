@@ -39,4 +39,18 @@ rule dest_scatter_intervals:
     	"results/logs/dest_scatter_intervals/log_{int_length}.txt"
     script:
     	"../scripts/sequence-scatter-bins.R"
+
+
+# this is for downsampling the bams and nothing more.  If you want
+# to downsample bams and then run through the entire gVCF workflow with those
+# you should see the next rule...
+# Note that it is hardwired for bqsr round 0 for now.
+rule dest_downsample_bams_only:
+	input:
+		bam=expand(
+			"results/bqsr-round-{bqsr_round}/downsample-{cov}X/overlap_clipped/{sample}.bam", 
+			bqsr_round = config["downsample_bams"]["bqsr_round"], 
+			cov = config["downsample_bams"]["depths"],
+			sample = sample_list )
+
     
