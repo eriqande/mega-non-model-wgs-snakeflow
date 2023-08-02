@@ -124,7 +124,8 @@ wildcard_constraints:
     filter_condition="ALL|PASS|FAIL",
     maf="|".join(mafs),
     scatter=scatter_wc_constraint,
-    igrp="|".join(indel_grps_list)
+    igrp="|".join(indel_grps_list),
+    bqsr_round="|".join(["0","1","2","3","4"])
 
 
 
