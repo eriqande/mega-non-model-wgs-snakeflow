@@ -944,4 +944,61 @@ JobID           JobName  Partition    Account  AllocCPUS      State ExitCode
 ```
 I checked the log of one of those and GATK clearly reported that it had finished.
 
-When I did a dry-run, 
+When I did a dry-run, it seemed OK, and ran snakemake and it all seemed OK until it started trying
+to concatenate the BCFs.  Some of the BCFs still had the old count of individuals in there---the
+ones starting with `Z`s.  
+
+That was a bit of a mess.  A couple of observations:
+
+1. I think it is a serious error when `sacct` doesn't manage to return a status for
+a job.  The sacct_status_robust.sh tries 5 times before it fails.  I suspect there are times
+when the slurm controller is just messed up and failing to reply at some point.  I might
+try adding more attempts (20, instead of 5) and also give it a `sleep 3` after each
+attempt.
+2. I am assuming that error was the problem.  For some reason, after it occurred,
+re-runs of certain files were not triggered.
+
+I checked the GATK logs, and I saw that all the genomics data bases had gotten
+properly regenerated, but there were about 8 or 9 chromosomes that had not
+gotten properly updated.  So, I will track those down and remove them, and that
+should trigger a re-run for them.  
+
+Here is what I did:
+
+1. Remove all the vcf sections that were from before July 10:
+```sh
+rm $(ls -lrt  results/bqsr-round-0/vcf_sections/*/* | awk '$7 < 10 {print $NF}')
+rm $(ls -lrt   results/bqsr-round-0/vcf_sections/*.gz | awk '$7<10 {print $NF}' )
+rm $(ls -lrt results/bqsr-round-0/vcf_sect_miss_denoted/* | awk '$7<10 {print $NF}')
+```
+
+After a dry run it looked to me like I should just re-do the bcf stats
+```
+rm -r  results/bqsr-round-0/qc/bcftools_stats/{maf_sections,sections}
+```
+
+Now, the dry-run looks like this:
+```
+Job stats:
+job                                 count    min threads    max threads
+--------------------------------  -------  -------------  -------------
+all                                     1              1              1
+bcf_concat                              1              1              1
+bcf_concat_mafs                         1              1              1
+bcf_maf_section_summaries              42              1              1
+bcf_section_summaries                 126              1              1
+bung_filtered_vcfs_back_together       13              1              1
+combine_bcftools_stats                  3              1              1
+combine_maf_bcftools_stats              1              1              1
+gather_scattered_vcfs                  13              1              1
+genomics_db2vcf_scattered             387              2              2
+hard_filter_indels                     13              1              1
+hard_filter_snps                       13              1              1
+maf_filter                             13              1              1
+make_indel_vcf                         13              1              1
+make_snp_vcf                           13              1              1
+mark_dp0_as_missing                    13              1              1
+total                                 666              1              2
+
+```
+That looks right.  I will set that a-running after hacking the sacct-status-robust script.
