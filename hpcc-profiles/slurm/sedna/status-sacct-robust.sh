@@ -16,12 +16,14 @@ function get_status(){
   sacct -j "$1" --format State --noheader | head -n 1 | awk '{print $1}'
 }
 
-for i in {1..5}
+for i in {1..20}
 do
   output=`get_status "$jobid"`
   if [[ ! -z $output ]]
   then
     break
+  else
+    sleep 3
   fi
 done
 
