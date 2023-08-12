@@ -1,7 +1,7 @@
 cluster:
   mkdir -p results/slurm_logs/{rule} &&
   sbatch
-    --partition=D16ds_v5
+    --partition=execute
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --time={resources.time}
@@ -11,7 +11,7 @@ cluster:
     --parsable
 default-resources:
   - time="08:00:00"
-  - mem_mb=4000
+  - mem_mb=3700
 restart-times: 0
 max-jobs-per-second: 10
 max-status-checks-per-second: 50
@@ -37,23 +37,23 @@ set-threads:
   genomics_db2vcf_scattered: 2
 set-resources:
   map_reads:
-    mem_mb: 16000
+    mem_mb: 14800
     time: "23:59:59"
   make_gvcf_sections:
-    mem_mb: 4000
+    mem_mb: 3700
     time: "23:59:59"
   genomics_db_import_chromosomes:
-    mem_mb: 8000
+    mem_mb: 7400
     time: "23:59:59"
   genomics_db_import_scaffold_groups:
-    mem_mb: 12000
+    mem_mb: 11100
     time: "23:59:59"
   genomics_db2vcf_scattered:
-    mem_mb: 12000
+    mem_mb: 11100
     time: "23:59:59"
   multiqc_dir:
-    mem_mb: 40000
+    mem_mb: 37000
   bwa_index:
-    mem_mb: 40000
+    mem_mb: 37000
   realigner_target_creator:
     mem_mb: 14960
