@@ -1097,3 +1097,30 @@ Now, the dry-run looks like this:
 
 That looks right. I will set that a-running after hacking the
 sacct-status-robust script.
+
+That all ran without a hitch.
+
+To copy it back to the sharepoint I did:
+
+``` sh
+ snakemake -n --profile hpcc-profiles/slurm/alpine send_to_gdrive2 --configfile config/config.yaml
+```
+
+in order to get the code:
+
+``` sh
+ git log | head -n 150  > config/latest-git-commits.txt;   mkdir -p results/qc_summaries/bqsr-round-{0..0};  for i in {0..0}; do cp -r results/bqsr-round-$i/qc/{multiqc.html,bcftools_stats/*.txt} results/qc_summaries/bqsr-round-$i/; done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/qc.tar results/bqsr-round-$i/qc; gzip results/bqsr-round-$i/qc.tar;  done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/benchmarks.tar results/bqsr-round-$i/benchmarks; gzip results/bqsr-round-$i/benchmarks.tar; done;  for i in {0..0}; do tar -cvf results/bqsr-round-$i/logs.tar results/bqsr-round-$i/logs; gzip results/bqsr-round-$i/logs.tar; done;                                                                                                                    rclone copy --dry-run  --drive-stop-on-upload-limit . onedrive2:BGP_Share/Genetic_and_Environmental_Data/Species_genetic_data/SWTH-2   --include='config/**'  --include='results/qc_summaries/**'  --include='results/bqsr-round-0/{qc,benchmarks,logs}.tar.gz'  --include='results/bqsr-round-0/bcf/**'  --include='resources/**'  --include='data/**'  --include='results/bqsr-round-0/gvcf/*'  --include='results/bqsr-round-0/mkdup/*'  --include='results/bqsr-round-0/overlap_clipped/*'
+```
+
+I am only going to copy the overlap_clipped and the bcf up there, and we
+also need to copy the DS_control direcctory: So I went with:
+
+``` sh
+ rclone copy --dry-run  --drive-stop-on-upload-limit . \
+ onedrive2:BGP_Share/Genetic_and_Environmental_Data/Species_genetic_data/SWTH-2  \
+ --include='config/**'  --include='results/qc_summaries/**'  \
+ --include='results/bqsr-round-0/{qc,benchmarks,logs}.tar.gz' \
+ --include='results/bqsr-round-0/bcf/**'  --include='resources/**'  \
+ --include='results/bqsr-round-0/overlap_clipped/**' \
+ --include='results/bqsr-round-0/DS_control/**'
+```
