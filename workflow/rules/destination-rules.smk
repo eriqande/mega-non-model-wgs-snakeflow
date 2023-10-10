@@ -59,5 +59,5 @@ rule dest_downsample_bams_only:
 # force-calls the sites
 rule force_call_sites:
 	input:
-		vcf="results/bqsr-round-{bqsr_round}/force-call/final.vcf.gz"
+		vcf="results/bqsr-round-0/force-call/final.vcf.gz"
 
