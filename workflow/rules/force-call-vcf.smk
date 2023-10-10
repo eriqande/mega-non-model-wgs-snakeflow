@@ -102,15 +102,20 @@ rule force_call_with_gatk_scatters:
 		hc=config["params"]["gatk"]["HaplotypeCaller"]
 	conda:
 		"../envs/gatk4.2.6.1.yaml"
+	threads: 4
 	output:
 		vcf="results/bqsr-round-{bqsr_round}/force-call/vcf_sections/{sg_or_chrom}/{scat}.vcf.gz",
+	resources:
+		mem_mb=18800,
+		time="24:00:00"
 	shell:
 		" if [ ! -s {input.regions} ]; then "
 		" 	touch {output}; "
 		" else "
 		"   BAMLIST=$(echo {input.bams} | awk '{{for(i=1;i<=NF;i++) printf(\" -I %s \",$i); }}'); "
 		"   gatk  --java-options \"{params.java_opts}\" HaplotypeCaller -R {input.ref} -O {output.vcf} -L {input.regions} "
-		"    --alleles {input.alleles} {params.hc} $BAMLIST > {log} 2>&1; "
+		"    --alleles {input.alleles} {params.hc} --native-pair-hmm-threads {threads} "
+		" $BAMLIST > {log} 2>&1; "
 		" fi "
 
 
