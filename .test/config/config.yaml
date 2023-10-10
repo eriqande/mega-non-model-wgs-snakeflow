@@ -7,6 +7,9 @@ scatter_intervals_file: .test/config/scatters_1200000.tsv
 # as different species, for indel realignment, etc.
 #indel_grps: ".test/config/igrps.tsv" 
 
+# this file is only needed if running dest_force_call
+force_call_vcf: .test/force-call/snps-force.vcf.gz
+
 # if you don't want to produce indel-realigned BAMs, set the
 # following to False.  It will still make overlap_clipped bams
 do_indel_realignment: False

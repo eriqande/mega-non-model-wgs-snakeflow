@@ -85,6 +85,8 @@ if config["scatter_intervals_file"] != "":
     scatter_wc_constraint="|".join(unique_scats)
 
 
+# get a pandas frame of unique values of scaff_group and scat
+unique_scatters_table=scatter_groups[['id', 'scatter_idx']].drop_duplicates()
 
 ### Deal with the indel_grps if present (i.e. groupings of the samples
 ### into different species so that indel realignment is done species by species).
@@ -346,6 +348,8 @@ def get_bams_for_bqsr(wildcards):
 def get_scattered_vcfs(wildcards, ext):
     scat_ids=scatter_groups.loc[(scatter_groups["id"] == wildcards.sg_or_chrom), "scatter_idx"].unique()
     return expand("results/bqsr-round-{{bqsr_round}}/vcf_sections/{{sg_or_chrom}}/{scat}.vcf.gz{e}", scat=scat_ids, e=ext)
+
+
 
 # we have this here becuase we only want to do fastqc, mkdup and trimmomatic
 # qc for bqsr_round=0.  The others just do the samtools stats.
