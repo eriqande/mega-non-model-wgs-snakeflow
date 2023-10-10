@@ -99,6 +99,7 @@ rule force_call_with_gatk_scatters:
 		"results/bqsr-round-{bqsr_round}/logs/force_call_with_gatk_scatters/{sg_or_chrom}/{scat}.log",
 	params:
 		java_opts="-Xmx4g",
+		hc=config["params"]["gatk"]["HaplotypeCaller"]
 	conda:
 		"../envs/gatk4.2.6.1.yaml"
 	output:
@@ -109,7 +110,7 @@ rule force_call_with_gatk_scatters:
 		" else "
 		"   BAMLIST=$(echo {input.bams} | awk '{{for(i=1;i<=NF;i++) printf(\" -I %s \",$i); }}'); "
 		"   gatk  --java-options \"{params.java_opts}\" HaplotypeCaller -R {input.ref} -O {output.vcf} -L {input.regions} "
-		"    --alleles {input.alleles} $BAMLIST > {log} 2>&1; "
+		"    --alleles {input.alleles} {params.hc} $BAMLIST > {log} 2>&1; "
 		" fi "
 
 
