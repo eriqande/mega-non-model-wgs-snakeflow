@@ -53,4 +53,11 @@ rule dest_downsample_bams_only:
 			cov = config["downsample_bams"]["depths"],
 			sample = sample_list )
 
-    
+
+
+# this is just here to make it easy to do a run that just
+# force-calls the sites
+rule force_call_sites:
+	input:
+		vcf="results/bqsr-round-{bqsr_round}/force-call/final.vcf.gz"
+
