@@ -13,6 +13,7 @@ rule trim_reads_pe:
     params:
         **config["params"]["trimmomatic"]["pe"],
         #extra=lambda w, output: "-trimlog {}".format(output.trimlog),
+    threads: 1
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/trim_reads_pe/{sample}---{unit}.bmk"
     log:
