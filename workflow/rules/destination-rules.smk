@@ -33,6 +33,7 @@ rule dest_scatter_intervals:
         scaffs=config["scaffold_groups"],
     params:
         binsize="{int_length}"
+    envmodules: "R/4.0.3"
     output:
         tsv="results/scatter_config/scatters_{int_length}.tsv"
     log:
