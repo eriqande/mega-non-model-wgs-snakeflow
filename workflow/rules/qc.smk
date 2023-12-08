@@ -69,7 +69,7 @@ rule multiqc_dir:
     resources:
         mem_mb = 36800
     wrapper:
-        "v1.23.3/bio/multiqc"
+        "v3.0.4/bio/multiqc"
 
 
 
