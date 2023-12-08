@@ -83,10 +83,12 @@ if config["scatter_intervals_file"] != "":
         raise Exception("Column order is important in the scaffold_groups file.  The columns must be in order: id, scatter_idx, chrom, start, end, scatter_length.")
     unique_scats = list(scatter_groups.scatter_idx.unique())
     scatter_wc_constraint="|".join(unique_scats)
+    # get a pandas frame of unique values of scaff_group and scat
+    unique_scatters_table=scatter_groups[['id', 'scatter_idx']].drop_duplicates()
 
 
-# get a pandas frame of unique values of scaff_group and scat
-unique_scatters_table=scatter_groups[['id', 'scatter_idx']].drop_duplicates()
+
+
 
 ### Deal with the indel_grps if present (i.e. groupings of the samples
 ### into different species so that indel realignment is done species by species).
