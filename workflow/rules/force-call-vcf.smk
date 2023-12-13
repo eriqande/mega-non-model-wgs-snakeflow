@@ -119,25 +119,26 @@ rule force_call_with_gatk_scatters:
 		" fi "
 
 
-
-rule gather_gatk_force_calls:
-	input:
-		vcf_sections=expand("results/bqsr-round-{bqsr_round}/force-call/vcf_sections/{sg_or_chrom}/{scat}.vcf.gz",
-				zip,
-				bqsr_round=[0] * len(unique_scatters_table),
-				sg_or_chrom=unique_scatters_table.id,
-				scat=unique_scatters_table.scatter_idx,
-			)
-	conda:
-		"../envs/bcftools.yaml"
-	log:
-		"results/bqsr-round-{bqsr_round}/logs/gather_gatk_force_calls/log.stderr",
-	output:
-		vcf="results/bqsr-round-{bqsr_round}/force-call/final.vcf.gz"
-	shell:
-		" (FULLS=$(for i in {input.vcf_sections}; do if [ -s $i ]; then echo $i; fi; done); "
-		" bcftools concat --naive $FULLS > {output.vcf}; "
-		" bcftools index -t {output.vcf} "
-		" ) 2>{log} "
+# we have to include this next rule only when the scatters file is present
+if config["scatter_intervals_file"] != "":
+	rule gather_gatk_force_calls:
+		input:
+			vcf_sections=expand("results/bqsr-round-{bqsr_round}/force-call/vcf_sections/{sg_or_chrom}/{scat}.vcf.gz",
+					zip,
+					bqsr_round=[0] * len(unique_scatters_table),
+					sg_or_chrom=unique_scatters_table.id,
+					scat=unique_scatters_table.scatter_idx,
+				)
+		conda:
+			"../envs/bcftools.yaml"
+		log:
+			"results/bqsr-round-{bqsr_round}/logs/gather_gatk_force_calls/log.stderr",
+		output:
+			vcf="results/bqsr-round-{bqsr_round}/force-call/final.vcf.gz"
+		shell:
+			" (FULLS=$(for i in {input.vcf_sections}; do if [ -s $i ]; then echo $i; fi; done); "
+			" bcftools concat --naive $FULLS > {output.vcf}; "
+			" bcftools index -t {output.vcf} "
+			" ) 2>{log} "
 
 
