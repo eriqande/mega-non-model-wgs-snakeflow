@@ -1,7 +1,7 @@
 units: .test/config/units.tsv
 chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv
-scatter_intervals_file: ""
+scatter_intervals_file: .test/config/scatters_1200000.tsv
 
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
