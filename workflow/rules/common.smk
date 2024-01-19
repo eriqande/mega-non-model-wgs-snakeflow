@@ -72,6 +72,9 @@ if scaff_cols[0] != 'id' or scaff_cols[1] != 'chrom':
 unique_scaff_groups = list(scaffold_groups.id.unique())
 unique_chromosomes = list(chromosomes.chrom.unique())  # don't need to unique it, but I do anyway
 
+# deal with cases where the scaff groups are empty
+
+
 
 # finally, get all the scatter groups, indexed two different ways.
 scatter_wc_constraint="scat_0[0-9]*"  # this is just here for the case where `scatter_intervals_file: ""`
@@ -119,11 +122,22 @@ if "do_indel_realignment" in config and config["do_indel_realignment"] == False:
 
 
 ##### Wildcard constraints #####
+# we have to deal with the cases where scaff groups or chroms might be empty
+if not unique_scaff_groups:
+    sg_constraint = "CrazyScaffGroupName"  # this is sort of a hack.  Just put something that won't be a chromosome
+else:
+    sg_constraint="|".join(unique_scaff_groups)
+
+if not unique_chromosomes:
+    chrom_constraint="CrazyChromName"
+else:
+    chrom_constraint="|".join(unique_chromosomes)
+
 wildcard_constraints:
     sample="|".join(sample_list),
     unit="|".join(units["unit"]),
-    chromo="|".join(unique_chromosomes),
-    scaff_group="|".join(unique_scaff_groups),
+    chromo=chrom_constraint,
+    scaff_group=sg_constraint,
     sg_or_chrom="|".join(unique_scaff_groups + unique_chromosomes),
     filter_condition="ALL|PASS|FAIL",
     maf="|".join(mafs),
