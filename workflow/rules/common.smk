@@ -224,19 +224,13 @@ def get_GDB_import_number(wildcards):
 
 
 def chromo_import_gdb_opts(wildcards):
-    inum=get_GDB_import_number(wildcards)
-    if inum == 0:
+    
         return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals {chr} --genomicsdb-workspace-path ".format(chr = wildcards.chromo))
-    else:
-        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --genomicsdb-update-workspace-path ")
+    
 
 
 def scaff_group_import_gdb_opts(wildcards):
-    inum=get_GDB_import_number(wildcards)
-    if inum == 0:
         return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/bqsr-round-{bq}/gdb_intervals/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(bq = wildcards.bqsr_round, sg = wildcards.scaff_group))
-    else:
-        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --merge-contigs-into-num-partitions 1  --genomicsdb-update-workspace-path ")
 
 
 

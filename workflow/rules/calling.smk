@@ -104,19 +104,15 @@ rule concat_gvcf_sections:
 ## tee it to one named with the import number.  
 rule genomics_db_import_chromosomes:
     input:
-        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{chromo}}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
-        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{chromo}}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
+        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{chromo}}.g.vcf.gz", sample=sample_list),
+        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{chromo}}.g.vcf.gz.tbi", sample=sample_list),
     output:
-        counter="results/bqsr-round-{bqsr_round}/gdb_accounting/counters/{chromo}.txt",
-        receipts=touch(expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{chromo}}/{s}", s=sample_list))
+        db=directory("results/bqsr-round-{bqsr_round}/genomics_db/{chromo}")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/genomicsdbimport/{chromo}.log"
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/genomics_db_import_chromosomes/{chromo}.bmk"
     params:
-        db="results/bqsr-round-{bqsr_round}/genomics_db/{chromo}",
-        import_num=get_GDB_import_number,
-        histories=lambda wc: expand("results/bqsr-round-{bqsr_round}/gdb_accounting/histories/{chr}/{sample}.txt", bqsr_round = wc.bqsr_round, chr=wc.chromo, sample=get_samples_for_GDB_import(wc)),
         my_opts=chromo_import_gdb_opts,
         java_opts="-Xmx4g",  # optional
     resources:
@@ -127,13 +123,10 @@ rule genomics_db_import_chromosomes:
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
-        " mkdir -p results/bqsr-round-{wildcards.bqsr_round}/genomics_db; "
         " gatk --java-options {params.java_opts} GenomicsDBImport "
         " $(echo {input.gvcfs} | awk '{{for(i=1;i<=NF;i++) printf(\" -V %s \", $i)}}') "
-        " {params.my_opts} {params.db} 2>&1 | tee {log} > {log}.import_{params.import_num} && "
-        " (echo $(({params.import_num} + 1)) > {output.counter}) && "
-        " (for i in {params.histories}; do mkdir -p $(dirname $i); echo {params.import_num} $(date) > $i; done)"
-
+        " {params.my_opts} {output.db} > {log} 2>&1  "
+        
 
 
 # It seems like I have to set threads to 2 in order to get 2 CPUs for this
@@ -142,21 +135,17 @@ rule genomics_db_import_chromosomes:
 # than that.
 rule genomics_db_import_scaffold_groups:
     input:
-        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{scaff_group}}.g.vcf.gz", sample=get_samples_for_GDB_import(wc)),
-        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{scaff_group}}.g.vcf.gz.tbi", sample=get_samples_for_GDB_import(wc)),
+        gvcfs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{scaff_group}}.g.vcf.gz", sample=sample_list),
+        gvcf_idxs=lambda wc: expand("results/bqsr-round-{{bqsr_round}}/gvcf_sections/{sample}/{{scaff_group}}.g.vcf.gz.tbi", sample=sample_list),
         scaff_groups = config["scaffold_groups"],
     output:
         interval_list="results/bqsr-round-{bqsr_round}/gdb_intervals/{scaff_group}.list",
-        counter="results/bqsr-round-{bqsr_round}/gdb_accounting/counters/{scaff_group}.txt",
-        receipts=touch(expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{scaff_group}}/{s}", s=sample_list))
+        db=directory("results/bqsr-round-{bqsr_round}/genomics_db/{scaff_group}")
     log:
         "results/bqsr-round-{bqsr_round}/logs/gatk/genomicsdbimport/{scaff_group}.log"
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/genomics_db_import_scaffold_groups/{scaff_group}.bmk"
     params:
-        db="results/bqsr-round-{bqsr_round}/genomics_db/{scaff_group}",
-        import_num=get_GDB_import_number,
-        histories=lambda wc: expand("results/bqsr-round-{bq}/gdb_accounting/histories/{sg}/{sample}.txt", bq = wc.bqsr_round, sg=wc.scaff_group, sample=get_samples_for_GDB_import(wc)),
         my_opts=scaff_group_import_gdb_opts,
         java_opts="-Xmx4g",  # optional
     resources:
@@ -167,13 +156,10 @@ rule genomics_db_import_scaffold_groups:
     conda:
         "../envs/gatk4.2.6.1.yaml"
     shell:
-        " mkdir -p results/bqsr-round-{wildcards.bqsr_round}/genomics_db; "
         " awk -v sg={wildcards.scaff_group} 'NR>1 && $1 == sg {{print $2}}' {input.scaff_groups} > {output.interval_list}; "
         " gatk --java-options {params.java_opts} GenomicsDBImport "
         " $(echo {input.gvcfs} | awk '{{for(i=1;i<=NF;i++) printf(\" -V %s \", $i)}}') "
-        " {params.my_opts} {params.db} 2>&1 | tee {log} > {log}.import_{params.import_num} && "
-        " (echo $(({params.import_num} + 1)) > {output.counter}) && "
-        " (for i in {params.histories}; do mkdir -p $(dirname $i); echo {params.import_num} $(date) > $i; done) "
+        " {params.my_opts} {output.db} >{log} 2>&1; "
 
 
 
@@ -186,7 +172,7 @@ rule genomics_db2vcf_scattered:
     input:
         genome="resources/genome.fasta",
         scatters="results/bqsr-round-{bqsr_round}/scatter_interval_lists/{sg_or_chrom}/{scatter}.list",
-        receipts=expand("results/bqsr-round-{{bqsr_round}}/gdb_accounting/receipts/{{sg_or_chrom}}/{s}", s=sample_list)
+        db="results/bqsr-round-{bqsr_round}/genomics_db/{sg_or_chrom}",
     output:
         vcf="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz",
         tbi="results/bqsr-round-{bqsr_round}/vcf_sections/{sg_or_chrom}/{scatter}.vcf.gz.tbi"
