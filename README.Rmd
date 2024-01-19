@@ -435,6 +435,13 @@ to see the contents:
 The workflow operates a lot on individual chromosomes to allow
 parallelization, so this is critical information.
 
+However, in some cases, your genome might be in a lot of small scaffolds,
+and you have no true chromosomes.  Or, you might have a bunch of scaffolds
+with stupid characters in their names like a `|` that will break most
+shell scripts.  In such cases, you can put everything into the scaffold_groups
+file and leave the chromosome.tsv file as just the TAB-separated columns
+names. (see `.test/config/empty-chromosomes.tsv` as an example).
+
 ### `scaffold_groups.tsv`
 
 The user must make this file that
@@ -453,6 +460,10 @@ This file can also be made from the
 `workflow/prepare/make_chromosomes_and_scaffolds.R`:
 
 [https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/workflow/prepare/make_chromosomes_and_scaffolds.R](https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/workflow/prepare/make_chromosomes_and_scaffolds.R)
+
+
+If you don't have any scaffolds, this file can be left as just the TAB-separated
+column names as in `cat .test/config/empty-scaffold_groups.tsv`.
 
 
 ### `config.yaml`

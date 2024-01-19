@@ -1,58 +1,35 @@
 mega-non-model-wgs-snakeflow
 ================
 
-- <a href="#major-updateupgrade-notes-new"
-  id="toc-major-updateupgrade-notes-new">Major Update/Upgrade Notes
-  (New)</a>
-- <a href="#major-updateupgrade-notes-old"
-  id="toc-major-updateupgrade-notes-old">Major Update/Upgrade Notes
-  (Old)</a>
-- <a href="#some-notes-on-indel-realignment"
-  id="toc-some-notes-on-indel-realignment">Some notes on Indel
-  Realignment</a>
-  - <a href="#realignment-around-species-specific-indels"
-    id="toc-realignment-around-species-specific-indels">Realignment around
-    species-specific indels</a>
-- <a href="#quick-install-and-run" id="toc-quick-install-and-run">Quick
-  install and run</a>
-  - <a href="#so-what-just-happened-there"
-    id="toc-so-what-just-happened-there">So, what just happened there</a>
-- <a href="#condensed-dag-for-the-workflow"
-  id="toc-condensed-dag-for-the-workflow">Condensed DAG for the
-  workflow</a>
-- <a href="#rulegraph-for-the-workflow"
-  id="toc-rulegraph-for-the-workflow">Rulegraph for the workflow</a>
-- <a href="#running-this-with-slurm"
-  id="toc-running-this-with-slurm">Running this with SLURM</a>
-- <a href="#what-the-user-must-do-and-values-to-be-set-etc"
-  id="toc-what-the-user-must-do-and-values-to-be-set-etc">What the user
-  must do and values to be set, etc</a>
-  - <a href="#unitstsv" id="toc-unitstsv"><code>units.tsv</code></a>
-  - <a href="#chromosomestsv"
-    id="toc-chromosomestsv"><code>chromosomes.tsv</code></a>
-  - <a href="#scaffold_groupstsv"
-    id="toc-scaffold_groupstsv"><code>scaffold_groups.tsv</code></a>
-  - <a href="#configyaml" id="toc-configyaml"><code>config.yaml</code></a>
-- <a href="#bootstrapped-base-quality-score-recalibration"
-  id="toc-bootstrapped-base-quality-score-recalibration">Bootstrapped Base
-  Quality Score Recalibration</a>
-  - <a href="#what-values-should-be-chosen"
-    id="toc-what-values-should-be-chosen">What values should be chosen?</a>
-- <a href="#offloading-results-to-google-drive"
-  id="toc-offloading-results-to-google-drive">Offloading results to google
-  drive</a>
-  - <a href="#google-drive-directory-structure"
-    id="toc-google-drive-directory-structure">Google Drive Directory
-    Structure</a>
-- <a href="#assumptions" id="toc-assumptions">Assumptions</a>
-- <a href="#things-fixed-or-added-relative-to-jks-snakemake-workflow"
-  id="toc-things-fixed-or-added-relative-to-jks-snakemake-workflow">Things
-  fixed or added relative to JK’s snakemake workflow</a>
-- <a
-  href="#stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases"
-  id="toc-stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases">Stepwise
-  addition of new samples to the Workflow (and the Genomics Data
-  bases)</a>
+- [Major Update/Upgrade Notes (New)](#major-updateupgrade-notes-new)
+- [Major Update/Upgrade Notes (Old)](#major-updateupgrade-notes-old)
+- [Some notes on Indel Realignment](#some-notes-on-indel-realignment)
+  - [Realignment around species-specific
+    indels](#realignment-around-species-specific-indels)
+- [Quick install and run](#quick-install-and-run)
+  - [So, what just happened there](#so-what-just-happened-there)
+- [Condensed DAG for the workflow](#condensed-dag-for-the-workflow)
+- [Rulegraph for the workflow](#rulegraph-for-the-workflow)
+- [Running this with SLURM](#running-this-with-slurm)
+- [What the user must do and values to be set,
+  etc](#what-the-user-must-do-and-values-to-be-set-etc)
+  - [`units.tsv`](#unitstsv)
+  - [`chromosomes.tsv`](#chromosomestsv)
+  - [`scaffold_groups.tsv`](#scaffold_groupstsv)
+  - [`config.yaml`](#configyaml)
+- [Bootstrapped Base Quality Score
+  Recalibration](#bootstrapped-base-quality-score-recalibration)
+  - [What values should be chosen?](#what-values-should-be-chosen)
+- [Offloading results to google
+  drive](#offloading-results-to-google-drive)
+  - [Google Drive Directory
+    Structure](#google-drive-directory-structure)
+- [Assumptions](#assumptions)
+- [Things fixed or added relative to JK’s snakemake
+  workflow](#things-fixed-or-added-relative-to-jks-snakemake-workflow)
+- [Stepwise addition of new samples to the Workflow (and the Genomics
+  Data
+  bases)](#stepwise-addition-of-new-samples-to-the-workflow-and-the-genomics-data-bases)
 
 ## Major Update/Upgrade Notes (New)
 
@@ -535,6 +512,14 @@ contents:
 The workflow operates a lot on individual chromosomes to allow
 parallelization, so this is critical information.
 
+However, in some cases, your genome might be in a lot of small
+scaffolds, and you have no true chromosomes. Or, you might have a bunch
+of scaffolds with stupid characters in their names like a `|` that will
+break most shell scripts. In such cases, you can put everything into the
+scaffold_groups file and leave the chromosome.tsv file as just the
+TAB-separated columns names. (see `.test/config/empty-chromosomes.tsv`
+as an example).
+
 ### `scaffold_groups.tsv`
 
 The user must make this file that tells snakemake which collections of
@@ -551,6 +536,10 @@ This file can also be made from the `.fai` file for the genome using the
 helper script at `workflow/prepare/make_chromosomes_and_scaffolds.R`:
 
 <https://github.com/eriqande/mega-non-model-wgs-snakeflow/blob/main/workflow/prepare/make_chromosomes_and_scaffolds.R>
+
+If you don’t have any scaffolds, this file can be left as just the
+TAB-separated column names as in
+`cat .test/config/empty-scaffold_groups.tsv`.
 
 ### `config.yaml`
 
@@ -620,9 +609,9 @@ tibble(
     ## # A tibble: 4 × 4
     ##   base_quals       n ascii PHRED
     ##   <chr>        <int> <int> <dbl>
-    ## 1 ,            68212    44    11
-    ## 2 :            77998    58    25
-    ## 3 #               17    35     2
+    ## 1 #               17    35     2
+    ## 2 ,            68212    44    11
+    ## 3 :            77998    58    25
     ## 4 F          1207941    70    37
 
 So, these new machines produce a whole lot of sequence, but it really
@@ -771,13 +760,13 @@ g +
   xlim(0, 100)
 ```
 
-    ## Warning: Removed 126 rows containing missing values (position_stack).
+    ## Warning: Removed 126 rows containing missing values (`position_stack()`).
 
-    ## Warning: Removed 1 rows containing missing values (geom_col).
+    ## Warning: Removed 1 rows containing missing values (`geom_col()`).
 
-    ## Warning: Removed 126 rows containing missing values (geom_point).
+    ## Warning: Removed 126 rows containing missing values (`geom_point()`).
 
-    ## Warning: Removed 126 row(s) containing missing values (geom_path).
+    ## Warning: Removed 126 rows containing missing values (`geom_line()`).
 
 ![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
@@ -828,6 +817,10 @@ And it will print out a command line that does:
     - Finally, if there is a `data` directory present at the top level
       we assume that is what holds the original fastqs, and we copy all
       that back, too!
+    - It will also copy the entire contents of the subdirectory that
+      contains the `units` file. Accordingly, when you set your run up,
+      you should put your config.yaml, your chromosomes and scaffold
+      groups, etc. all in that subdirectory along with units.tsv.
 
 For example, on the test data set it prints out something like this (but
 not exactly this, because I keep tweaking it):
