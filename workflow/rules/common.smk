@@ -178,65 +178,7 @@ def get_all_bams_of_common_sample(wildcards):
 #     return(list(dict.fromkeys(dupie_list)))
 
 
-
-##################################################################
-##### Eric's Helper Functions to Handle GenomicDB updating  #####
-
-# here is how we are doing it.  Every time a sample gets put
-# in the data base, a file with the sample name is put into
-# results/bqsr-round-{bqsr_round}/gdb_accounting/receipts/{chrom_or_scaff_group}/sample_name.
-# The contents of the file are a number
-# which is the number of the update.  0 = initial import, 1 = first
-# update, etc.  and on the same line we will put the date that happened.
-#
-# Additionally, each time the data base is imported or updated, we will
-# write a line with the total number of imports/updates made to
-# results/bqsr-round-{bqsr_round}/gdb_accounting/counters/{chrom_or_scaff_group.txt}.
-# We add those up to get what the number should be.
-
-# here chrom is either a chromosome or a scaffold group, because we have to get
-# either of those.
-def previously_imported_samples(chrom, bq):
-    dir="results/bqsr-round-{bq}/gdb_accounting/receipts/".format(bq = bq) + chrom
-    if not  os.path.exists(dir):
-        return([])  
-    return(os.listdir(dir))
-    
-
-
-# samples to put in the GDB are any in sample list
-# that have not already been imported.
-def get_samples_for_GDB_import(wildcards):
-    # wildcards might contain either scaff_group or chromo.
-    # whichever it is, we get it and save it as the variable chrom
-    if hasattr(wildcards, 'chromo'):
-        chrom=wildcards.chromo
-    elif hasattr(wildcards, 'scaff_group'):
-            chrom=wildcards.scaff_group
-    else:
-        raise Exception("Wildcards has neither chromo or scaff_group in get_samples_for_GDB_import")
-    return(list(set(sample_list).difference(set(previously_imported_samples(chrom, wildcards.bqsr_round)))))
-
-
-# get the number of data base import or update
-# based on the dbi_counters
-def get_GDB_import_number(wildcards):
-    # wildcards might contain either scaff_group or chromo.
-    # whichever it is, we get it and save it as the variable chrom
-    if hasattr(wildcards, 'chromo'):
-        chrom=wildcards.chromo
-    elif hasattr(wildcards, 'scaff_group'):
-            chrom=wildcards.scaff_group
-    else:
-        raise Exception("Wildcards has neither chromo or scaff_group in get_samples_for_GDB_import")
-    file="results/bqsr-round-{{bqsr_round}}/gdb_accounting/counters/" + chrom + ".txt"
-    if not  os.path.exists(file):
-        return(0)  
-    return int(open(file).readlines()[0])
-
-
-
-
+# for setting options for genomics DB import
 def chromo_import_gdb_opts(wildcards):
     
         return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals {chr} --genomicsdb-workspace-path ".format(chr = wildcards.chromo))
@@ -246,9 +188,6 @@ def chromo_import_gdb_opts(wildcards):
 def scaff_group_import_gdb_opts(wildcards):
         return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/bqsr-round-{bq}/gdb_intervals/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(bq = wildcards.bqsr_round, sg = wildcards.scaff_group))
 
-
-
-###################################################################################################
 
 ## Here we get the -L option(s) for a chromosome or a scaff_group
 
