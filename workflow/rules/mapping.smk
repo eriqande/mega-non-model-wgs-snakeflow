@@ -1,25 +1,28 @@
 
-# eca commented out the trimlog from this as it is huge and
-# not particularly useful by default, as far as I can tell.
 rule trim_reads_pe:
     input:
         unpack(get_fastq),
     output:
         r1=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.fastq.gz"),
         r2=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.fastq.gz"),
-        r1_unpaired=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.unpaired.fastq.gz"),
-        r2_unpaired=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.unpaired.fastq.gz"),
-        #trimlog="results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.trimlog.txt",
-    params:
-        **config["params"]["trimmomatic"]["pe"],
-        #extra=lambda w, output: "-trimlog {}".format(output.trimlog),
-    threads: 1
+        #r1_unpaired=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.unpaired.fastq.gz"),
+        #r2_unpaired=temp("results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.unpaired.fastq.gz"),
+        html="results/bqsr-round-{bqsr_round}/qc/fastp/{sample}---{unit}.html",
+        json="results/bqsr-round-{bqsr_round}/qc/fastp/{sample}---{unit}.json"
+    conda:
+        "../envs/fastp.yaml"
+    log:
+        out="results/bqsr-round-{bqsr_round}/logs/trim_reads_pe/{sample}---{unit}.log",
+        err="results/bqsr-round-{bqsr_round}/logs/trim_reads_pe/{sample}---{unit}.err"
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/trim_reads_pe/{sample}---{unit}.bmk"
-    log:
-        "results/bqsr-round-{bqsr_round}/logs/trim_reads_pe/{sample}---{unit}.log",
-    wrapper:
-        "v1.1.0/bio/trimmomatic/pe"
+    params:
+        **config["params"]["fastp"]["pe"],
+    shell:
+        " fastp -i {input.r1} -I {input.r2} "
+        "       -o {output.r1} -O {output.r2} "
+        "       -h {output.html} -j {output.json} "
+        "  {params.trimmer} > {log.out} 2> {log.err} "
 
 
 # eca modified this.  The idea is to give 4 threads to bwa.

@@ -300,13 +300,13 @@ def get_scattered_vcfs(wildcards, ext):
 
 
 
-# we have this here becuase we only want to do fastqc, mkdup and trimmomatic
+# we have this here becuase we only want to do fastp and  mkdup
 # qc for bqsr_round=0.  The others just do the samtools stats.
 def get_multiqc_inputs(wildcards):
     if wildcards.bqsr_round == "0":
         return(
             expand("results/bqsr-round-{bq}/qc/samtools_stats/{sample}.txt", bq=wildcards.bqsr_round, sample=sample_list) +
-            expand("results/bqsr-round-{bq}/qc/fastqc/{u.sample}---{u.unit}_R{r}_fastqc.zip", bq=wildcards.bqsr_round, u=units.itertuples(), r = [1, 2]) +
+            expand("results/bqsr-round-{bq}/qc/fastp/{u.sample}---{u.unit}.json", bq=wildcards.bqsr_round, u=units.itertuples(), r = [1, 2]) +
             list(dict.fromkeys(expand("results/bqsr-round-{bq}/qc/mkdup/{u.sample}.metrics.txt", bq=wildcards.bqsr_round, u=units.itertuples()))) +
             expand("results/bqsr-round-{bq}/logs/trim_reads_pe/{u.sample}---{u.unit}.log", bq=wildcards.bqsr_round, u=units.itertuples())
         )

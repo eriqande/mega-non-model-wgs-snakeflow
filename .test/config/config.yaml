@@ -108,18 +108,17 @@ params:
     VariantRecalibrator: ""
   picard:
     MarkDuplicates: " --TAGGING_POLICY All --CREATE_INDEX "
-  trimmomatic:
+  fastp:
     pe:
       trimmer:
-        # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
-        - "ILLUMINACLIP:resources/adapters/TruSeq3-PE-2.fa:2:30:10"
-        - "LEADING:3"
-        - "TRAILING:3"
-        - "SLIDINGWINDOW:4:20"
-        - "MINLEN:36"
+        # See fastp manual for adding additional options, e.g. for adapter trimming.
+        - " --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
+        - " --adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+        - " --detect_adapter_for_pe --cut_right --cut_right_window_size 4 --cut_right_mean_quality 20 "
+    # single-end is currently broken
     se:
       trimmer:
-        # See trimmomatic manual for adding additional options, e.g. for adapter trimming.
+        # See fastp manual for adding additional options, e.g. for adapter trimming.
         - "LEADING:3"
         - "TRAILING:3"
         - "SLIDINGWINDOW:4:20"
