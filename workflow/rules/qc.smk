@@ -1,32 +1,3 @@
-rule fastqc_read1:
-    input:
-        lambda wc: (get_fastq(wc))["r1"],
-    output:
-        html="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R1.html",
-        zip="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R1_fastqc.zip",
-    log:
-        "results/bqsr-round-{bqsr_round}/logs/fastqc/{sample}---{unit}_R1.log",
-    benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/fastqc_read1/{sample}---{unit}_R1.bmk",
-    wrapper:
-        "v1.1.0/bio/fastqc"
-
-
-rule fastqc_read2:
-    input:
-        lambda wc: (get_fastq(wc))["r2"],
-    output:
-        html="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R2.html",
-        zip="results/bqsr-round-{bqsr_round}/qc/fastqc/{sample}---{unit}_R2_fastqc.zip",
-    log:
-        "results/bqsr-round-{bqsr_round}/logs/fastqc/{sample}---{unit}_R2.log",
-    benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/fastqc_read2/{sample}---{unit}_R2.bmk",
-    wrapper:
-        "v1.1.0/bio/fastqc"
-
-
-
 rule samtools_stats:
     input:
         get_bams_for_samtools_stats,
@@ -62,14 +33,17 @@ rule multiqc_dir:
         get_multiqc_inputs
     output:
         "results/bqsr-round-{bqsr_round}/qc/multiqc.html",
+        directory("results/bqsr-round-{bqsr_round}/qc/multiqc_data")
     log:
         "results/bqsr-round-{bqsr_round}/logs/multiqc.log",
+    params:
+        extra="--verbose",  # Optional: extra parameters for multiqc.
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/multiqc/multiqc.bmk",
     resources:
         mem_mb = 36800
     wrapper:
-        "v3.0.4/bio/multiqc"
+        "v3.5.1-2-g5f72db4/bio/multiqc"
 
 
 
