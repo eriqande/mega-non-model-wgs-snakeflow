@@ -306,7 +306,7 @@ def get_multiqc_inputs(wildcards):
     if wildcards.bqsr_round == "0":
         return(
             expand("results/bqsr-round-{bq}/qc/samtools_stats/{sample}.txt", bq=wildcards.bqsr_round, sample=sample_list) +
-            expand("results/bqsr-round-{bq}/qc/fastp/{u.sample}---{u.unit}.json", bq=wildcards.bqsr_round, u=units.itertuples(), r = [1, 2]) +
+            expand("results/bqsr-round-{bq}/qc/fastp/{u.sample}---{u.unit}.json", bq=wildcards.bqsr_round, u=units.itertuples()) +
             list(dict.fromkeys(expand("results/bqsr-round-{bq}/qc/mkdup/{u.sample}.metrics.txt", bq=wildcards.bqsr_round, u=units.itertuples()))) +
             expand("results/bqsr-round-{bq}/logs/trim_reads_pe/{u.sample}---{u.unit}.log", bq=wildcards.bqsr_round, u=units.itertuples())
         )
