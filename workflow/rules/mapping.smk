@@ -17,12 +17,12 @@ rule trim_reads_pe:
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/trim_reads_pe/{sample}---{unit}.bmk"
     params:
-        config["params"]["fastp"]["pe"]["trimmer"],
+        trim_settings=config["params"]["fastp"]["pe"]["trimmer"],
     shell:
         " fastp -i {input.r1} -I {input.r2} "
         "       -o {output.r1} -O {output.r2} "
         "       -h {output.html} -j {output.json} "
-        "  {params} > {log.out} 2> {log.err} "
+        "  {params.trim_settings} > {log.out} 2> {log.err} "
 
 
 # eca modified this.  The idea is to give 4 threads to bwa.
