@@ -33,14 +33,17 @@ rule multiqc_dir:
         get_multiqc_inputs
     output:
         "results/bqsr-round-{bqsr_round}/qc/multiqc.html",
+        directory("results/bqsr-round-{bqsr_round}/qc/multiqc_data")
     log:
         "results/bqsr-round-{bqsr_round}/logs/multiqc.log",
+    params:
+        extra="--verbose",  # Optional: extra parameters for multiqc.
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/multiqc/multiqc.bmk",
     resources:
         mem_mb = 36800
     wrapper:
-        "v3.0.4/bio/multiqc"
+        "v3.5.1-2-g5f72db4/bio/multiqc"
 
 
 
