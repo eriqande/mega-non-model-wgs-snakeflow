@@ -1,0 +1,22 @@
+
+executor: slurm
+# warning, time here is very small.  It works for the small
+# example data set, but should be increased for production jobs
+default-resources:
+  - runtime=20   # must be specified in minutes
+  - mem_mb=3740
+  - tmpdir="results/snake-tmp"
+  - slurm_partition=amilan,csu
+restart-times: 0
+max-jobs-per-second: 10
+max-status-checks-per-second: 50
+local-cores: 1
+latency-wait: 60
+cores: 2400
+jobs: 950
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+use-conda: True
+rerun-trigger: mtime
+

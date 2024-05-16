@@ -1,0 +1,35 @@
+
+executor: cluster-generic
+cluster-generic-submit-cmd:
+  mkdir -p results/slurm_logs/{rule} &&
+  sbatch
+    --partition=amilan,csu
+    --cpus-per-task={threads}
+    --mem={resources.mem_mb}
+    --time={resources.time}
+    --job-name=smk-{rule}-{wildcards}
+    --output=results/slurm_logs/{rule}/{rule}-%j-{wildcards}.out
+    --error=results/slurm_logs/{rule}/{rule}-%j-{wildcards}.err
+    --parsable
+cluster-generic-status-cmd: status-sacct-robust.sh
+cluster-generic-cancel-cmd: scancel
+cluster-generic-cancel-nargs: 400
+# warning, time here is very small.  It works for the small
+# example data set, but should be increased for production jobs
+default-resources:
+  - time="00:30:00"
+  - mem_mb=3740
+  - tmpdir="results/snake-tmp"
+restart-times: 0
+max-jobs-per-second: 10
+max-status-checks-per-second: 25
+local-cores: 1
+latency-wait: 60
+cores: 2400
+jobs: 950
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+software-deployment-method: conda
+rerun-trigger: mtime
+
