@@ -3,7 +3,6 @@ cluster:
   sbatch
     --partition=standard
     --cpus-per-task={threads}
-    --mem={resources.mem_mb}
     --time={resources.time}
     --job-name=smk-{rule}-{wildcards}
     --output=results/slurm_logs/{rule}/{rule}-%j-{wildcards}.out
@@ -13,8 +12,7 @@ cluster-status: status-sacct-robust.sh
 cluster-cancel: scancel
 cluster-cancel-nargs: 400
 default-resources:
-  - time="08:00:00"
-  - mem_mb=4800
+  - time="24:00:00"
 restart-times: 0
 max-jobs-per-second: 10
 max-status-checks-per-second: 25
