@@ -3,6 +3,15 @@ chromosomes: .test/config/chromosomes.tsv
 scaffold_groups: .test/config/scaffold_groups.tsv
 scatter_intervals_file: .test/config/scatters_1200000.tsv
 
+
+# if all of your fastqs are in a separate directory that is not
+# listed in the units file, but which you want to prepend to each
+# one of them, you can put it here with a trailing slash. Otherwise
+# leave it as an empty string.  Hey folks, no spaces in path
+# names please!
+data_parent_dir: "/Users/eriq/Documents/git-repos/mega-non-model-wgs-snakeflow/"
+
+
 # this file is only needed when treating different samples
 # as different species, for indel realignment, etc.
 #indel_grps: ".test/config/igrps.tsv" 
