@@ -47,6 +47,29 @@ rule multiqc_dir:
 
 
 
+# this is a simple version of the multiqc that just pulls in the
+# fastp results
+rule multiqc_dir_no_map:
+    input:
+        expand("results/bqsr-round-0/qc/fastp/{u.sample}---{u.unit}.json", u=units.itertuples())
+    output:
+        "results/prelim_qc/multiqc.html",
+        directory("results/prelim_qc/multiqc_data")
+    log:
+        "results/prelim_qc/logs/multiqc_dir_no_map.log",
+    params:
+        extra="--verbose",  # Optional: extra parameters for multiqc.
+    benchmark:
+        "results/prelim_qc/benchmarks/multiqc/multiqc.bmk",
+    resources:
+        mem_mb = 36800
+    wrapper:
+        "v3.5.1-2-g5f72db4/bio/multiqc"
+
+
+
+
+
 # here is a rule to use bcftools stats to summarize what is found in the
 # final BCF files.  Basically, we want to run bcftools stats with the option
 # to compile statistics about every single sample, and also to make a histogram

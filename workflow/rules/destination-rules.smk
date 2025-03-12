@@ -62,3 +62,10 @@ rule force_call_sites:
 	input:
 		vcf="results/bqsr-round-0/force-call/final.vcf.gz"
 
+
+
+# this is just a simple destination rule to just do preliminary qc on things
+rule dest_prelim_qc:
+	input:
+		"results/prelim_qc/multiqc.html"
+
