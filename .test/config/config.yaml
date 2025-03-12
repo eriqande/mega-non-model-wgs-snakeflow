@@ -9,7 +9,7 @@ scatter_intervals_file: .test/config/scatters_1200000.tsv
 # one of them, you can put it here with a trailing slash. Otherwise
 # leave it as an empty string.  Hey folks, no spaces in path
 # names please!
-data_parent_dir: "/Users/eriq/Documents/git-repos/mega-non-model-wgs-snakeflow/"
+data_parent_dir: ""
 
 
 # this file is only needed when treating different samples
