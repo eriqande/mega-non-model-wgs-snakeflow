@@ -1,4 +1,4 @@
-#units: /share/swfsc/eriq/Landscape_Genomics/250301_VH02170_2_2227GLJNX/units.tsv
+units: /share/swfsc/eriq/Landscape_Genomics/250301_VH02170_2_2227GLJNX/units.tsv
 chromosomes: example-configs/USDA_OmykA_1.1/chromosomes.tsv
 scaffold_groups: example-configs/USDA_OmykA_1.1/scaffold_groups.tsv
 scatter_intervals_file: ""
