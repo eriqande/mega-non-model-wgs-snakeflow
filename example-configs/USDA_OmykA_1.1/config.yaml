@@ -1,7 +1,7 @@
 units: /share/swfsc/eriq/Landscape_Genomics/250301_VH02170_2_2227GLJNX/units.tsv
 chromosomes: example-configs/USDA_OmykA_1.1/chromosomes.tsv
 scaffold_groups: example-configs/USDA_OmykA_1.1/scaffold_groups.tsv
-scatter_intervals_file: ""
+scatter_intervals_file: example-configs/USDA_OmykA_1.1/scatters_3000000.tsv
 
 
 # if all of your fastqs are in a separate directory that is not
