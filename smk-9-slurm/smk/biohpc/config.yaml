@@ -1,0 +1,17 @@
+__use_yte__: true
+executor: slurm
+default-resources:
+  slurm_account: nt246_0001
+  slurm_partition: regular
+  mem_mb: attempt * 3000
+  time: "08:00:00"
+jobs: 64
+latency-wait: 60
+retries: 1
+default-storage-provider: fs
+local-storage-prefix: /workdir/$USER
+shared-fs-usage:
+  - persistence
+  - software-deployment
+  - sources
+  - source-cache
