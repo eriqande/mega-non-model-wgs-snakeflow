@@ -15,3 +15,8 @@ shared-fs-usage:
   - software-deployment
   - sources
   - source-cache
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+software-deployment-method: conda
+rerun-trigger: mtime
