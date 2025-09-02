@@ -31,7 +31,7 @@ rule clip_overlaps:
         """ 
         bam clipOverlap --in {input} --out - --stats 2> {log.clip} | \
         samtools view -f 2 -O bam > {output} 2>{log.view} &&
-        samtools index {output} 2> {log.index}"
+        samtools index {output} 2> {log.index}
         """
 
 rule species_sample_lists:
