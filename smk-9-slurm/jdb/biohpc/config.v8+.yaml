@@ -1,0 +1,34 @@
+
+executor: cluster-generic
+cluster-generic-submit-cmd:
+  mkdir -p results/slurm_logs/{rule} &&
+  sbatch
+    --partition=regular
+    --account=nt246_0001
+    --cpus-per-task={threads}
+    --mem-per-cpu={resources.mem_per_cpu}
+    --time={resources.time}
+    --job-name=smk-{rule}-{wildcards}
+    --output=results/slurm_logs/{rule}/{rule}-%j-{wildcards}.out
+    --error=results/slurm_logs/{rule}/{rule}-%j-{wildcards}.err
+    --parsable
+cluster-generic-status-cmd: status-sacct-robust.sh
+cluster-generic-cancel-cmd: scancel
+cluster-generic-cancel-nargs: 400
+default-resources:
+  - time="12:00:00"
+  - mem_per_cpu=3200
+  - tmpdir="/tmp"
+restart-times: 0
+max-jobs-per-second: 10
+max-status-checks-per-second: 2
+local-cores: 1
+latency-wait: 60
+cores: 800
+jobs: 500
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+use-conda: True
+rerun-triggers: mtime
+
