@@ -4,6 +4,8 @@ scaffold_groups: example-configs/Cornell-Stripers/config/scaffold_groups.tsv
 scatter_intervals_file: example-configs/Cornell-Stripers/config/scatters_1200000.tsv
 
 
+mapper: bowtie2
+
 # if all of your fastqs are in a separate directory that is not
 # listed in the units file, but which you want to prepend to each
 # one of them, you can put it here with a trailing slash. Otherwise

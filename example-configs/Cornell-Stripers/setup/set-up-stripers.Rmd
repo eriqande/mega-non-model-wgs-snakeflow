@@ -135,3 +135,16 @@ write_tsv(final_units, file = "../config/units.tsv")
 That is done.
 
 ## Getting the chromosomes and scaffold groups...
+
+This we actually don't need to do for the parts of the workflow we are doing...
+
+## Testing
+
+I am going to run through one of them all the way to the overlap-clipped ones.
+By the way.  That is where we will toss the improper pairs.
+
+Here is the one we will do:
+```
+results/bqsr-round-0/overlap_clipped/HUD12_26.bam
+```
+That one is about 187 Mb per read, so it is smaller than most others.  

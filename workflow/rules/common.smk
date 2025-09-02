@@ -246,6 +246,20 @@ def get_read_group(wildcards):
     )
 
 
+def get_read_group_for_bowtie2(wildcards):
+    """Denote sample name and platform in read group."""
+    return r" --rg-id {sample}_{sample_id}_{library}_{flowcell}_{lane}_{barcode}  --rg SM:{sample_id} --rg PU:{flowcell}.{lane}.{barcode} --rg PL:{platform} --rg LB:{library} ".format(
+        sample=wildcards.sample,
+        sample_id=units.loc[(wildcards.sample, wildcards.unit), "sample_id"],
+        platform=units.loc[(wildcards.sample, wildcards.unit), "platform"],
+        library=units.loc[(wildcards.sample, wildcards.unit), "library"],
+        flowcell=units.loc[(wildcards.sample, wildcards.unit), "flowcell"],
+        lane=units.loc[(wildcards.sample, wildcards.unit), "lane"],
+        barcode=units.loc[(wildcards.sample, wildcards.unit), "barcode"],
+    )
+
+
+
 # here is the function that picks out the appropriate bam and bai file
 # to use for calling gvcfs.  If the {bqsr_round} is = 0 it pulls them
 # from bqsr_round-{bqsr-round}/mkdup. 

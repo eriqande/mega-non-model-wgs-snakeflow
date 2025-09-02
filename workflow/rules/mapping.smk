@@ -25,34 +25,71 @@ rule trim_reads_pe:
         "  {params.trim_settings} > {log.out} 2> {log.err} "
 
 
-# eca modified this.  The idea is to give 4 threads to bwa.
-# and it will get 4 cores and also take all the memory you'd
-# expect for those cores.  Sedna's machines are almost all
-# 20 core units, so this should fill them up OK.
-rule map_reads:
-    input:
-        reads = [
-            "results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.fastq.gz",
-            "results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.fastq.gz"
-        ],
-        idx=rules.bwa_index.output,
-    output:
-        temp("results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam"),
-    log:
-        "results/bqsr-round-{bqsr_round}/logs/map_reads/{sample}---{unit}.log",
-    benchmark:
-        "results/bqsr-round-{bqsr_round}/benchmarks/map_reads/{sample}---{unit}.bmk"
-    params:
-        extra=get_read_group,
-        sorting="samtools",
-        sort_order="coordinate",
-        sort_extra=""
-    threads: 4
-    resources:
-        mem_mb=19200,
-        time="23:59:59"
-    wrapper:
-        "v1.23.3/bio/bwa/mem"
+
+if config["mapper"] == "bwa":
+    # eca modified this.  The idea is to give 4 threads to bwa.
+    # and it will get 4 cores and also take all the memory you'd
+    # expect for those cores.  Sedna's machines are almost all
+    # 20 core units, so this should fill them up OK.
+    rule map_reads:
+        input:
+            reads = [
+                "results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.fastq.gz",
+                "results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.fastq.gz"
+            ],
+            idx=rules.bwa_index.output,
+        output:
+            temp("results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam"),
+        log:
+            "results/bqsr-round-{bqsr_round}/logs/map_reads/{sample}---{unit}.log",
+        benchmark:
+            "results/bqsr-round-{bqsr_round}/benchmarks/map_reads/{sample}---{unit}.bmk"
+        params:
+            extra=get_read_group,
+            sorting="samtools",
+            sort_order="coordinate",
+            sort_extra=""
+        threads: 4
+        resources:
+            mem_mb=19200,
+            time="23:59:59"
+        wrapper:
+            "v1.23.3/bio/bwa/mem"
+
+
+
+# this is for doing the stripers analogously to the shad
+if config["mapper"] == "bowtie2":
+    rule map_reads:
+        input:
+            r1="results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.1.fastq.gz",
+            r2="results/bqsr-round-{bqsr_round}/trimmed/{sample}---{unit}.2.fastq.gz",
+            idx=rules.bowtie2_index.output
+        output:
+            bam=temp("results/bqsr-round-{bqsr_round}/mapped/{sample}---{unit}.sorted.bam"),
+        params:
+            rg=get_read_group_for_bowtie2,
+            genome_prefix="resources/genome.fasta"
+        log:
+            "results/bqsr-round-{bqsr_round}/logs/map_reads/{sample}---{unit}.log",
+        benchmark:
+            "results/bqsr-round-{bqsr_round}/benchmarks/map_reads/{sample}---{unit}.bmk"
+        threads: 4
+        resources:
+            mem_mb=19200,
+            time="23:59:59"
+        conda:
+            "../envs/bowsam.yaml"
+        shell:
+            """
+            bowtie2 --wrapper basic-0 -q --phred33 --very-sensitive -p {threads}  \
+               -I 0 -X 1500 --fr \
+               {params.rg} \
+               -x {params.genome_prefix} \
+               -1 {input.r1}   \
+               -2 {input.r2}   \
+               | samtools sort -@ {threads} -O bam -o {output.bam}
+            """
 
 
 

@@ -63,3 +63,23 @@ rule bwa_index:
     wrapper:
         "0.59.2/bio/bwa/index"
 
+
+rule bowtie2_index:
+    input:
+        fasta="resources/genome.fasta",
+    params:
+        prefix="resources/genome.fasta"
+    output:
+        multiext("resources/genome.fasta", ".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"),
+    log:
+        "results/bqsr-round-0/logs/bowtie2_index.log",
+    benchmark:
+        "results/bqsr-round-0/benchmarks/bowtie2_index/bowtie2_index.bmk",
+    resources:
+        mem_mb=36900,
+    shell:
+        """
+        bowtie2-build {input.fasta} {params.prefix} > {log} 2>&1
+        """
+
+
