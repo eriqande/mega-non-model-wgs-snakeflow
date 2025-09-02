@@ -1,0 +1,137 @@
+---
+title: "Setting up the Stripers"
+output: html_notebook
+---
+
+The fastqs are at:
+```
+/home2/nt246_0001/eca64/striped_bass/mega-non-model-wgs-snakeflow/data
+```
+
+I got the list of them and their sizes with
+```sh
+(base) [eca64@cbsulogin mega-non-model-wgs-snakeflow]$ pwd
+/home2/nt246_0001/eca64/striped_bass/mega-non-model-wgs-snakeflow
+
+du   data/*/*.fastq.gz
+```
+And I copied that into:
+```
+/Users/eriq/Documents/git-repos/mega-non-model-wgs-snakeflow/example-configs/Cornell-Stripers/setup/file_listing.tsv
+```
+
+Now we can process that with R.
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+
+f1 <- read_tsv("file_listing.tsv") %>%
+  extract(
+    fq,
+    into = c("sample_id", "junk", "lane", "read"),
+    regex = "^data/Lane./..._(.*)_(10483618|10483619)_2337HWLT4_L([1-9])_R([12])\\.fastq\\.gz$",
+    convert = TRUE,
+    remove = FALSE
+  ) %>%
+  select(-junk)
+
+
+# some of those path names are malformed. They don't have a specifier for lane:
+malformed <- f1 %>%
+  filter(is.na(lane) | is.na(read))
+
+malformed
+```
+
+That is only six files.  Four are negative controls and 2 are from a sample that
+didn't get any reads.  We can just ignore those.
+
+Now, there are also a few samples that have very few reads, but we will leave
+those in there and just get reports on them from fastp.    Also, we will toss
+out all the negative controls
+```{r}
+f2 <- f1 %>%
+  filter(!(is.na(lane) | is.na(read))) %>%
+  filter(!str_detect(fq, "_neg[1-9]_")) %>%
+  pivot_wider(names_from = read, values_from = c(fq, kb), names_sep = "") %>%
+  mutate(
+    platform = "ILLUMINA",
+    flowcell = "2337HWLT4",
+    unit = 1, 
+  )
+
+```
+
+We are close to ready to go, but I want to get the barcodes and the library name
+in there. I am just going to call the library the "plate", which data is available
+online, but which googlesheets4 can't access for some reason.  So I just downloaded it
+as a CSV.
+
+I discovered that `SJR87_L1` was named `SJR87-L1` in the meta data, so I changed that
+in the CSV. Also, the letters on the possibly duplicated versions of the same
+individuals were not in the meta data, so I added those in the order in which the
+samples appeared (multiple times) in the CSV.
+
+
+Namely, I had to do this with:
+```
+"KEN46a"     "ROA_SB128b" "ROA_SB160b" "ROA_SB138b" "HUD14_E36b" "KEN46b"     "KEN46c"
+```
+Harmony gave me a heads up about these samples...
+
+But, it looks like there are also two version of `RAP14_03`, so I renamed the second
+occurrence of it with a b suffix in the meta-data CSV, and I also will change
+it in R here for the Snakemake units file:
+```{r}
+f3 <- f2 %>%
+  mutate(
+    idx = 1:n(),
+    sample_id = ifelse(idx == 310 & sample_id == "RAP14_03", "RAP14_03b", sample_id),
+    sample = sample_id
+  ) %>%
+  select(-idx)
+```
+
+Now we should be good to go...
+```{r}
+
+seq_meta <- read_csv("library_prep_meta.csv")
+
+sm2 <- seq_meta %>%
+  mutate(
+    library = str_replace_all(`Seq plate`, "[ a-z]*", ""),
+    barcode = str_c(i7, "+", i5)
+  ) %>%
+  select(Specimen, library, barcode)
+
+# now, join that
+f4 <- f3 %>%
+  left_join(sm2, by = join_by(sample == Specimen))
+```
+
+And finally, we just need to get the columns in the correct order:
+```{r}
+final_units <- f4 %>%
+  select(sample, unit, library, flowcell, platform, lane, sample_id, barcode, fq1, fq2, kb1, kb2)
+```
+
+That gives us 546 samples.   So, who is missing from the seq_meta?
+```{r}
+seq_meta %>% anti_join(final_units, by = join_by(Specimen == sample))
+
+setdiff(seq_meta$Specimen, final_units$sample)
+```
+
+That is cool, we are just missing:
+```
+"CB208" "neg1"  "neg2"  "neg3"  "neg4"  "neg5"  "neg6"  "neg7"  "neg8"  "neg9"
+```
+And Harmony told me that CB208 had failed.
+
+So, let's write this dude out.
+```{r}
+write_tsv(final_units, file = "../config/units.tsv")
+```
+
+That is done.
+
+## Getting the chromosomes and scaffold groups...
