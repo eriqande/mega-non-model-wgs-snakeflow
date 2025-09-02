@@ -118,7 +118,7 @@ params:
     GenotypeGVCFs: ""
     VariantRecalibrator: ""
   picard:
-    MarkDuplicates: " --TAGGING_POLICY=All REMOVE_DUPLICATES=true --CREATE_INDEX "
+    MarkDuplicates: " --REMOVE_DUPLICATES true --CREATE_INDEX "
   fastp:
     pe:
       trimmer:
