@@ -21,15 +21,18 @@ rule clip_overlaps:
         bai="results/bqsr-round-{bqsr_round}/overlap_clipped/{sample}.bam.bai"
     log:
         clip="results/bqsr-round-{bqsr_round}/logs/clip_overlaps/clip_overlap-{sample}.log",
+        view="results/bqsr-round-{bqsr_round}/logs/clip_overlaps/samtools-view-{sample}.log",
         index="results/bqsr-round-{bqsr_round}/logs/clip_overlaps/index-{sample}.log"
     conda:
         "../envs/bamutil_samtools.yaml"
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/clip_overlaps/{sample}.bmk"
     shell:
-        " bam clipOverlap --in {input} --out {output} --stats 2> {log.clip} && "
-        " samtools index {output} 2> {log.index}"
-
+        """ 
+        bam clipOverlap --in {input} --out - --stats 2> {log.clip} | \
+        samtools view -f 2 -O bam > {output} 2>{log.view} &&
+        samtools index {output} 2> {log.index}"
+        """
 
 rule species_sample_lists:
     params:
