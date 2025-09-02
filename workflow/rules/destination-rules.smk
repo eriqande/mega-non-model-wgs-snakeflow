@@ -42,6 +42,13 @@ rule dest_scatter_intervals:
     	"../scripts/sequence-scatter-bins.R"
 
 
+# Get all the overlap-clipped bams for bqsr-0
+rule dest_overlap_clipped_bams:
+	input:
+		expand("results/bqsr-round-0/overlap_clipped/{sample}.bam", sample = sample_list)
+
+
+
 # this is for downsampling the bams and nothing more.  If you want
 # to downsample bams and then run through the entire gVCF workflow with those
 # you should see the next rule...
