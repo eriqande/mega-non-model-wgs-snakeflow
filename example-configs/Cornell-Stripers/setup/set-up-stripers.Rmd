@@ -148,3 +148,36 @@ Here is the one we will do:
 results/bqsr-round-0/overlap_clipped/HUD12_26.bam
 ```
 That one is about 187 Mb per read, so it is smaller than most others.  
+
+I worked all the kinks out on that and then got a jdb slurm profile up and working.
+
+I did a dry-run with this:
+```sh
+snakemake -np  results/bqsr-round-0/qc/multiqc.html  dest_overlap_clipped_bams  --configfile example-configs/Cornell-Stripers/config/config.yaml --profile smk-9-slurm/jdb/biohpc
+```
+And the dry-run report looks like:
+```
+Shell command: None
+Job stats:
+job                          count
+-------------------------  -------
+clip_overlaps                  543
+dest_overlap_clipped_bams        1
+map_reads                      543
+mark_duplicates                543
+multiqc_dir                      1
+samtools_stats                 546
+trim_reads_pe                  543
+total                         2720
+```
+
+So, I am going to give it a big ol' whirl now.
+
+That ran pretty well, but many of the MarkDuplicates jobs failed.  I am guessing
+the ran out of memory or time.
+
+I did a dry-run, and there are about 213 remaining for mark duplicates.  I gave that
+rule 8192 Mb per cpu and will let it rip again...
+```
+
+```

@@ -107,7 +107,7 @@ rule mark_duplicates:
     params:
         extra=config["params"]["picard"]["MarkDuplicates"],
     resources:
-        cpus = 1
+        mem_per_cpu=8192
     wrapper:
         "v1.1.0/bio/picard/markduplicates"
 
