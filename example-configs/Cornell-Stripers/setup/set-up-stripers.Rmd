@@ -178,6 +178,21 @@ the ran out of memory or time.
 
 I did a dry-run, and there are about 213 remaining for mark duplicates.  I gave that
 rule 8192 Mb per cpu and will let it rip again...
+
+I am also adding in extracting the sequencing depths from the samtools stats.
+```sh
+snakemake -np  results/bqsr-round-0/qc/multiqc.html  dest_overlap_clipped_bams  results/bqsr-round-0/DS_control/sample_info.tsv --configfile example-configs/Cornell-Stripers/config/config.yaml --profile smk-9-slurm/jdb/biohpc
+
+job                          count
+-------------------------  -------
+clip_overlaps                  213
+dest_overlap_clipped_bams        1
+get_ave_depths                   1
+get_genome_length                1
+mark_duplicates                213
+multiqc_dir                      1
+samtools_stats                 213
+total                          643
 ```
 
-```
+

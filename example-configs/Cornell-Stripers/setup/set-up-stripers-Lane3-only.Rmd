@@ -1,0 +1,152 @@
+---
+title: "Setting up the Stripers"
+output: html_notebook
+---
+
+We have added a third lane in there, so I want to add them into the units file.
+In fact, though, I don't need to add them in.  There is nothing like variant 
+calling that requires doing things jointly, so, I will just make a separate units
+file with them all in there, and then make a new config for them, too.  
+
+The fastqs are at:
+```
+/home2/nt246_0001/eca64/striped_bass/mega-non-model-wgs-snakeflow/data
+```
+
+I got the list of them and their sizes with
+```sh
+(base) [eca64@cbsulogin mega-non-model-wgs-snakeflow]$ pwd
+/home2/nt246_0001/eca64/striped_bass/mega-non-model-wgs-snakeflow
+
+du   data/*/*.fastq.gz
+```
+And I copied that into:
+```
+/Users/eriq/Documents/git-repos/mega-non-model-wgs-snakeflow/example-configs/Cornell-Stripers/setup/file_listing.tsv
+```
+
+Now we can process that with R.
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+
+f1 <- read_tsv("file_listing-Lane3.tsv") %>%
+  extract(
+    fq,
+    into = c("junk", "sample_id", "lane", "read"),
+    regex = "^data/Lane3/(B_...|B)_(.*)_10484832_237LGHLT3_L([1-9])_R([12])\\.fastq\\.gz$",
+    convert = TRUE,
+    remove = FALSE
+  )
+```
+
+Those appear to have all parsed out.  It looks like 220 fish.
+
+One sample had very few reads (`2015R_DCA01_04`) but we will leave
+those in there and just get reports on them from fastp.  There were no samples
+that looked like negative controls.
+
+
+We are close to ready to go, but I want to get the barcodes and the library name
+in there. I am just going to call the library the "plate", which data is available
+online, but which googlesheets4 can't access for some reason.  So I just downloaded it
+as a CSV.
+
+
+Now we should be good to go...
+```{r}
+
+seq_meta <- read_csv("library_prep_meta.csv")
+
+sm2 <- seq_meta %>%
+  mutate(
+    library = str_replace_all(`Seq plate`, "[ a-z]*", ""),
+    barcode = str_c(i7, "+", i5)
+  ) %>%
+  select(Specimen, library, barcode)
+```
+
+Join the meta data fields on there.  When I did that the first time, I found that
+there was a `KEN46` in the sequencing data that did not join to anything in the
+metadata.  That is because it is called KEN46a, in the metadata, I think.  Because
+there is a KEN46b.  So, this is another case of not naming the first one as it is
+in the meta data I would say...
+
+I will change its name in f1 by adding the a
+```{r}
+f2 <- f1 %>%
+  mutate(sample_id = ifelse(sample_id == "KEN46", "KEN46a", sample_id)) %>% 
+  left_join(sm2, by = join_by(sample_id == Specimen))
+```
+
+Let's see what is missing now:
+```{r}
+f2 %>%
+  filter(is.na(barcode))
+```
+
+Nothing!  Good.  
+
+Then we have to pivot that wider to that we have fq1 and kb1 and fq2 and kb2, and add
+flowcell and sample.  We also set all of these as unit 2 because they are all
+fish that were sequenced previously.  
+```{r}
+f3 <- f2 %>%
+  pivot_wider(
+    names_from = read,
+    values_from = c(kb, fq),
+    names_sep = ""
+  ) %>%
+  mutate(
+    flowcell = "237LGHLT3", # got this by looking inside one of the fastqs
+    sample = sample_id,
+    unit = 2,
+    platform = "ILLUMINA"
+  )
+
+```
+
+Check to see how many time each sample id occurs:
+```{r}
+f3 %>%
+  count(sample_id) %>%
+  count(n)
+```
+
+They are all in there just once.  And we should check to make sure that the same sample
+ids occur in the old units file from the previous run.
+```{r}
+old_units <- read_tsv("../config/units.tsv") %>%
+  semi_join(f3, by = join_by(sample_id))
+
+nrow(old_units)
+```
+
+That is the right number of things samples.  So, let's put columns in the right order
+and then bind_rows old and new and arrange:
+```{r}
+
+final_units <- f3 %>%
+  select(sample, unit, library, flowcell, platform, lane, sample_id, barcode, fq1, fq2, kb1, kb2) %>%
+  bind_rows(old_units) %>%
+  arrange(sample, unit)
+```
+
+
+Check to make sure that every sample has two units:
+```{r}
+final_units %>%
+  count(sample) %>%
+  count(n)
+```
+It looked good.
+
+So, let's write this dude out.
+```{r}
+write_tsv(final_units, file = "../config/units-add-sequence-to-220-samples.tsv")
+```
+
+That is done.
+
+## Making a new config
+
+I modified config.yaml to make a new one called `config-add-seq-220.yaml`
