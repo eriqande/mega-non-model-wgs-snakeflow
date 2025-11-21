@@ -32,3 +32,6 @@ printshellcmds: True
 use-conda: True
 rerun-triggers: mtime
 
+set-resources:
+  plot_logl_histograms:
+    mem_per_cpu: 6960
