@@ -124,3 +124,30 @@ write_tsv(units, file = "../config/units-Canadian-fish-to-be-assigned.tsv")
 ```
 
 
+## Launching the runs:
+
+Dry run with this:
+
+```sh
+snakemake -np  results/bqsr-round-0/qc/multiqc.html  dest_overlap_clipped_bams  --configfile example-configs/Cornell-Stripers/config/config-Canadian-fish-to-be-assigned.yaml --profile smk-9-slurm/jdb/biohpc
+```
+Gave me this:
+```sh
+Shell command: None
+Job stats:
+job                          count
+-------------------------  -------
+clip_overlaps                  857
+dest_overlap_clipped_bams        1
+map_reads                      857
+mark_duplicates                857
+multiqc_dir                      1
+samtools_stats                 857
+trim_reads_pe                  857
+total                         4287
+```
+That looks spot on! Launching it now.
+
+```sh
+snakemake -p  results/bqsr-round-0/qc/multiqc.html  dest_overlap_clipped_bams  --configfile example-configs/Cornell-Stripers/config/config-Canadian-fish-to-be-assigned.yaml --profile smk-9-slurm/jdb/biohpc
+```
