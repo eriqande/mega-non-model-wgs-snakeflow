@@ -1,0 +1,126 @@
+---
+title: 'Set Up the "To Be Assigned" Striped Bass'
+output: html_notebook
+---
+
+
+
+There are a lot of these fish.  Fun.  It will be a big run. The data are in:
+```
+/home2/nt246_0001/nt246/striped_bass/samples_for_assignment/
+```
+and I make a symlink to that in
+```
+/home2/nt246_0001/eca64/striped_bass/mega-non-model-wgs-snakeflow/data
+```
+
+
+We get a file listing of the fastqs with:
+```sh
+ls -l data/samples_for_assignment/*.fastq.gz | awk 'BEGIN {printf("kb\tfq\n");} {printf("%.0f\t%s\n", $5/1000, $NF);}'
+```
+and I copied that into:
+```
+example-configs/Cornell-Stripers/setup/to-be-assigned-fastq-listing.txt
+```
+
+Then, I also got the library prep info from:
+```
+https://docs.google.com/spreadsheets/d/1FbrdFyWuhZhJZvzbwceu3c0Z9p5RotsS8JKIwP-rrOM/edit?gid=182325693#gid=182325693
+```
+and downloaded that to:
+```
+example-configs/Cornell-Stripers/setup/to-be-assigned-hackflex-libraries.csv
+```
+
+Note that I am going to add the negative controls and the topunkowns in the
+analysis.
+
+
+
+## Making the units file
+
+```{r}
+library(tidyverse)
+fastqs <- read_tsv("to-be-assigned-fastq-listing.txt") %>%
+  extract(
+    fq,
+    into = c("sample_id", "lane", "read"),
+    regex = "^data/samples_for_assignment/A_..._(.*)_10484831_237LGHLT3_L([1-9])_R([12])\\.fastq\\.gz$",
+    convert = TRUE,
+    remove = FALSE
+  )
+```
+
+Check on any that did not get parsed
+```{r}
+fastqs %>%
+  filter(is.na(sample_id)) %>% View()
+```
+
+It is just the top Unknown ones.  So, we can fix that
+```{r}
+fastqs[is.na(fastqs$sample_id), "sample_id"] <- "TopUnknown"
+fastqs[is.na(fastqs$lane), "lane"] <- 5L
+fastqs[is.na(fastqs$read), "read"] <- c(1L, 2L)
+```
+
+
+We can pivot this wider and then attach meta data:
+```{r}
+fwide <- fastqs %>%
+  pivot_wider(
+    names_from = read,
+    values_from = c(kb, fq),
+    names_sep = ""
+  )
+```
+
+Then join the library metadata.  Note that I edited the library file by removing a
+space in `neg 6` and also removing some barcode-check columns that were not attached
+to any samples.
+
+```{r}
+libmeta <- read_csv("to-be-assigned-hackflex-libraries.csv") %>%
+  mutate(
+    library = str_replace_all(plate, " ", "-"),
+    barcode = paste(i7, i5, sep = "+")
+  ) %>%
+  rename(sample_id = `Specimen ID`) %>%
+  select(sample_id, library, barcode)
+
+joined <- fwide %>%
+  full_join(libmeta, by = join_by(sample_id))
+```
+
+Now, we need to find any joining failures:
+```{r}
+joined %>%
+  filter(is.na(lane) | is.na(barcode)) %>% View()
+```
+
+So, the only one that doesn't have something going on is the TopUnknown.  We can
+add the barcode and the Library to that.  It didn't formally come from a particular
+library, so we just say it came from the TopUnknown library.
+```{r}
+joined[is.na(joined$library), "library"] <- "TopUnkLib"
+joined[is.na(joined$barcode), "barcode"] <- "GCTCATCA+TGCGGAAC"
+```
+
+Now we just need to get a few more columns and put them in the right order.
+```{r}
+units <- joined %>%
+  mutate(
+    flowcell = "237LGHLT3",
+    platform = "ILLUMINA",
+    sample = sample_id,
+    unit = 1
+  ) %>%
+  select(sample, unit, library, flowcell, platform, lane, sample_id, barcode, fq1, fq2, kb1, kb2)
+
+View(units)
+
+write_tsv(units, file = "../config/units-Canadian-fish-to-be-assigned.tsv")
+```
+
+

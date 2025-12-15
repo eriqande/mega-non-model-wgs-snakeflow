@@ -150,3 +150,37 @@ That is done.
 ## Making a new config
 
 I modified config.yaml to make a new one called `config-add-seq-220.yaml`
+
+## Dry Run
+
+```sh
+snakemake -np  results/bqsr-round-0/qc/multiqc.html  dest_overlap_clipped_bams  --configfile example-configs/Cornell-Stripers/config/config-add-seq-220.yaml --profile smk-9-slurm/jdb/biohpc
+
+
+Shell command: None
+Job stats:
+job                          count
+-------------------------  -------
+clip_overlaps                  220
+dest_overlap_clipped_bams        1
+map_reads                      440
+mark_duplicates                220
+multiqc_dir                      1
+samtools_stats                 220
+trim_reads_pe                  440
+total                         1542
+
+```
+
+If I include the multiqc in there, then it wants to re-run the mapping step for
+all 220 unit 1 fastqs. (Because the trimmed files have been tossed at this point).
+Not really what I want.  So, let's try dropping that.
+```sh
+snakemake -np  dest_overlap_clipped_bams  --configfile example-configs/Cornell-Stripers/config/config-add-seq-220.yaml --profile smk-9-slurm/jdb/biohpc
+```
+
+Actually, it looks like it is going to need to re-do the mapping anyway because the
+contents of `mapped` are deleted because they were temp.  So, just put the multiqc in there.
+```sh
+snakemake -p  results/bqsr-round-0/qc/multiqc.html  dest_overlap_clipped_bams  --configfile example-configs/Cornell-Stripers/config/config-add-seq-220.yaml --profile smk-9-slurm/jdb/biohpc
+```
