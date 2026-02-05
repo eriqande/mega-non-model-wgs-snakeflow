@@ -1,17 +1,19 @@
 cluster:
   mkdir -p results/slurm_logs/{rule} &&
   sbatch
-    --exclude=node[29-36]
-    --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --time={resources.time}
     --job-name=smk-{rule}-{wildcards}
     --output=results/slurm_logs/{rule}/{rule}-{wildcards}-%j.out
     --error=results/slurm_logs/{rule}/{rule}-{wildcards}-%j.err
     --parsable
+    --partition medmem
+
+
+    
 default-resources:
   - time="08:00:00"
-  - mem_mb=4800
+  - mem_mb=94000
 restart-times: 0
 max-jobs-per-second: 10
 max-status-checks-per-second: 50
@@ -29,15 +31,19 @@ cluster-cancel-nargs: 1000
 
 set-threads:
   map_reads: 20
-  trim_reads_pe: 5 
+  trim_reads_pe: 15 
 set-resources:
   map_reads:
     mem_mb: 94000
-    time: "7-00:00:00"
+    time: "3-00:00:00"
   mark_duplicates:
-    mem_mb: 47000
-    time: "7-00:00:00"
+    mem_mb: 90000
+    time: "3-00:00:00"
   trim_reads_pe:
-    mem_mb: 23500
-    time: "7-00:00:00"
+    mem_mb: 90000
+    time: "3-00:00:00"
+  clip_overlaps:
+    cpus: 20
+    time: "3-00:00:00"   
 
+## --exclude=node[29-36] avoid this when using medmem

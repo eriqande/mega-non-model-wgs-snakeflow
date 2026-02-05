@@ -49,7 +49,7 @@ rule map_reads:
         sort_extra=""
     threads: 4
     resources:
-        mem_mb=19200,
+        mem_mb=40000,
         time="23:59:59"
     wrapper:
         "v1.23.3/bio/bwa/mem"

@@ -3,6 +3,7 @@ include: "rules/common.smk"
 
 
 
+
 ##### Target rules #####
 localrules: make_scaff_group_interval_lists, make_chromo_interval_lists, combine_bcftools_stats, make_scatter_interval_lists, gatk3_register, species_sample_lists, get_genome_length, get_ave_depths
 
@@ -12,6 +13,7 @@ rule all:
         #expand("results/bqsr-round-{bq}/genomics_db/scaffold_groups/{s}", s=unique_scaff_groups),
         #expand("results/bqsr-round-{bq}/vcf_sections/{c}.vcf.gz", c=chromosomes.chrom),
         #expand("results/bqsr-round-{bq}/vcf_sections/{s}.vcf.gz", s=unique_scaff_groups),
+        expand("results/bqsr-round-{bqsr_round}/downsample-{cov}X/overlap_clipped/{sample}.bam",bqsr_round = config["downsample_bams"]["bqsr_round"],cov = config["downsample_bams"]["depths"],sample = sample_list ),
         expand("results/bqsr-round-{bq}/overlap_clipped/{samp}.{ext}", bq=config["bqsr_rounds"], samp=sample_list, ext = ["bam", "bam.bai"]),
         expand("results/bqsr-round-{bq}/gvcf/{samp}.g.vcf.gz", bq=config["bqsr_rounds"], samp=sample_list),
         expand("results/bqsr-round-{bq}/bcf/all.bcf", bq=config["bqsr_rounds"]),
@@ -32,8 +34,9 @@ rule old_all:
         "plots/allele-freqs.svg",
 
 
-##### Modules #####
 
+
+##### Modules #####
 
 include: "rules/ref.smk"
 include: "rules/mapping.smk"

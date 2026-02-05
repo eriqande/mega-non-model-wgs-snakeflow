@@ -185,7 +185,7 @@ rule genomics_db2vcf_scattered:
         java_opts="-Xmx8g",  # I might need to consider a temp directory, too in which case, put it in the config.yaml
         pextra=" --genomicsdb-shared-posixfs-optimizations --only-output-calls-starting-in-intervals "
     resources:
-        mem_mb = 11750,
+        mem_mb = 20000,
         cpus = 2,
         time = "1-00:00:00"
     threads: 2
